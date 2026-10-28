@@ -16,10 +16,35 @@ OpenAI key; the only cloud call is the Voice agent's model. Everything after a f
 answer task, transcript and dock) is shared; only the audio layer differs.
 
 - `session-local.ts` replaces `session.ts`: the microphone (with the browser's echo cancellation) feeds a level gate.
-  A 400 ms pause cuts the utterance; it goes as 16 kHz PCM to `speak/transcribe`, where Silero drops non-speech,
-  Parakeet-TDT 0.6B v3 transcribes and Smart Turn v3 judges whether the sentence is finished. An unfinished one is
-  held for up to 1.6 s more quiet. While the user talks, the words so far are transcribed every second for the live
-  line. A finished line plays one soft tick and goes through `heard` as usual.
+  A 900 ms pause sends the whole turn so far as 16 kHz PCM to `speak/transcribe`, where Silero drops non-speech,
+  Parakeet-TDT 0.6B v3 transcribes (and speak's `HEARD` lexicon puts misheard project terms right, keeping the raw
+  words as `raw`) and Smart Turn v3 judges whether the sentence is finished. `turn.ts` then decides, biased toward
+  waiting, since a cut-off thought costs far more than a second of silence:
+  - an end phrase ("over", "go ahead", "send it", "done") at the end sends at once, without the phrase;
+  - "wait", "hold on", "let me think" at the end hold the floor 30 s;
+  - a line that trails off (no end punctuation; last word a preposition, article, conjunction, auxiliary, filler or
+    an -ing verb), a long composed line (over 25 words, or code words), or Smart Turn saying unfinished holds
+    `holdMs` (12 s); a short fragment, or Smart Turn under 0.9 sure, holds 4 s;
+  - only a line that reads whole and Smart Turn is sure of goes after the pause.
+    Speech that resumes during a hold joins the same turn and the next pause transcribes all of it again, so Voice
+    gets one line. A hold that runs out still delivers, marked `unsure`: Voice then asks it back before forwarding a
+    request (and `voice_ask_ultimate` refuses it), while small talk is answered as usual. The dock shows
+    "Listening… Still your turn" during a hold, and speech waits for the user's turn to end.
+    "Dictation mode" / "normal mode" as a whole line switch the turn mode for the session: dictation never ends a
+    turn on silence, only on an end phrase or 30 s of quiet (delivered, never dropped).
+- `"voiceLive": { "pause": …, "turns": "auto" | "dictation", "endPhrases": […] }` tunes that: `"relaxed"`
+  (default, 900 ms cut, 12 s hold), `"snappy"` (400 ms and 1.6 s) or `{ "cutMs": 700, "holdMs": 6000 }`; `turns` is
+  the mode a session starts in; `endPhrases` replaces the end phrases. `startLocal` returns all three.
+- A forwarded request still waiting on @ultimate gets a short spoken “Still on it” after 30 s, then every 60 s
+  (`NUDGE_FIRST_MS`, `NUDGE_REPEAT_MS` in `pause.ts`, beside the pause timings; both engines).
+- Words being heard are never dropped: a session closing, a two-minute turn, or the microphone's frames stopping
+  mid-line (the browser held the audio) send what was heard so far, transcribed as it is.
+- The screen stays awake while a session is live (Screen Wake Lock, taken again when the page is back), so
+  auto-lock does not end it; browsers without it just lock. Locking with the power button still ends the
+  microphone (a web platform limit): the dock says so, and Resume starts again.
+- Playback never hangs: a held audio context (iOS after a call or Siri) waits instead of playing into nothing, and
+  after 1.5 s the dock offers Hear it, whose tap resumes it. A sentence whose `ended` never comes is given up 3 s
+  after its length. The microphone is deaf only while a sentence actually plays.
 - `startLocal` writes the session divider and brief like `start`, without SDP. The brief tells Voice which audio
   layer it has: with local audio nothing else answers small talk, so Voice does, and `voice_note` has no listener.
 - Speech is half-duplex: `voice_say` lines render through `speak/render` with Kokoro sentence by sentence (the
@@ -75,6 +100,9 @@ is about 1.0 s, so a spoken reply starts about 1.5–2 s after the user stops ta
    preserving decisions without reading Markdown, paths or code aloud. There is no summary-model speech rewrite.
    Failed/unanswered inputs leave a notice linked to the forwarded line and tell Voice to explain the failure.
    `voice_say` derives `re` from the input preceding its own tool round, so speech answers the right forwarded line.
+   Voice sometimes writes an answer as plain text instead; nothing reads that aloud, so an `onYield` hook writes it
+   as the spoken line for the newest unspoken answer. In the browser, an answer still unspoken 20 s after it
+   arrived turns the dock to "Answer ready · tap Hear it", which reads @ultimate's answer itself.
    Request ids and a transactional scheduling receipt keep forwards and answer delivery safe across task replay.
 
 ## Browser and transcript
@@ -93,7 +121,7 @@ the title-bar pill says voice is live; on @ultimate the card replaces it, so the
 
 Voice mode outlasts individual sessions. After two quiet minutes the session closes and listening pauses; an answer
 wakes it (or waits for a tap if browser activation blocks it). A pending forwarded request gets a short “Still on it”
-after 20 seconds, then every 45 seconds. Acknowledgements do not clear that pending state. Mute, End, the level meter,
+after 30 seconds, then every 60 seconds. Acknowledgements do not clear that pending state. Mute, End, the level meter,
 front/back sheet and tones remain browser-side: a quiet pulsing hum while connecting, stopped by any phase change
 (the ready tone, a low failed tone, End, page hide), and ready/pause/end tones. Closing waits for `session.closed`, records usage
 seconds and releases the microphone even on failure. No session survives its page.

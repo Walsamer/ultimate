@@ -18,9 +18,17 @@ export type LiveSession = {
   send: (event: Record<string, unknown>) => void
   mute: () => void
   unmute: () => void
-  speak: (text: string) => void
+  /** `forEar`: an answer relayed from @ultimate, rewritten for listening first where the engine speaks itself. */
+  speak: (text: string, options?: { forEar?: boolean }) => void
   /** Cut the speech playing now (tap-to-stop); GPT-Live stops itself when interrupted, so only local has it. */
   stopSpeaking?: () => void
+  /** Speech waits on an audio output the browser holds (no gesture since it stopped); `resumeAudio` from a tap frees it. */
+  audioBlocked?: () => boolean
+  resumeAudio?: () => Promise<void>
+  /** The user's turn is held open after a pause (an unfinished line, or they asked to wait): still theirs. */
+  holding?: () => boolean
+  /** Dictation: only an end phrase or a long silence ends the user's turn. */
+  dictating?: () => boolean
   /** Send session.close, await session.closed, record EndAction and release all media resources. */
   close: () => Promise<void>
 }

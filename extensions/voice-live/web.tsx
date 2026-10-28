@@ -360,7 +360,9 @@ function SpeakNew({ voice }: { voice: number }) {
     for (const entry of entries) {
       if (entry.id <= seen.current || entry.kind !== 'voice.line') continue
       const line = entry.data as unknown as VoiceLine
-      if (line.role === 'ultimate' && line.speech) live.hear(line.text, entry.id)
+      // A line said in reply to @ultimate's answer relays eye-formatted text: rewrite it for the ear.
+      if (line.role === 'ultimate' && line.speech)
+        live.hear(line.text, entry.id, line.re !== undefined)
       else if (line.role === 'note') live.note(line.text)
     }
     seen.current = Math.max(seen.current, last)
@@ -531,9 +533,7 @@ function Collapsed({ phone }: { phone: boolean }) {
     <div
       className={cn(
         'pointer-events-auto absolute flex items-center gap-1 rounded-2xl border bg-background/95 p-1 shadow-xl shadow-black/30 backdrop-blur motion-safe:animate-fade-in',
-        step.step === 'working' || step.step === 'answer' || step.step === 'waiting'
-          ? 'border-brand/40'
-          : 'border-border',
+        attention(step) ? 'border-brand/40' : 'border-border',
         phone ? 'inset-x-3 top-2' : 'top-3 right-5 w-80',
       )}
       data-voice-live-collapsed={step.step}
@@ -551,13 +551,13 @@ function Collapsed({ phone }: { phone: boolean }) {
         </span>
         <Maximize2Icon className="mr-1 size-3.5 shrink-0 text-muted-foreground" />
       </button>
-      {asleep ? (
+      {asleep || recoverable(step) ? (
         <button
           className="h-8 shrink-0 cursor-pointer rounded-lg px-2 text-[12px] text-brand outline-none hover:bg-brand/15 focus-visible:ring-1 focus-visible:ring-ring"
-          onClick={() => void live.open(mode.waiting)}
+          onClick={() => (asleep ? void live.open(mode.waiting) : recover(step))}
           type="button"
         >
-          {mode.waiting ? 'Hear it' : 'Resume'}
+          {asleep && !mode.waiting ? 'Resume' : 'Hear it'}
         </button>
       ) : step.step === 'speaking' && mode.engine === 'local' ? (
         <button
@@ -609,7 +609,10 @@ function StepLine({ step, mode }: { step: Step; mode: VoiceMode }) {
           ? 'Thinking it over'
           : step.step === 'working'
             ? '@ultimate is on it'
-            : step.step === 'answer' || step.step === 'waiting'
+            : step.step === 'answer' ||
+                step.step === 'waiting' ||
+                step.step === 'stuck' ||
+                step.step === 'blocked'
               ? 'Answer ready'
               : step.step === 'connecting'
                 ? 'Connecting…'
@@ -660,16 +663,42 @@ type Step =
         | 'muted'
         | 'listening'
     }
-  | { step: 'hearing' | 'speaking' | 'deciding' | 'answer' }
+  | { step: 'hearing' | 'speaking' | 'deciding' | 'answer' | 'blocked' }
+  | { step: 'stuck'; answer: string; entry: number }
   | { step: 'working'; request: string; since?: number }
+
+/** The step needs the user: an answer is in, or a tap would let it play. */
+const attention = (step: Step) =>
+  ['working', 'answer', 'waiting', 'stuck', 'blocked'].includes(step.step)
+/** A live session's speech is held up, and a tap gets it going. */
+const recoverable = (step: Step) => step.step === 'stuck' || step.step === 'blocked'
+
+/** An answer still unspoken this long after it arrived never will be by itself: offer to read it. */
+const ANSWER_WATCHDOG_MS = 20_000
+/** When this tab first saw each answer, for the watchdog; arrival time is not stored on the entry. */
+const answerSeen = new Map<number, number>()
+/** Answers the user had read out from the watchdog's tap: no longer waiting. */
+const readOut = new Set<number>()
+
+/** The tap that recovers speech: frees held audio, or reads a stuck answer itself. */
+function recover(step: Step) {
+  if (step.step === 'blocked') return live.resumeAudio()
+  if (step.step !== 'stuck') return
+  readOut.add(step.entry)
+  live.hear(step.answer, undefined, true)
+}
 
 function useStep(mode: VoiceMode): Step {
   const deciding = useConversation((conversation) => conversation.busy)
   const transcript = useTranscript()
+  const now = useNow(1000, mode.phase === 'live')
   if (mode.phase === 'off') return { step: 'off' }
   if (mode.phase === 'starting') return { step: 'connecting' }
   if (mode.phase === 'ending') return { step: 'ending' }
-  const settled = new Map<number, { answered: boolean; spoken: boolean; failed: boolean }>()
+  const settled = new Map<
+    number,
+    { answered: boolean; spoken: boolean; failed: boolean; answer?: EntryRecord }
+  >()
   for (const entry of transcript) {
     const re = (entry.data as { re?: number } | undefined)?.re
     if (re === undefined) continue
@@ -678,7 +707,10 @@ function useStep(mode: VoiceMode): Step {
       spoken: false,
       failed: false,
     }
-    if (entry.kind === 'voice.answer') state.answered = true
+    if (entry.kind === 'voice.answer') {
+      state.answered = true
+      state.answer = entry
+    }
     const role = entry.kind === 'voice.line' && (entry.data as unknown as VoiceLine).role
     if (role === 'ultimate') state.spoken = true
     if (role === 'notice') state.failed = true
@@ -691,7 +723,9 @@ function useStep(mode: VoiceMode): Step {
       !settled.get(entry.id)?.answered &&
       !settled.get(entry.id)?.failed,
   )
-  const unspoken = [...settled.values()].some((state) => state.answered && !state.spoken)
+  const unspoken = [...settled.values()].findLast(
+    (state) => state.answered && !state.spoken && !readOut.has(state.answer!.id),
+  )?.answer
   // The session's brief follows its start divider; until it is there, Voice holds the user's first line for it.
   const started = transcript.findLastIndex(
     (entry) => entry.kind === 'voice.session' && (entry.data as VoiceSession).phase === 'started',
@@ -701,8 +735,13 @@ function useStep(mode: VoiceMode): Step {
   if (mode.phase === 'paused') return { step: mode.waiting ? 'waiting' : 'paused' }
   if (mode.floor === 'user') return { step: 'hearing' }
   if (!briefed) return { step: 'loading' }
+  if (mode.blocked) return { step: 'blocked' }
   if (mode.floor === 'voice') return { step: 'speaking' }
-  if (unspoken) return { step: 'answer' }
+  if (unspoken) {
+    if (!answerSeen.has(unspoken.id)) answerSeen.set(unspoken.id, now)
+    if (now - answerSeen.get(unspoken.id)! < ANSWER_WATCHDOG_MS) return { step: 'answer' }
+    return { step: 'stuck', answer: (unspoken.data as VoiceAnswer).text, entry: unspoken.id }
+  }
   if (deciding) return { step: 'deciding' }
   if (open) {
     const line = open.data as unknown as VoiceLine
@@ -732,7 +771,14 @@ function StepText({ step, mode }: { step: Step; mode: VoiceMode }) {
               : step.step === 'waiting'
                 ? ['Answer ready', 'Tap Hear it to hear it']
                 : step.step === 'hearing'
-                  ? ['Hearing you…', 'Keep talking · a pause sends it']
+                  ? mode.holding
+                    ? ['Listening…', 'Still your turn · take your time']
+                    : [
+                        'Hearing you…',
+                        mode.dictating
+                          ? 'Dictation · say “over” to send'
+                          : 'Keep talking · a pause sends it',
+                      ]
                   : step.step === 'speaking'
                     ? [
                         'Speaking',
@@ -742,32 +788,39 @@ function StepText({ step, mode }: { step: Step; mode: VoiceMode }) {
                       ? ['Thinking it over', 'Voice decides whether this goes to @ultimate']
                       : step.step === 'answer'
                         ? ['Answer ready', 'Putting it into words']
-                        : step.step === 'working'
-                          ? [
-                              <span className="flex min-w-0 items-baseline gap-2" key="working">
-                                <span className="shrink-0">@ultimate is on it</span>
-                                {step.since !== undefined && (
-                                  <span className="font-mono text-[13px] font-normal text-muted-foreground tabular-nums">
-                                    {clock(now - step.since)}
-                                  </span>
-                                )}
-                              </span>,
-                              <span className="flex min-w-0 items-center gap-1" key="request">
-                                <Provided input={busy ? main : undefined} point={ConversationPhase}>
-                                  {(phase) =>
-                                    phase && (
-                                      <span className="shrink-0 text-brand">
-                                        {phase.word[0].toUpperCase() + phase.word.slice(1)} ·
+                        : step.step === 'stuck'
+                          ? ['Answer ready', 'It didn’t start by itself · tap Hear it']
+                          : step.step === 'blocked'
+                            ? ['Answer ready', 'The browser paused audio · tap Hear it']
+                            : step.step === 'working'
+                              ? [
+                                  <span className="flex min-w-0 items-baseline gap-2" key="working">
+                                    <span className="shrink-0">@ultimate is on it</span>
+                                    {step.since !== undefined && (
+                                      <span className="font-mono text-[13px] font-normal text-muted-foreground tabular-nums">
+                                        {clock(now - step.since)}
                                       </span>
-                                    )
-                                  }
-                                </Provided>
-                                <span className="truncate">{step.request}</span>
-                              </span>,
-                            ]
-                          : step.step === 'muted'
-                            ? ['Muted', '@ultimate keeps working · unmute to talk']
-                            : ['Listening', 'Talk · requests go to @ultimate']
+                                    )}
+                                  </span>,
+                                  <span className="flex min-w-0 items-center gap-1" key="request">
+                                    <Provided
+                                      input={busy ? main : undefined}
+                                      point={ConversationPhase}
+                                    >
+                                      {(phase) =>
+                                        phase && (
+                                          <span className="shrink-0 text-brand">
+                                            {phase.word[0].toUpperCase() + phase.word.slice(1)} ·
+                                          </span>
+                                        )
+                                      }
+                                    </Provided>
+                                    <span className="truncate">{step.request}</span>
+                                  </span>,
+                                ]
+                              : step.step === 'muted'
+                                ? ['Muted', '@ultimate keeps working · unmute to talk']
+                                : ['Listening', 'Talk · requests go to @ultimate']
   return (
     <div className="min-w-0 flex-1" aria-live="polite" data-voice-step={step.step}>
       <div className="flex min-w-0 items-baseline gap-2 text-[17px] leading-tight font-semibold sm:text-[19px]">
@@ -804,7 +857,7 @@ function StepMark({
         size === 'small' ? 'size-9 [&_svg]:size-4' : 'size-11',
         busy
           ? 'bg-brand/12 text-brand'
-          : step.step === 'speaking'
+          : step.step === 'speaking' || recoverable(step)
             ? 'bg-brand/12 text-brand'
             : hot
               ? 'bg-error/12 text-error'
@@ -813,7 +866,7 @@ function StepMark({
     >
       {busy ? (
         <LoaderCircleIcon className="size-5 motion-safe:animate-spin motion-safe:[animation-duration:1.6s]" />
-      ) : step.step === 'speaking' ? (
+      ) : step.step === 'speaking' || recoverable(step) ? (
         <Volume2Icon className="size-5" />
       ) : mode.muted && mode.phase === 'live' ? (
         <MicOffIcon className="size-5" />
@@ -857,9 +910,7 @@ function VoiceDock({ core }: { core: ReactNode }) {
       <div
         className={cn(
           'flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-xl border px-3 py-3 transition-colors',
-          step.step === 'working' || step.step === 'answer' || step.step === 'waiting'
-            ? 'border-brand/35 bg-brand/5'
-            : 'border-border bg-muted/20',
+          attention(step) ? 'border-brand/35 bg-brand/5' : 'border-border bg-muted/20',
         )}
       >
         <div className="flex min-w-0 flex-[1_1_16rem] items-center gap-3">
@@ -867,14 +918,16 @@ function VoiceDock({ core }: { core: ReactNode }) {
           <StepText mode={mode} step={step} />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {off || asleep ? (
+          {off || asleep || recoverable(step) ? (
             <button
               className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-brand/50 px-3 text-[13px] hover:border-brand focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-              onClick={() => void (off ? start() : live.open(mode.waiting))}
+              onClick={() =>
+                off ? void start() : asleep ? void live.open(mode.waiting) : recover(step)
+              }
               type="button"
             >
               <AudioLinesIcon className="size-4 text-brand" />
-              {off ? 'Start' : mode.waiting ? 'Hear it' : 'Resume'}
+              {off ? 'Start' : asleep && !mode.waiting ? 'Resume' : 'Hear it'}
             </button>
           ) : step.step === 'speaking' && mode.engine === 'local' ? (
             <button
@@ -1336,11 +1389,17 @@ function UtteranceRow({ entry }: { entry: EntryRecord }) {
  * than the request cards they may become.
  */
 function HeardRow({ entry }: { entry: EntryRecord }) {
-  const { text } = entry.data as { text: string }
+  const { text, raw } = entry.data as { text: string; raw?: string }
   return (
     <Message className="mt-4 first:mt-0" data-voice-line="user" from="user">
       <MessageContent className="group-[.is-user]:bg-secondary/50 group-[.is-user]:text-[13px] group-[.is-user]:text-foreground/80">
         <UserText text={text} />
+        {/* Terms the lexicon put right stay auditable: what the transcriber actually heard. */}
+        {raw && (
+          <span className="block text-[11px] text-muted-foreground" data-voice-raw>
+            heard “{raw}”
+          </span>
+        )}
       </MessageContent>
     </Message>
   )

@@ -9,6 +9,7 @@ import { playNotes } from '../sounds/ui.tsx'
 import type { Note } from '../sounds/ui.tsx'
 import { StatusAction } from './refs.ts'
 import type { VoiceEngine, VoiceStatus } from './refs.ts'
+import { NUDGE_FIRST_MS, NUDGE_REPEAT_MS } from './pause.ts'
 import { IDLE_MS } from './relay.ts'
 import type { LiveEvent } from './relay.ts'
 import { startLive } from './session.ts'
@@ -33,18 +34,24 @@ export type VoiceMode = {
   floor?: 'user' | 'voice'
   /** The words of the line the user is saying now, before a pause finishes it. */
   partial?: string
+  /** The user paused mid-thought and the floor is still theirs. */
+  holding?: boolean
+  /** Dictation mode: only an end phrase ends their turn. */
+  dictating?: boolean
   /** A line just finished and on its way to Voice: shown until its `voice.heard` entry arrives. */
   sending?: { text: string; at: number }
   /** The Voice line GPT-Live is reading out now, and how many of its words it has said so far. */
   speaking?: { entry: number; words: number; at: number }
   /** The audio layer of this tab's sessions, from the last status read. */
   engine?: VoiceEngine
+  /** Speech is ready but the browser holds the audio output: a tap on Play frees it. */
+  blocked?: boolean
 }
 
 let mode: VoiceMode = { phase: 'off', muted: false, front: false }
 let session: LiveSession | undefined
 /** Answers to speak once the session starting now is live, with the Voice line each one is. */
-let queued: { text: string; entry?: number }[] = []
+let queued: { text: string; entry?: number; forEar?: boolean }[] = []
 let cancelled = false
 let closing: Promise<void> | undefined
 let ticker: ReturnType<typeof setInterval> | undefined
@@ -143,12 +150,36 @@ function stopHum() {
   }, 120)
 }
 
+/** The screen stays on while a session is live, so auto-lock never ends it; unsupported browsers just lock. */
+let wakeLock: Promise<WakeLockSentinel | undefined> | undefined
+function holdScreen(live: boolean) {
+  if (live && !wakeLock && document.visibilityState === 'visible' && 'wakeLock' in navigator)
+    wakeLock = navigator.wakeLock.request('screen').catch((error: unknown) => {
+      console.warn('Voice: screen wake lock refused', error)
+      return undefined
+    })
+  else if (!live && wakeLock) {
+    const held = wakeLock
+    wakeLock = undefined
+    void held
+      .then((sentinel) => sentinel?.release())
+      .catch((error: unknown) => console.warn('Voice: wake lock release failed', error))
+  }
+}
+// The browser drops the lock when the page hides; it is taken again when the page is back with a session live.
+const onVisible = () => {
+  if (document.visibilityState !== 'visible') wakeLock = undefined
+  else holdScreen(mode.phase === 'live')
+}
+document.addEventListener('visibilitychange', onVisible)
+
 function set(next: Partial<VoiceMode>, failed = false) {
   const cue = failed ? cues.failed : next.phase && cueOf(mode.phase, next.phase)
   // The connecting hum lasts exactly as long as `starting`: it hands over to the ready, failed or no cue.
   if (next.phase === 'starting' && mode.phase !== 'starting') startHum()
   else if (next.phase && next.phase !== 'starting') stopHum()
   mode = { ...mode, ...next }
+  if (next.phase) holdScreen(next.phase === 'live')
   // The indicator already shows the phase; a cue the browser refuses is only worth a warning.
   if (cue) playNotes(cue, 0.08).catch((error: unknown) => console.warn('Voice cue failed', error))
   for (const listener of listeners) listener()
@@ -184,6 +215,13 @@ export function stopSpeaking() {
   session?.stopSpeaking?.()
   set({ speaking: undefined })
 }
+/** From a tap: let the held audio output play the speech waiting on it. */
+export function resumeAudio() {
+  session
+    ?.resumeAudio?.()
+    .then(() => set({ blocked: undefined }))
+    .catch((error: unknown) => set({ problem: describe(error) }))
+}
 /** The live session's microphone analyser, for a level meter. */
 export const analyser = () => session?.analyser
 
@@ -205,6 +243,7 @@ function release(next: VoiceMode['phase'], problem?: string) {
     floor: undefined,
     partial: undefined,
     speaking: undefined,
+    blocked: undefined,
     ...(problem ? { problem } : {}),
   })
   if (!current) return
@@ -227,13 +266,19 @@ function tick() {
       floor: undefined,
       partial: undefined,
       speaking: undefined,
+      blocked: undefined,
       problem: mode.problem ?? 'The session closed',
     })
     return
   }
   const now = Date.now()
+  const blocked = session.audioBlocked?.() || undefined
+  if (blocked !== mode.blocked) set({ blocked })
   const floor = session.relay.hearing() ? 'user' : session.relay.talking() ? 'voice' : undefined
   const partial = session.relay.partial() || undefined
+  const holding = session.holding?.() || undefined
+  const dictating = session.dictating?.() || undefined
+  if (holding !== mode.holding || dictating !== mode.dictating) set({ holding, dictating })
   if (floor !== mode.floor || partial !== mode.partial)
     set({
       floor,
@@ -249,8 +294,8 @@ function tick() {
     if ((words > 0 && !session.relay.talking()) || silent) set({ speaking: undefined })
     else if (words !== mode.speaking.words) set({ speaking: { ...mode.speaking, words } })
   }
-  // A forwarded request still unanswered: a short spoken "still on it", first after 20 s, then every 45 s.
-  if (asked !== undefined && now - asked >= (nudged ? 45_000 : 20_000)) {
+  // A forwarded request still unanswered: a short spoken "still on it", first after 30 s, then every 60 s.
+  if (asked !== undefined && now - asked >= (nudged ? NUDGE_REPEAT_MS : NUDGE_FIRST_MS)) {
     asked = now
     nudged = true
     try {
@@ -276,8 +321,8 @@ function onEvent(event: LiveEvent) {
 }
 
 /** Start a session, from a user gesture or for an answer that arrived while paused. Never two at once. */
-export async function open(speech?: string, entry?: number): Promise<void> {
-  if (speech) queued.push({ text: speech, entry })
+export async function open(speech?: string, entry?: number, forEar?: boolean): Promise<void> {
+  if (speech) queued.push({ text: speech, entry, forEar })
   if (mode.phase === 'starting' || mode.phase === 'live' || mode.phase === 'ending') return
   const from = mode.phase
   cancelled = false
@@ -322,7 +367,7 @@ export async function open(speech?: string, entry?: number): Promise<void> {
   set({ phase: 'live', since: Date.now() })
   try {
     if (mode.muted) started.mute()
-    for (const item of queued) say(started, item.text, item.entry)
+    for (const item of queued) say(started, item.text, item.entry, item.forEar)
   } catch (error) {
     set({ problem: describe(error) })
   }
@@ -352,25 +397,25 @@ export function note(text: string) {
 }
 
 /** Read a line out, following it word by word when it is a Voice line on screen. */
-function say(live: LiveSession, text: string, entry?: number) {
-  live.speak(text)
+function say(live: LiveSession, text: string, entry?: number, forEar?: boolean) {
+  live.speak(text, { forEar })
   set({ speaking: entry === undefined ? undefined : { entry, words: 0, at: Date.now() } })
 }
 
 /** An answer to speak: now while live, after the start in flight, or by waking a paused session. */
-export function hear(text: string, entry?: number) {
+export function hear(text: string, entry?: number, forEar?: boolean) {
   if (mode.phase === 'live' && session) {
     try {
-      say(session, text, entry)
+      say(session, text, entry, forEar)
     } catch (error) {
       set({ problem: describe(error) })
     }
-  } else if (mode.phase === 'starting') queued.push({ text, entry })
+  } else if (mode.phase === 'starting') queued.push({ text, entry, forEar })
   else if (mode.phase === 'paused') {
     // Without an earlier gesture on this page the browser keeps the microphone and audio shut: ask for a tap.
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) set({ waiting: text })
     // oxlint-disable-next-line typescript/no-floating-promises -- open never rejects: its failures become `problem`.
-    else void open(text, entry)
+    else void open(text, entry, forEar)
   }
 }
 
@@ -406,5 +451,7 @@ const leave = () => {
 addEventListener('pagehide', leave)
 import.meta.hot?.dispose(() => {
   removeEventListener('pagehide', leave)
+  document.removeEventListener('visibilitychange', onVisible)
   leave()
+  holdScreen(false)
 })

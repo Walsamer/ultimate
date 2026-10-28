@@ -59,13 +59,24 @@ export const StartAction = actionRef<{ sdp: string }, { sdp: string; conversatio
   'voice-live',
   'start',
 )
+/**
+ * How long the local engine waits before a line is done. `cutMs` of quiet sends the words so far to Smart Turn; a
+ * sentence it calls finished goes at once, an unfinished one is held `holdMs` more for the rest, then sent as it is.
+ */
+export type VoicePause = { cutMs: number; holdMs: number }
 /** Start a local-engine session: no audio leaves the Mac, so there is no SDP; the brief is placed as for GPT-Live. */
-export const StartLocalAction = actionRef<null, { conversation: number }>(
-  'voice-live',
-  'startLocal',
-)
-/** A finished user transcript → input to the Voice agent, steering while busy. */
-export const HeardAction = actionRef<{ text: string }, Record<string, never>>('voice-live', 'heard')
+export const StartLocalAction = actionRef<
+  null,
+  { conversation: number; pause: VoicePause; turns: 'auto' | 'dictation'; endPhrases: string[] }
+>('voice-live', 'startLocal')
+/**
+ * A finished user transcript → input to the Voice agent, steering while busy. `raw`: what the transcriber heard before
+ * the lexicon put the user's terms right. `unsure`: the turn ended on silence alone, with signs it was unfinished.
+ */
+export const HeardAction = actionRef<
+  { text: string; raw?: string; unsure?: boolean },
+  Record<string, never>
+>('voice-live', 'heard')
 /** GPT-Live's own line or a notice. The user's lines use heard instead. */
 export const LogAction = actionRef<{ role: 'live' | 'notice'; text: string }, { line: number }>(
   'voice-live',
