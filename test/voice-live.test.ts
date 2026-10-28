@@ -429,9 +429,11 @@ it('starts a local-engine session without an OpenAI key, when speak can transcri
   await until(async () => (await f.action('status', null)).available === true)
   expect(await f.action('startLocal', null)).toEqual({
     conversation: f.voice,
+    session: expect.stringMatching(/^local-/),
     pause: { cutMs: 900, holdMs: 12_000 },
     turns: 'auto',
     endPhrases: ['over', 'go ahead', 'send it', 'done'],
+    diagnostics: false,
   })
   const briefs = async () => (await f.entries(f.voice)).filter((e) => e.kind === 'voice.context')
   await until(async () => (await briefs()).length === 2)
@@ -441,6 +443,25 @@ it('starts a local-engine session without an OpenAI key, when speak can transcri
   expect((await briefs())[0].data).toMatchObject({
     text: expect.stringContaining('Audio for this session: GPT-Live'),
   })
+  // Diagnostics on: the session logs the server's version, and each turn decision the tab reports, under the home.
+  await writeFile(
+    join(f.server.host.userHome, '.ultimate/settings.json'),
+    JSON.stringify({ voiceLive: { engine: 'local', diagnostics: true } }),
+  )
+  const { session, diagnostics } = await f.action('startLocal', null)
+  expect(diagnostics).toBe(true)
+  await f.action('diagnose', { session, event: 'decision', kind: 'hold', why: 'ends on "the"' })
+  const log = (
+    await readFile(join(f.server.host.home, 'voice-live/diagnostics', `${session}.jsonl`), 'utf8')
+  )
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line))
+  expect(log).toMatchObject([
+    { event: 'server', commit: expect.any(String), client: expect.any(String), diagnostics: true },
+    { event: 'decision', kind: 'hold', why: 'ends on "the"' },
+  ])
+  expect((await f.action('version', null)).client).toMatch(/^[0-9a-f]{8}$/)
 })
 
 it('briefs each session, waits for the brief before the first line, and lets only the newest reach Voice', async () => {

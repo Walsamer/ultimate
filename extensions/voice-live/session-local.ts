@@ -4,9 +4,9 @@
  */
 import { actionRef } from '../../shared/extension-api.ts'
 import { PAUSES } from './pause.ts'
-import { EndAction, HeardAction, StartLocalAction } from './refs.ts'
-import type { VoicePause } from './refs.ts'
-import { decide, END_PHRASES } from './turn.ts'
+import { DiagnoseAction, EndAction, HeardAction, StartLocalAction } from './refs.ts'
+import type { VoicePause, VoiceTurnNote, VoiceVersion } from './refs.ts'
+import { decide, END_PHRASES, SOFT_MS } from './turn.ts'
 import type { VoiceTurns } from './turn.ts'
 import type { LiveOptions, LiveSession } from './session.ts'
 
@@ -41,6 +41,10 @@ const PREROLL_MS = 300
 const ECHO_TAIL_MS = 350
 /** A turn this long goes as it is, so dictation never grows past what transcribes quickly. */
 const MAX_MS = 120_000
+/** Quiet into a long hold before the once-a-session hint says how to end the turn. */
+const HINT_AFTER_MS = 2000
+/** The hint plays over the hold, and the hold grows by this much so its words do not eat the user's time. */
+const HINT_MS = 3500
 /** A sentence whose `ended` never comes (a stalled audio context) is given up this long after its length. */
 const PLAY_SLACK_MS = 3000
 /** The audio context has not been running this long: the browser holds it, and a tap must resume it. */
@@ -111,6 +115,8 @@ export async function startLocal(
   options: LiveOptions & {
     /** A finished line is on its way to Voice: the soft end-of-speech cue. */
     onLine?: () => void
+    /** The voice-live code this tab loaded, written to the diagnostics log. */
+    loaded?: VoiceVersion
   },
 ): Promise<LiveSession> {
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -162,26 +168,48 @@ export async function startLocal(
   let holdMs = 0
   let turns: VoiceTurns = 'auto'
   let endPhrases = END_PHRASES
+  // Once a session: the first long hold speaks how to end the turn.
+  let hinted = false
+  // `voiceLive.diagnostics`: each decision goes to this session's log on the server.
+  let session = ''
+  let diagnostics = false
+  let utteranceAt = 0
+  let note: VoiceTurnNote | undefined
   let partialAt = 0
   let partialBusy = false
   let floor = 0.004
   let pending = Promise.resolve()
   // Speech playback: sentences queued in order, the one playing, deaf until.
   let playing: AudioBufferSourceNode | undefined
-  let queue: { audio: Promise<AudioBuffer | undefined>; words: number; first: boolean }[] = []
+  // `first`: the start of a line, which waits for the user's turn to end unless `now`.
+  let queue: {
+    audio: Promise<AudioBuffer | undefined>
+    words: number
+    first: boolean
+    now?: boolean
+  }[] = []
   let draining = false
   let talkingUntil = 0
   let spoken = 0
   let generation = 0
 
-  type Line = { raw?: string; unsure?: boolean }
+  /** Log one decision when diagnostics are on; a lost line never disturbs the session. */
+  const diagnose = (event: string, fields: Record<string, unknown> = {}) => {
+    if (!diagnostics) return
+    options
+      .action(DiagnoseAction, { session, event, ...fields })
+      .catch((error: unknown) => console.warn('Voice: diagnostics', error))
+  }
+  type Line = { raw?: string; unsure?: boolean; rule?: string }
   const send = (text: string, line: Line) => {
+    const turn = diagnostics && line.rule ? { ...note, rule: line.rule } : undefined
     pending = pending
       .then(async () => {
         await options.action(HeardAction, {
           text,
           ...(line.raw ? { raw: line.raw } : {}),
           ...(line.unsure ? { unsure: true } : {}),
+          ...(turn ? { turn } : {}),
         })
       })
       .catch((error: unknown) => options.onError(errorOf(error)))
@@ -195,33 +223,41 @@ export async function startLocal(
     voicedAt = 0
     quietSince = 0
   }
-  /** `unsure`: the turn ended without a sign it was finished (a hold ran out, the session closed). */
+  /**
+   * `unsure`: the turn ended without a sign it was finished (a hold ran out, the session closed). `rule`: what ended
+   * it, for diagnostics.
+   */
   const finish = (text: string, line: Line = {}) => {
+    const ms = utteranceAt ? Date.now() - utteranceAt : undefined
     reset()
     if (!text) return
+    diagnose('send', { rule: line.rule, text, unsure: line.unsure === true, utteranceMs: ms })
     options.onLine?.()
     send(text, line)
+    note = undefined
   }
   const transcribe = async (turn: boolean) =>
     options.action(TranscribeAction, { pcm: toPcm(heard, audioContext.sampleRate), turn })
   // The newest flush's transcription, which closing waits for; it never rejects.
   let flushing = Promise.resolve()
   /** Deliver what is heard so far, whatever Smart Turn would say: words held, else the audio transcribed now. */
-  const flush = () => {
+  const flush = (rule: string) => {
     if (!heard.length || cut === 'pending') return
-    if (cut === 'held') return finish(words, { raw, unsure: true })
+    if (cut === 'held') return finish(words, { raw, unsure: true, rule })
     const audio = heard
     reset()
     flushing = options
       .action(TranscribeAction, { pcm: toPcm(audio, audioContext.sampleRate), turn: false })
       .then((result) => {
-        if (result.speech && result.text) finish(result.text, { raw: result.raw, unsure: true })
+        if (result.speech && result.text)
+          finish(result.text, { raw: result.raw, unsure: true, rule })
       })
       .catch((error: unknown) => options.onError(errorOf(error)))
   }
   // Frames stopped coming mid-utterance (the browser holds the audio): a held line still goes, never dropped.
   const stall = setInterval(() => {
-    if (heard.length && Date.now() - frameAt > pause.cutMs + Math.max(holdMs, pause.holdMs)) flush()
+    if (heard.length && Date.now() - frameAt > pause.cutMs + Math.max(holdMs, pause.holdMs))
+      flush('stall')
   }, 500)
 
   /**
@@ -231,19 +267,36 @@ export async function startLocal(
   const cutNow = () => {
     cut = 'pending'
     const length = heard.length
+    const asked = Date.now()
     void transcribe(true)
       .then((result) => {
+        diagnose('transcribed', {
+          text: result.text,
+          raw: result.raw,
+          speech: result.speech,
+          complete: result.complete,
+          probability: result.probability,
+          modelMs: result.ms,
+          roundTripMs: Date.now() - asked,
+          audioMs: Math.round(length * frameMs),
+        })
         // The session ended while this was out: its words still go.
         if (releasing)
           return void (
             result.speech &&
             result.text &&
-            finish(result.text, { raw: result.raw, unsure: true })
+            finish(result.text, { raw: result.raw, unsure: true, rule: 'closed' })
           )
         if (cut !== 'pending') return
         // Speech resumed while this was out: the next pause transcribes the whole of it again.
-        if (heard.length !== length && voicedAt > quietSince) return void (cut = 'none')
-        if (!result.speech) return reset()
+        if (heard.length !== length && voicedAt > quietSince) {
+          diagnose('resumed')
+          return void (cut = 'none')
+        }
+        if (!result.speech) {
+          diagnose('no speech')
+          return reset()
+        }
         const turn = decide(result.text, result, { turns, holdMs: pause.holdMs, endPhrases })
         console.info(
           'Voice: turn',
@@ -251,6 +304,18 @@ export async function startLocal(
           'why' in turn ? turn.why : turn.turns,
           result.probability,
         )
+        diagnose('decision', {
+          kind: turn.kind,
+          ...(turn.kind === 'mode' ? { turns: turn.turns } : { why: turn.why, text: turn.text }),
+          ...(turn.kind === 'hold' ? { holdMs: turn.ms } : {}),
+          probability: result.probability,
+          mode: turns,
+        })
+        note = {
+          rule: '',
+          ...('why' in turn ? { why: turn.why } : {}),
+          ...(result.probability !== undefined ? { probability: result.probability } : {}),
+        }
         if (turn.kind === 'mode') {
           reset()
           turns = turn.turns
@@ -263,7 +328,8 @@ export async function startLocal(
         }
         words = turn.text
         raw = result.raw
-        if (turn.kind === 'send') finish(turn.text, { raw })
+        if (turn.kind === 'send')
+          finish(turn.text, { raw, rule: turn.why === 'end phrase' ? 'end-phrase' : 'cut' })
         else {
           cut = 'held'
           holdMs = turn.ms
@@ -310,6 +376,7 @@ export async function startLocal(
       }
       heard = [...preroll, input]
       preroll = []
+      utteranceAt = now
       voicedAt = now
       partialAt = now
       activityAt = now
@@ -323,10 +390,23 @@ export async function startLocal(
       if (cut === 'held') cut = 'none'
     } else quietSince ||= now
     const quiet = quietSince ? now - quietSince : 0
-    if (heard.length * frameMs > MAX_MS) flush()
+    if (heard.length * frameMs > MAX_MS) flush('cap')
     else if (cut === 'none' && quiet >= pause.cutMs) cutNow()
-    else if (cut === 'held' && quiet >= pause.cutMs + holdMs) finish(words, { raw, unsure: true })
-    else if (cut === 'none' && !quiet && !partialBusy && now - partialAt >= PARTIAL_MS) partial()
+    else if (cut === 'held' && quiet >= pause.cutMs + holdMs)
+      finish(words, { raw, unsure: true, rule: turns === 'dictation' ? 'dictation' : 'hold' })
+    else if (
+      cut === 'held' &&
+      !hinted &&
+      holdMs > SOFT_MS &&
+      !queue.length &&
+      quiet >= pause.cutMs + HINT_AFTER_MS
+    ) {
+      // The user paused mid-thought and may not know how to end it: said once, over the hold.
+      hinted = true
+      holdMs += HINT_MS
+      diagnose('hint')
+      speak(`Take your time. Say ${endPhrases[0] ?? 'over'} when you're done.`, { now: true })
+    } else if (cut === 'none' && !quiet && !partialBusy && now - partialAt >= PARTIAL_MS) partial()
   }
 
   const render = (text: string, run: number) =>
@@ -376,7 +456,7 @@ export async function startLocal(
           if (run !== generation) return
         }
         // The user has the floor (mid-line, or holding it to think): the answer waits for their turn to end.
-        if (next.first) await userDone(run)
+        if (next.first && !next.now) await userDone(run)
         if (run !== generation) return
         const node = audioContext.createBufferSource()
         node.buffer = buffer
@@ -434,25 +514,28 @@ export async function startLocal(
     talkingUntil = Date.now() + ECHO_TAIL_MS
   }
   /** Queue a line after any speech still playing; each sentence renders while the one before plays. */
-  const queueLine = (text: string, run: number) => {
+  const queueLine = (text: string, run: number, now = false) => {
     if (run !== generation) return
     for (const [index, part] of sentences(speakable(text)).entries())
       queue.push({
         audio: render(part, run),
         words: part.split(/\s+/).filter(Boolean).length,
         first: index === 0,
+        ...(now ? { now } : {}),
       })
     // drain reports a failed sentence itself and never rejects.
     if (!draining) void drain(run).catch((error: unknown) => options.onError(errorOf(error)))
   }
   // Lines still being rewritten for the ear, so a later line never overtakes one.
   let rewriting = Promise.resolve()
-  const speak = (text: string, { forEar = false } = {}) => {
+  /** `now`: spoken while the user holds the floor, instead of after their turn (the hold hint). */
+  const speak = (text: string, { forEar = false, now = false } = {}) => {
     if (releasing) return
     const run = generation
     rewriting = rewriting.then(async () => {
       if (releasing || run !== generation) return
-      if (!forEar || localStorage.getItem('speak:speechify') === 'off') return queueLine(text, run)
+      if (!forEar || localStorage.getItem('speak:speechify') === 'off')
+        return queueLine(text, run, now)
       const rewritten = await options
         .action(SpeechifyAction, { text })
         .then((result) => result.text)
@@ -477,7 +560,7 @@ export async function startLocal(
   const close = () =>
     (closePromise ??= (async () => {
       // Words still being heard as the session ends go to Voice, not nowhere.
-      if (!releasing) flush()
+      if (!releasing) flush('closed')
       await cleanup()
       await flushing
       await pending
@@ -496,6 +579,9 @@ export async function startLocal(
     pause = started.pause ?? PAUSES.relaxed
     turns = started.turns ?? 'auto'
     endPhrases = started.endPhrases ?? END_PHRASES
+    session = started.session
+    diagnostics = started.diagnostics
+    diagnose('client', { ...options.loaded, userAgent: navigator.userAgent })
     // iOS ends the microphone when the screen locks or another app takes it: the session is over, and says why.
     for (const track of stream.getAudioTracks())
       track.addEventListener('ended', () => {
@@ -519,6 +605,7 @@ export async function startLocal(
       },
       holding: () => cut === 'held',
       dictating: () => turns === 'dictation',
+      endPhrase: endPhrases[0],
       // No GPT-Live to read quiet context: thinking notes have no listener here.
       send: () => undefined,
       mute: () => {

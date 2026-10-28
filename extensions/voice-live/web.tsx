@@ -52,10 +52,18 @@ import { openAgentSource, StandingDoc, talkToUltimate } from '../subagents/ui.ts
 import * as live from './live.tsx'
 import type { VoiceMode } from './live.tsx'
 import { StatusAction } from './refs.ts'
-import type { VoiceAnswer, VoiceContext, VoiceLine, VoiceSession, VoiceUtterance } from './refs.ts'
+import type {
+  VoiceAnswer,
+  VoiceContext,
+  VoiceLine,
+  VoiceSession,
+  VoiceTurnNote,
+  VoiceUtterance,
+} from './refs.ts'
 
 const KEYS = 'alt+v'
 const useMode = () => useSyncExternalStore(live.subscribe, live.voiceMode)
+const useLoaded = () => useSyncExternalStore(live.subscribe, live.loadedVersion)
 /** @ultimate's conversation and the Voice conversation, once start created it. */
 function useIds() {
   const main = useDocOf(1, StandingDoc)?.ultimate
@@ -772,7 +780,10 @@ function StepText({ step, mode }: { step: Step; mode: VoiceMode }) {
                 ? ['Answer ready', 'Tap Hear it to hear it']
                 : step.step === 'hearing'
                   ? mode.holding
-                    ? ['Listening…', 'Still your turn · take your time']
+                    ? [
+                        'Still your turn',
+                        `Take your time · say “${mode.endPhrase ?? 'over'}” to send`,
+                      ]
                     : [
                         'Hearing you…',
                         mode.dictating
@@ -879,6 +890,21 @@ function StepMark({
   )
 }
 
+/** The voice-live code this tab loaded, quiet in the dock's corner: a commit older than the clone's is a stale tab. */
+function Loaded() {
+  const loaded = useLoaded()
+  if (!loaded) return null
+  return (
+    <span
+      className="order-last basis-full text-right font-mono text-[10px] text-muted-foreground/60"
+      data-voice-loaded
+      title={`voice-live client ${loaded.client}, clone ${loaded.commit}`}
+    >
+      {loaded.commit} · {loaded.client}
+    </span>
+  )
+}
+
 /** In place of Voice's composer: what is happening right now, Mute and End; or the way to start it again. */
 function VoiceDock({ core }: { core: ReactNode }) {
   const id = useConversation((conversation) => conversation.id)
@@ -917,6 +943,7 @@ function VoiceDock({ core }: { core: ReactNode }) {
           <StepMark mode={mode} step={step} />
           <StepText mode={mode} step={step} />
         </div>
+        <Loaded />
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {off || asleep || recoverable(step) ? (
             <button
@@ -1389,7 +1416,7 @@ function UtteranceRow({ entry }: { entry: EntryRecord }) {
  * than the request cards they may become.
  */
 function HeardRow({ entry }: { entry: EntryRecord }) {
-  const { text, raw } = entry.data as { text: string; raw?: string }
+  const { text, raw, turn } = entry.data as { text: string; raw?: string; turn?: VoiceTurnNote }
   return (
     <Message className="mt-4 first:mt-0" data-voice-line="user" from="user">
       <MessageContent className="group-[.is-user]:bg-secondary/50 group-[.is-user]:text-[13px] group-[.is-user]:text-foreground/80">
@@ -1398,6 +1425,18 @@ function HeardRow({ entry }: { entry: EntryRecord }) {
         {raw && (
           <span className="block text-[11px] text-muted-foreground" data-voice-raw>
             heard “{raw}”
+          </span>
+        )}
+        {/* Diagnostics on: what ended the turn, to tune the rules on real speech. */}
+        {turn && (
+          <span className="block font-mono text-[10.5px] text-muted-foreground" data-voice-turn>
+            {[
+              turn.rule,
+              turn.why !== turn.rule.replace('-', ' ') && turn.why,
+              turn.probability !== undefined && `smart ${turn.probability.toFixed(2)}`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         )}
       </MessageContent>

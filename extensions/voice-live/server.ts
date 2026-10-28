@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto'
+import { appendFile, mkdir, readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { BACKGROUND_CONTEXT as context, awaitWithContext } from '@earendil-works/chord/context'
 import {
   AssistantEntry,
@@ -13,6 +16,7 @@ import type { ConversationId, Cursor, ToolTaskInput, Tx } from '@earendil-works/
 import { Type } from '@earendil-works/pi-ai'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { implementAction } from '../../lib/actions.ts'
+import { git } from '../../lib/git.ts'
 import { readSecret } from '../../lib/secrets.ts'
 import { readSettings, userSettingsPath } from '../../lib/settings.ts'
 import { Messages, MessagesApi } from '../messages/api.ts'
@@ -21,12 +25,14 @@ import { Standing, SubagentsApi } from '../subagents/api.ts'
 import { ConversationsApi } from '../conversations/api.ts'
 import { LineageApi } from '../lineage/api.ts'
 import {
+  DiagnoseAction,
   EndAction,
   HeardAction,
   LogAction,
   StartAction,
   StartLocalAction,
   StatusAction,
+  VersionAction,
 } from './refs.ts'
 import type {
   VoiceAnswer,
@@ -35,6 +41,8 @@ import type {
   VoiceLine,
   VoicePause,
   VoiceSession,
+  VoiceTurnNote,
+  VoiceVersion,
 } from './refs.ts'
 import { voiceBrief } from './brief.ts'
 import { PAUSES } from './pause.ts'
@@ -114,6 +122,53 @@ export async function voiceTurns(
   return { turns: turns ?? 'auto', endPhrases: endPhrases ?? END_PHRASES }
 }
 
+/** `voiceLive.diagnostics: true`, project over user: local sessions log every turn decision under the home. */
+export async function voiceDiagnostics(host: Pick<ExtensionHost, 'userHome' | 'projectSettings'>) {
+  const user = await readSettings(userSettingsPath(host.userHome)).catch(() => ({}))
+  for (const settings of [await host.projectSettings(), user]) {
+    const value = (settings as { voiceLive?: { diagnostics?: unknown } }).voiceLive?.diagnostics
+    if (typeof value === 'boolean') return value
+  }
+  return false
+}
+
+/** The files the browser runs: their hash names the client code a tab loaded. */
+const CLIENT_FILES = [
+  'web.tsx',
+  'live.tsx',
+  'session.ts',
+  'session-local.ts',
+  'turn.ts',
+  'pause.ts',
+  'relay.ts',
+  'refs.ts',
+]
+let versionRead: Promise<VoiceVersion> | undefined
+/**
+ * Read on first use and kept for this facet load, which every change to these files causes: the code this server
+ * serves now. Never rejects: what cannot be read is `unknown`.
+ */
+const version = () =>
+  (versionRead ??= (async () => {
+    const client = await Promise.all(
+      CLIENT_FILES.map((file) => readFile(join(import.meta.dirname, file))),
+    )
+      .then((files) => {
+        const digest = createHash('sha256')
+        for (const file of files) digest.update(file)
+        return digest.digest('hex').slice(0, 8)
+      })
+      .catch(() => 'unknown')
+    const commit = await git(import.meta.dirname, 'rev-parse', '--short', 'HEAD').catch(
+      () => 'unknown',
+    )
+    const dirty = await git(import.meta.dirname, 'status', '--porcelain', '.').catch(() => '')
+    return { commit: dirty ? `${commit}+dirty` : commit, client }
+  })())
+
+const diagnosticsDir = (host: Pick<ExtensionHost, 'home'>) =>
+  join(host.home, 'voice-live', 'diagnostics')
+
 const NO_LOCAL =
   'Local voice needs the speak extension and its open-model venv (~/.ultimate/extensions/speak/README.md)'
 
@@ -159,7 +214,7 @@ const Forwarded = defineDoc<{ scheduled: boolean }>({
   scope: 'task',
   initial: () => ({ scheduled: false }),
 })
-export const userActions = ['status', 'start', 'startLocal', 'heard', 'log', 'end']
+export const userActions = ['status', 'start', 'startLocal', 'heard', 'log', 'end', 'diagnose']
 const terminal = {
   status: 'terminal',
   outcome: { status: 'completed', result: null },
@@ -543,6 +598,27 @@ async function sessionBrief(host: ExtensionHost, engine: VoiceEngine): Promise<V
   )
 }
 
+/** One line of local session `session`'s diagnostics log, `<home>/voice-live/diagnostics/<session>.jsonl`. */
+async function appendDiagnostic(
+  host: Pick<ExtensionHost, 'home'>,
+  session: string,
+  record: Record<string, unknown>,
+) {
+  const dir = diagnosticsDir(host)
+  await mkdir(dir, { recursive: true })
+  await appendFile(
+    join(dir, `${session}.jsonl`),
+    `${JSON.stringify({ at: new Date().toISOString(), ...record })}\n`,
+  )
+}
+
+/** The fields of a turn note a heard entry keeps, nothing else the browser sent. */
+const turnNote = ({ rule, why, probability }: VoiceTurnNote): VoiceTurnNote => ({
+  rule: rule.slice(0, 20),
+  ...(typeof why === 'string' ? { why: why.slice(0, 80) } : {}),
+  ...(typeof probability === 'number' ? { probability } : {}),
+})
+
 /** Mark session `session` started in Voice's transcript and place its brief; heard lines wait for the brief. */
 async function begin(
   host: ExtensionHost,
@@ -579,8 +655,27 @@ export const actions = {
     const status = await localStatus(host, signal)
     if (!status.available) throw new Error(status.reason)
     const id = await host.need(SubagentsApi).standing('voice', context)
-    await begin(host, id, `local-${crypto.randomUUID()}`, sessionBrief(host, 'local'))
-    return { conversation: id, pause: await voicePause(host), ...(await voiceTurns(host)) }
+    const session = `local-${crypto.randomUUID()}`
+    await begin(host, id, session, sessionBrief(host, 'local'))
+    const settings = {
+      pause: await voicePause(host),
+      ...(await voiceTurns(host)),
+      diagnostics: await voiceDiagnostics(host),
+    }
+    if (settings.diagnostics)
+      await appendDiagnostic(host, session, { event: 'server', ...(await version()), ...settings })
+    return { conversation: id, session, ...settings }
+  }),
+  version: implementAction(VersionAction, () => version()),
+  diagnose: implementAction(DiagnoseAction, async (args, { host }) => {
+    const { session, event, ...rest } =
+      args && typeof args === 'object' && !Array.isArray(args) ? args : ({} as never)
+    if (typeof session !== 'string' || !/^local-[\w-]+$/.test(session))
+      throw new Error('Expected a local session id')
+    if (typeof event !== 'string' || !event) throw new Error('Expected an event')
+    if (!(await voiceDiagnostics(host))) return {}
+    await appendDiagnostic(host, session, { event, ...rest })
+    return {}
   }),
   start: implementAction(StartAction, async (args, { host, signal }) => {
     const sdp = args && typeof args === 'object' && !Array.isArray(args) ? args.sdp : undefined
@@ -633,7 +728,7 @@ export const actions = {
     return { sdp: answer.transport.sdp, conversation: id }
   }),
   heard: implementAction(HeardAction, async (args, { host }) => {
-    const { text, raw, unsure } =
+    const { text, raw, unsure, turn } =
       args && typeof args === 'object' && !Array.isArray(args) ? args : {}
     if (typeof text !== 'string' || !text.trim()) throw new Error('Expected text')
     const misheard =
@@ -652,6 +747,9 @@ export const actions = {
             text: text.trim(),
             ...(misheard ? { raw: misheard } : {}),
             ...(unsure === true ? { unsure: true } : {}),
+            ...(turn && typeof (turn as Partial<VoiceTurnNote>).rule === 'string'
+              ? { turn: turnNote(turn as VoiceTurnNote) }
+              : {}),
           },
         },
         content: `The user, by voice (live transcript, may contain mistakes${

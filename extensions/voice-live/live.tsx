@@ -7,8 +7,8 @@ import { api, errorMessage, events } from '@/sdk'
 import type { ActionRef } from '@/sdk'
 import { playNotes } from '../sounds/ui.tsx'
 import type { Note } from '../sounds/ui.tsx'
-import { StatusAction } from './refs.ts'
-import type { VoiceEngine, VoiceStatus } from './refs.ts'
+import { StatusAction, VersionAction } from './refs.ts'
+import type { VoiceEngine, VoiceStatus, VoiceVersion } from './refs.ts'
 import { NUDGE_FIRST_MS, NUDGE_REPEAT_MS } from './pause.ts'
 import { IDLE_MS } from './relay.ts'
 import type { LiveEvent } from './relay.ts'
@@ -38,6 +38,8 @@ export type VoiceMode = {
   holding?: boolean
   /** Dictation mode: only an end phrase ends their turn. */
   dictating?: boolean
+  /** The phrase that ends the user's turn at once. */
+  endPhrase?: string
   /** A line just finished and on its way to Voice: shown until its `voice.heard` entry arrives. */
   sending?: { text: string; at: number }
   /** The Voice line GPT-Live is reading out now, and how many of its words it has said so far. */
@@ -49,6 +51,20 @@ export type VoiceMode = {
 }
 
 let mode: VoiceMode = { phase: 'off', muted: false, front: false }
+
+/**
+ * The server's voice-live code as this module loaded, read again on every hot reload: a dock showing a commit older
+ * than the server's is a stale tab. Undefined while it is read or when it cannot be.
+ */
+let loaded: VoiceVersion | undefined
+api.action(VersionAction).then(
+  (version) => {
+    loaded = version
+    for (const listener of listeners) listener()
+  },
+  (error: unknown) => console.warn('Voice: version', error),
+)
+export const loadedVersion = () => loaded
 let session: LiveSession | undefined
 /** Answers to speak once the session starting now is live, with the Voice line each one is. */
 let queued: { text: string; entry?: number; forEar?: boolean }[] = []
@@ -278,7 +294,9 @@ function tick() {
   const partial = session.relay.partial() || undefined
   const holding = session.holding?.() || undefined
   const dictating = session.dictating?.() || undefined
-  if (holding !== mode.holding || dictating !== mode.dictating) set({ holding, dictating })
+  const endPhrase = session.endPhrase
+  if (holding !== mode.holding || dictating !== mode.dictating || endPhrase !== mode.endPhrase)
+    set({ holding, dictating, endPhrase })
   if (floor !== mode.floor || partial !== mode.partial)
     set({
       floor,
@@ -342,6 +360,7 @@ export async function open(speech?: string, entry?: number, forEar?: boolean): P
         api.action(ref as ActionRef<null, R>, args as null),
       onEvent,
       onError: (error) => set({ problem: describe(error) }),
+      loaded,
       onLine: () =>
         playNotes(cues.heard, 0.035).catch((error: unknown) =>
           console.warn('Voice cue failed', error),

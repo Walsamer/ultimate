@@ -29,6 +29,8 @@ export type LiveSession = {
   holding?: () => boolean
   /** Dictation: only an end phrase or a long silence ends the user's turn. */
   dictating?: () => boolean
+  /** The phrase that ends the user's turn at once, for the hint the dock shows while the floor is held. */
+  endPhrase?: string
   /** Send session.close, await session.closed, record EndAction and release all media resources. */
   close: () => Promise<void>
 }
