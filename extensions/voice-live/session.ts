@@ -13,11 +13,14 @@ export type LiveOptions = {
 export type LiveSession = {
   conversation: number
   analyser: AnalyserNode
-  relay: Relay
+  /** What the tab follows of the floor; the local engine answers it without a `Relay`. */
+  relay: Pick<Relay, 'hearing' | 'talking' | 'partial' | 'spokenWords' | 'idleFor'>
   send: (event: Record<string, unknown>) => void
   mute: () => void
   unmute: () => void
   speak: (text: string) => void
+  /** Cut the speech playing now (tap-to-stop); GPT-Live stops itself when interrupted, so only local has it. */
+  stopSpeaking?: () => void
   /** Send session.close, await session.closed, record EndAction and release all media resources. */
   close: () => Promise<void>
 }

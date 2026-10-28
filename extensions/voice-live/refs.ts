@@ -1,7 +1,12 @@
 /** Live voice actions and the standing Voice conversation. Browser-safe. */
 import { actionRef } from '../../shared/extension-api.ts'
 
-export type VoiceStatus = { available: true } | { available: false; reason: string }
+/** `gpt-live`: GPT-Live's WebRTC audio; `local`: this Mac's open models through the speak extension. */
+export type VoiceEngine = 'gpt-live' | 'local'
+export type VoiceStatus = { engine: VoiceEngine } & (
+  | { available: true }
+  | { available: false; reason: string }
+)
 export type VoiceSession = {
   phase: 'started' | 'ended'
   at: number
@@ -53,6 +58,11 @@ export const StatusAction = actionRef<null, VoiceStatus>('voice-live', 'status')
 export const StartAction = actionRef<{ sdp: string }, { sdp: string; conversation: number }>(
   'voice-live',
   'start',
+)
+/** Start a local-engine session: no audio leaves the Mac, so there is no SDP; the brief is placed as for GPT-Live. */
+export const StartLocalAction = actionRef<null, { conversation: number }>(
+  'voice-live',
+  'startLocal',
 )
 /** A finished user transcript → input to the Voice agent, steering while busy. */
 export const HeardAction = actionRef<{ text: string }, Record<string, never>>('voice-live', 'heard')

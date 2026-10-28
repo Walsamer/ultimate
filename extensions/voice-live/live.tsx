@@ -8,11 +8,12 @@ import type { ActionRef } from '@/sdk'
 import { playNotes } from '../sounds/ui.tsx'
 import type { Note } from '../sounds/ui.tsx'
 import { StatusAction } from './refs.ts'
-import type { VoiceStatus } from './refs.ts'
+import type { VoiceEngine, VoiceStatus } from './refs.ts'
 import { IDLE_MS } from './relay.ts'
 import type { LiveEvent } from './relay.ts'
 import { startLive } from './session.ts'
 import type { LiveSession } from './session.ts'
+import { startLocal } from './session-local.ts'
 
 /** `paused`: in voice mode without a session, listening paused until an answer or a tap wakes it. */
 export type Phase = 'off' | 'starting' | 'live' | 'paused' | 'ending'
@@ -36,6 +37,8 @@ export type VoiceMode = {
   sending?: { text: string; at: number }
   /** The Voice line GPT-Live is reading out now, and how many of its words it has said so far. */
   speaking?: { entry: number; words: number; at: number }
+  /** The audio layer of this tab's sessions, from the last status read. */
+  engine?: VoiceEngine
 }
 
 let mode: VoiceMode = { phase: 'off', muted: false, front: false }
@@ -52,7 +55,9 @@ const listeners = new Set<() => void>()
  * (C6, G5), ended steps down to rest (G5, E5, C5), failed drops low (E4, C♯4). Part of using voice, so the sounds
  * switch does not mute them.
  */
-const cues: Record<'ready' | 'paused' | 'ended' | 'failed', Note[]> = {
+const cues: Record<'ready' | 'paused' | 'ended' | 'failed' | 'heard', Note[]> = {
+  // One soft high tick (E6): the local engine heard the end of a line and passes it on.
+  heard: [[0, 1318.51, 0.18]],
   ready: [
     [0, 783.99, 0.25],
     [0.1, 1046.5, 0.45],
@@ -159,13 +164,25 @@ export const clearProblem = () => set({ problem: undefined })
 
 /** The last key status the composer read: a command then starts without a round trip, inside the user's gesture. */
 let status: VoiceStatus | undefined
-export const rememberStatus = (next: VoiceStatus) => (status = next)
+export const rememberStatus = (next: VoiceStatus) => {
+  status = next
+  if (next.engine !== mode.engine) set({ engine: next.engine })
+}
 
 /** Start from a click or a command: a missing key opens its row in Secrets instead of asking for the microphone. */
 export async function start() {
-  status ??= await api.action(StatusAction)
-  if (!status.available) return events.emit('secrets:open', { name: 'OPENAI_API_KEY' })
+  if (!status) rememberStatus(await api.action(StatusAction))
+  if (!status!.available) {
+    if (status!.engine === 'local') return set({ problem: status!.reason }, true)
+    return events.emit('secrets:open', { name: 'OPENAI_API_KEY' })
+  }
   await open()
+}
+
+/** Cut the speech playing now; the local engine only, GPT-Live stops when the user talks over it. */
+export function stopSpeaking() {
+  session?.stopSpeaking?.()
+  set({ speaking: undefined })
 }
 /** The live session's microphone analyser, for a level meter. */
 export const analyser = () => session?.analyser
@@ -274,12 +291,16 @@ export async function open(speech?: string, entry?: number): Promise<void> {
   if (closing) await closing
   let started: LiveSession
   try {
-    started = await startLive({
+    started = await (mode.engine === 'local' ? startLocal : startLive)({
       // api.action's rest arguments do not take a generic A; the ref still names the real args.
       action: <A, R>(ref: ActionRef<A, R>, args: A) =>
         api.action(ref as ActionRef<null, R>, args as null),
       onEvent,
       onError: (error) => set({ problem: describe(error) }),
+      onLine: () =>
+        playNotes(cues.heard, 0.035).catch((error: unknown) =>
+          console.warn('Voice cue failed', error),
+        ),
     })
   } catch (error) {
     const waiting = queued.at(-1)?.text

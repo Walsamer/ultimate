@@ -8,6 +8,31 @@ Nothing is billable until a session starts or the Voice agent receives input. GP
 Secrets (⌘K → Secrets), or Pi's OpenAI **API key**, never its OAuth login. The key stays on the server. The Voice
 agent uses `openai-codex/gpt-6-luna` through Pi's existing ChatGPT login, low thinking and the fast tier.
 
+## Engines
+
+`"voiceLive": { "engine": "local" }` in user or project settings (project over user; default `gpt-live`) swaps
+GPT-Live's audio for this Mac's open models, served by the user-scope `speak` extension's mlx-audio worker. No
+OpenAI key; the only cloud call is the Voice agent's model. Everything after a finished line (the brief, Voice, the
+answer task, transcript and dock) is shared; only the audio layer differs.
+
+- `session-local.ts` replaces `session.ts`: the microphone (with the browser's echo cancellation) feeds a level gate.
+  A 400 ms pause cuts the utterance; it goes as 16 kHz PCM to `speak/transcribe`, where Silero drops non-speech,
+  Parakeet-TDT 0.6B v3 transcribes and Smart Turn v3 judges whether the sentence is finished. An unfinished one is
+  held for up to 1.6 s more quiet. While the user talks, the words so far are transcribed every second for the live
+  line. A finished line plays one soft tick and goes through `heard` as usual.
+- `startLocal` writes the session divider and brief like `start`, without SDP. The brief tells Voice which audio
+  layer it has: with local audio nothing else answers small talk, so Voice does, and `voice_note` has no listener.
+- Speech is half-duplex: `voice_say` lines render through `speak/render` with Kokoro sentence by sentence (the
+  voice and rate chosen in Speak's settings), the next rendering while one plays. The microphone is deaf while it
+  plays and 350 ms after. Stop in the dock or the collapsed card cuts it short; there is no talking over it.
+- `status` reports the engine and, for `local`, whether speak's venv works; the composer button and indicator say
+  what is missing instead of opening Secrets. `OPENAI_API_KEY` is declared only for `gpt-live` (the facet reloads on
+  settings changes), so setup's Secrets check stays quiet with the local engine.
+
+Measured on an M4 Pro, warm: Silero + Parakeet + Smart Turn take about 45 ms per utterance and a Kokoro sentence
+90–220 ms. With Voice on `anthropic/claude-haiku-5-5` (a user overlay), one model request to a complete `voice_say`
+is about 1.0 s, so a spoken reply starts about 1.5–2 s after the user stops talking.
+
 ## Flow
 
 1. The browser acquires the microphone, adds its track to a peer connection and creates `oai-events` before its

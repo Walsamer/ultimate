@@ -1,6 +1,19 @@
 import { expect, it } from 'vitest'
 import { QUIET_MS, Relay, TRAILING_MS } from '../extensions/voice-live/relay.ts'
 import type { LiveEvent } from '../extensions/voice-live/relay.ts'
+import { sentences } from '../extensions/voice-live/session-local.ts'
+
+it('splits a local-engine line into sentences, so the first plays while the rest render', () => {
+  expect(sentences('Yes, it landed. Passing the restart on now! Want details?')).toEqual([
+    'Yes, it landed.',
+    'Passing the restart on now!',
+    'Want details?',
+  ])
+  expect(sentences('One: a, keep both… or b, local only')).toEqual([
+    'One: a, keep both…',
+    'or b, local only',
+  ])
+})
 
 const said = (delta: string): LiveEvent => ({ type: 'session.input_transcript.delta', delta })
 const spoken = (delta: string): LiveEvent => ({ type: 'session.output_transcript.delta', delta })

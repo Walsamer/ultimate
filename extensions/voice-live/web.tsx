@@ -11,6 +11,7 @@ import {
   Minimize2Icon,
   PhoneOffIcon,
   SquareArrowOutUpRightIcon,
+  SquareIcon,
   Volume2Icon,
   XIcon,
 } from 'lucide-react'
@@ -145,9 +146,12 @@ function StartButton() {
   }, [status.data])
   if (id === undefined || id !== main) return null
   const missing = status.data?.available === false
+  const local = status.data?.engine === 'local'
   const on = mode.phase !== 'off'
   const label = missing
-    ? 'Voice relay needs an OpenAI API key: tap to add it'
+    ? local
+      ? `Local voice is not set up: ${status.data?.available === false ? status.data.reason : ''}`
+      : 'Voice relay needs an OpenAI API key: tap to add it'
     : on
       ? mode.front
         ? 'Voice relay is on · send Voice back'
@@ -168,8 +172,10 @@ function StartButton() {
           data-voice-live={missing ? 'unavailable' : on ? mode.phase : 'off'}
           onClick={() => {
             if (status.loading) return
-            if (missing) return events.emit('secrets:open', { name: 'OPENAI_API_KEY' })
+            if (missing && !local) return events.emit('secrets:open', { name: 'OPENAI_API_KEY' })
             if (on) return toggleFront(actions)
+            // Local's setup problem goes to the indicator, where it says what is missing.
+            if (missing) return void start()
             // oxlint-disable-next-line typescript/no-floating-promises -- open shows its own failures in the indicator.
             void start()
           }}
@@ -553,6 +559,16 @@ function Collapsed({ phone }: { phone: boolean }) {
         >
           {mode.waiting ? 'Hear it' : 'Resume'}
         </button>
+      ) : step.step === 'speaking' && mode.engine === 'local' ? (
+        <button
+          aria-label="Stop speaking"
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-brand outline-none hover:bg-brand/15 focus-visible:ring-1 focus-visible:ring-ring"
+          onClick={live.stopSpeaking}
+          title="Stop speaking"
+          type="button"
+        >
+          <SquareIcon className="size-3.5 fill-current" />
+        </button>
       ) : (
         <button
           aria-label={mode.muted ? 'Unmute microphone' : 'Mute microphone'}
@@ -718,7 +734,10 @@ function StepText({ step, mode }: { step: Step; mode: VoiceMode }) {
                 : step.step === 'hearing'
                   ? ['Hearing you…', 'Keep talking · a pause sends it']
                   : step.step === 'speaking'
-                    ? ['Speaking', 'Interrupt any time']
+                    ? [
+                        'Speaking',
+                        mode.engine === 'local' ? 'Tap Stop to cut it short' : 'Interrupt any time',
+                      ]
                     : step.step === 'deciding'
                       ? ['Thinking it over', 'Voice decides whether this goes to @ultimate']
                       : step.step === 'answer'
@@ -856,6 +875,15 @@ function VoiceDock({ core }: { core: ReactNode }) {
             >
               <AudioLinesIcon className="size-4 text-brand" />
               {off ? 'Start' : mode.waiting ? 'Hear it' : 'Resume'}
+            </button>
+          ) : step.step === 'speaking' && mode.engine === 'local' ? (
+            <button
+              className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-brand/50 px-3 text-[13px] text-brand hover:bg-brand/10 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              onClick={live.stopSpeaking}
+              type="button"
+            >
+              <SquareIcon className="size-3.5 fill-current" />
+              Stop
             </button>
           ) : (
             <button

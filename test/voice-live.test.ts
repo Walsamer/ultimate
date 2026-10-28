@@ -354,6 +354,42 @@ it('speaks a tool-terminated question and answers it through Messages, without a
   expect((await f.entries(f.main)).some((e) => e.kind === 'board.message')).toBe(true)
 })
 
+it('starts a local-engine session without an OpenAI key, when speak can transcribe, and tells Voice its audio is local', async () => {
+  const f = await fixture()
+  await writeFile(
+    join(f.server.host.userHome, '.ultimate/settings.json'),
+    JSON.stringify({ voiceLive: { engine: 'local' } }),
+  )
+  // The local engine asks setup for no OpenAI key.
+  await until(
+    () =>
+      f.server.extensions.info().find((e) => e.name === 'voice-live')?.server?.secrets?.length ===
+      0,
+  )
+  // No speak extension in this home: the status says what is missing, and a start is refused.
+  expect(await f.action('status', null)).toMatchObject({ engine: 'local', available: false })
+  const refused = await post(f.server, '/api/extensions/voice-live/actions/startLocal', {
+    args: null,
+  })
+  expect(refused.data.error).toContain('Local voice needs the speak extension')
+  const speak = join(f.server.host.userHome, '.ultimate/extensions/speak')
+  await mkdir(speak, { recursive: true })
+  await writeFile(
+    join(speak, 'server.ts'),
+    `export const actions = { sttStatus: () => ({ ready: true }) }\nexport default { name: 'speak' }\n`,
+  )
+  await until(async () => (await f.action('status', null)).available === true)
+  expect(await f.action('startLocal', null)).toEqual({ conversation: f.voice })
+  const briefs = async () => (await f.entries(f.voice)).filter((e) => e.kind === 'voice.context')
+  await until(async () => (await briefs()).length === 2)
+  expect((await briefs())[1].data).toMatchObject({
+    text: expect.stringContaining('Audio for this session: local speech recognition'),
+  })
+  expect((await briefs())[0].data).toMatchObject({
+    text: expect.stringContaining('Audio for this session: GPT-Live'),
+  })
+})
+
 it('briefs each session, waits for the brief before the first line, and lets only the newest reach Voice', async () => {
   const f = await fixture()
   const briefs = async () => (await f.entries(f.voice)).filter((e) => e.kind === 'voice.context')
