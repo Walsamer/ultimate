@@ -2,7 +2,7 @@ import './index.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app/App.tsx'
-import { installDropGuard } from './app/drop.tsx'
+import { installDropGuard } from './app/composer-input.tsx'
 import { loadExtensions } from './extensions.ts'
 import { store } from './sdk/client.ts'
 

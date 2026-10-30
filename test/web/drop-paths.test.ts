@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { base64FromBytes, pathFromDrop } from '../../web/src/lib/drop.ts'
+import { base64FromBytes, pathFromDrop } from '../../.ultimate/extensions/drop/paths.tsx'
 
 it('takes the absolute path a drag hands over as text', () => {
   // A file manager's uri-list, with its CRLF endings.

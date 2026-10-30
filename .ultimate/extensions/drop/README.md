@@ -19,5 +19,7 @@ adds folders to search; `~/` means the user's home:
 { "drop.roots": ["~/src/notes", "/Volumes/Archive/inbox"] }
 ```
 
-The shell's own drop handling — nothing navigates, the path is inserted, images attach, shift copies in — lives in
-`web/src/app/drop.tsx`; this extension is what makes a Finder drop and a copy land somewhere on this machine.
+The extension's `web.tsx` takes the drop before the composer's own handling and gives back the path: the uri-list or
+plain text a file manager hands over, a file found by name on this machine, the picker for a name several files carry,
+and the bytes of a shift-drop copied into the conversation. The shell keeps only what must not depend on an extension —
+nothing a dropped file does navigates the page — and its plain default when no handler takes the drop (`web/src/app/input-handlers.ts`).

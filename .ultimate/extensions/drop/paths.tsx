@@ -1,6 +1,6 @@
 /**
- * What a drop carries, without the DOM or React: the absolute path a drag hands over as text, and the base64 a `save`
- * action takes. `web/src/app/drop.ts` wires these to the composer.
+ * What a drag carries, without the DOM or React: the absolute path a drag hands over as text, and the base64 a `save`
+ * action takes. `web.tsx` wires these to the composer.
  */
 
 /** A dropped file is copied in only up to this size: base64 in a JSON action body, which stops at 12 MiB. */
