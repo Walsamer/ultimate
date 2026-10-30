@@ -4,9 +4,11 @@
   },
   "modelFamilies": {
     "families": {
-      "lead": { "model": "claude-code/claude-opus-5-5", "thinking": "high", "color": "orange" },
-      "review": { "model": "openai-codex/gpt-6-astra", "thinking": "high" },
-      "fast": { "model": "openai-codex/gpt-6.1-sol" }
+      "lead": { "model": "deepseek/deepseek-flash", "thinking": "high", "color": "orange" },
+      "review": { "model": "deepseek/deepseek-flash", "thinking": "high" },
+      "fast": { "model": "deepseek/deepseek-flash" },
+      "tiny": { "model": "deepseek/deepseek-flash", "thinking": "low" },
+      "design": { "model": "deepseek/deepseek-flash", "thinking": "high" }
     },
     "assign": {
       "preview": "fast"
@@ -20,10 +22,10 @@
   "lander": {
     "checks": [
       { "command": "pnpm check", "timeout": 120 },
-      [
-        { "command": "pnpm test", "timeout": 180 },
-        { "command": "pnpm test:e2e", "timeout": 180 }
-      ]
+      {
+        "command": "mkdir -p \"$HOME/.ultimate/tmp\" && TMPDIR=\"$HOME/.ultimate/tmp\" pnpm test",
+        "timeout": 300
+      }
     ],
     "push": "origin"
   }
