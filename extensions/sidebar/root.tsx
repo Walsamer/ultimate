@@ -73,7 +73,7 @@ function useBranchState(
       label: phase && !phase.waiting ? phase.word : 'working',
       tone: 'brand',
     } as const
-  // A branch's decisions reach you through @ultimate: an open question it asked (an approval, a choice).
+  if (state === 'waits') return { label: 'waits on you', tone: 'waiting' } as const
   if (state === 'awaiting') return { label: 'awaiting @ultimate', tone: 'waiting' } as const
   if (state === 'failed') return { label: 'failed', tone: 'failed' } as const
   return { label: 'idle', tone: 'quiet' } as const

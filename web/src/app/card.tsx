@@ -14,10 +14,11 @@ export function Card({
     <section
       className={cn(
         'min-w-0 rounded-md border border-border border-l-2 border-l-brand/50 bg-muted/20',
-        attention && 'border-brand/40 border-l-brand bg-brand/5 shadow-[0_0_0_3px] shadow-brand/10',
+        attention && 'border-brand/40 border-l-brand bg-brand/5',
         className,
       )}
       data-attention={attention || undefined}
+      data-ui="card"
       {...props}
     />
   )

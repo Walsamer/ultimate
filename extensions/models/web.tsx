@@ -106,9 +106,7 @@ function ThinkingButton() {
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-1 font-mono" side="top">
-        <div className="px-2 pt-1 pb-1.5 text-[10.5px] tracking-wider text-muted-foreground uppercase">
-          Thinking
-        </div>
+        <div className="px-2 pt-1 pb-1.5 section-label">Thinking</div>
         {levels.map((level) => (
           <button
             className={cn(

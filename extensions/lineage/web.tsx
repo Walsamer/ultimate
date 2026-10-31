@@ -226,12 +226,6 @@ function Abstract({ entry }: { entry: EntryRecord }) {
   )
 }
 
-/**
- * In a compact transcript these notes are background, folded into a group whose line already names them. When the note
- * is the group's only row, opening it shows the content directly: the card's header goes.
- */
-const soleRowHeader = 'group-data-[compact-quiet=1]/quiet:hidden'
-
 /** A conversation this one asked `notify` about has finished: its title and last answer. */
 function Finished({ entry }: { entry: EntryRecord }) {
   const { switchConversation } = useUltimate()
@@ -241,12 +235,7 @@ function Finished({ entry }: { entry: EntryRecord }) {
       className="min-w-0 rounded-md border border-l-2 border-border border-l-success/70 bg-muted/20"
       data-lineage-finished={from}
     >
-      <header
-        className={cn(
-          'flex min-w-0 items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-muted-foreground',
-          soleRowHeader,
-        )}
-      >
+      <header className="flex min-w-0 items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-muted-foreground">
         <CircleCheckIcon className="size-3.5 shrink-0 text-success" />
         <button
           className="flex min-w-0 cursor-pointer items-center gap-1.5 text-left text-foreground hover:underline"
@@ -283,12 +272,7 @@ function NoteCard({
       className="min-w-0 rounded-md border border-l-2 border-note/25 border-l-note/60 bg-note/6"
       data-lineage-note={note}
     >
-      <header
-        className={cn(
-          'flex min-w-0 items-center gap-2 border-b border-note/15 px-3 py-2 font-mono text-[11px] text-foreground',
-          note === 'received' && soleRowHeader,
-        )}
-      >
+      <header className="flex min-w-0 items-center gap-2 border-b border-note/15 px-3 py-2 font-mono text-[11px] text-foreground">
         <StickyNoteIcon className="size-3.5 shrink-0 text-note" />
         {label}
         {typeof id === 'number' ? (
@@ -328,12 +312,7 @@ function Note({ entry, core }: { entry: EntryRecord; core: React.ReactNode }) {
 function Catchup({ text }: { text: string }) {
   return (
     <Card data-lineage-note="main">
-      <header
-        className={cn(
-          'flex items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-foreground',
-          soleRowHeader,
-        )}
-      >
+      <header className="flex items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-foreground">
         <GitBranchIcon className="size-3.5 text-brand" />
         Catch-up
       </header>
@@ -703,7 +682,7 @@ function RootMemory({
             if (!shown.length) return null
             return (
               <div className="mt-6" data-memory-kind={kind} key={kind}>
-                <h3 className="flex items-center gap-1.5 border-b border-border/60 pb-1.5 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+                <h3 className="flex items-center gap-1.5 border-b border-border/60 pb-1.5 section-label">
                   <span className={cn('size-1.5 rounded-full', kindDots[kind])} />
                   {title}
                   <span className="text-muted-foreground/60">{shown.length}</span>

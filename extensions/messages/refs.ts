@@ -59,6 +59,10 @@ export type Message = {
   images?: { entry: number; count: number }
   /** A branch's final answer routed to its starter after it stopped with nothing under way: it awaits the starter. */
   report?: true
+  /** The starter's final answer to a branch's report or reply, routed to that branch. */
+  routed?: true
+  /** A branch's report answering routed answers only: the starter's answer to it stays local. */
+  echo?: true
   /** The other project's Ultimate a `remote` side names. */
   remote?: Remote
   /** The questions a reply-expected message to the user asks, answered on its card. */

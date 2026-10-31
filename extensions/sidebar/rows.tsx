@@ -38,6 +38,11 @@ import type { ConversationState } from '../messages/ui.tsx'
 
 /** What a row's mark and state word say for each settled state; `working` and `idle` show no icon. */
 const settled = {
+  waits: {
+    label: 'Waits on you',
+    word: 'Waits on you',
+    tone: 'text-amber-700 dark:text-amber-300',
+  },
   awaiting: {
     label: 'Awaiting @ultimate',
     word: 'Awaiting @ultimate',
@@ -81,7 +86,7 @@ function Mark({
             >
               {shown === 'done' ? (
                 <CircleCheckIcon className="size-3.5" />
-              ) : shown === 'awaiting' ? (
+              ) : shown === 'awaiting' || shown === 'waits' ? (
                 <CircleHelpIcon className="size-3.5" />
               ) : shown === 'failed' ? (
                 <CircleXIcon className="size-3.5" />
@@ -188,6 +193,8 @@ function PhasedRow({
         shown ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50',
       )}
       data-conversation={conversation.id}
+      data-selected={shown || undefined}
+      data-ui="sidebar-row"
     >
       {editing ? (
         <div className="flex h-full min-w-0 flex-1 items-center gap-1.5 pr-1 pl-1.5">
@@ -385,7 +392,9 @@ export function StandingRow({
         shown ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50',
       )}
       data-conversation={conversation?.id}
+      data-selected={shown || undefined}
       data-standing={name}
+      data-ui="sidebar-row"
     >
       <button
         aria-current={shown ? 'true' : undefined}
@@ -398,7 +407,10 @@ export function StandingRow({
           <span className="flex min-w-0 items-baseline gap-1.5">
             {name === 'ultimate' ? (
               // The title bar's wordmark: Ultimate's own name is the brand.
-              <span className="truncate font-sans text-[11.5px] leading-5 font-semibold tracking-[0.28em] text-brand">
+              <span
+                className="truncate font-sans text-[11.5px] leading-5 font-semibold tracking-[0.28em] text-brand"
+                data-ui="wordmark"
+              >
                 ULTIMATE
               </span>
             ) : (
@@ -498,6 +510,8 @@ function TaskedSubagentLine({
         shown && 'bg-sidebar-accent',
       )}
       data-child-conversation={conversation.id}
+      data-selected={shown || undefined}
+      data-ui="sidebar-row"
       onClick={() => actions.switchConversation(conversation.id)}
       style={{ paddingLeft: 20 + depth * 12 }}
       title={[
@@ -566,6 +580,8 @@ function TaskedChildRow({
         shown && 'bg-sidebar-accent',
       )}
       data-child-conversation={conversation.id}
+      data-selected={shown || undefined}
+      data-ui="sidebar-row"
       onClick={() => actions.switchConversation(conversation.id)}
       title={conversation.title}
       type="button"

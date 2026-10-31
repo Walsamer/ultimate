@@ -5,7 +5,6 @@ import { callerOf } from '../../extensions/messages/caller.ts'
 import {
   answerTo,
   answeredMessages,
-  callFailed,
   backgroundRow,
   conversationState,
   counterparts,
@@ -182,8 +181,6 @@ const row = (kind: string, data?: object, model?: object, calls: object[] = []) 
   } as unknown as EntryRecord,
   calls: calls as { id: string; name: string; arguments: unknown }[],
 })
-const result = (toolCallId: string, isError: boolean) =>
-  ({ model: [{ role: 'toolResult', toolCallId, isError }] }) as unknown as EntryRecord
 const said = (stopReason: string) => ({ role: 'assistant', stopReason, content: [] })
 
 describe("background in @ultimate's compact transcript", () => {
@@ -278,14 +275,6 @@ describe("background in @ultimate's compact transcript", () => {
     expect(counterparts(row('pi.assistant', undefined, said('stop')), messagesLog)).toEqual([4])
   })
 
-  it('tells a failed call from one that ran by its stored result', () => {
-    const entries = [result('branch-1', true), result('branch-2', false)]
-    expect(callFailed(entries, 'branch-1')).toBe(true)
-    expect(callFailed(entries, 'branch-2')).toBe(false)
-    // Still running: no result yet.
-    expect(callFailed(entries, 'branch-3')).toBe(false)
-  })
-
   it('pairs a question with your answer', () => {
     expect(answerTo(log, log[1])?.id).toBe(3)
     expect(answerTo(log, log[3])).toBeUndefined()
@@ -376,7 +365,7 @@ describe('conversation state', () => {
     expect(conversationState({ ...primary, runState: 'queued' }, messagesLog())).toBe('working')
   })
 
-  it('waits only for the primary agent with an open question to the user', () => {
+  it('waits for the primary agent with an open question to the user', () => {
     expect(conversationState({ ...primary, runState: 'answered' }, toUser)).toBe('waits')
     expect(conversationState({ ...primary, runState: 'answered' }, messagesLog())).toBe('idle')
     expect(
@@ -384,9 +373,14 @@ describe('conversation state', () => {
     ).toBe('idle')
   })
 
-  it('never waits for a subagent or another conversation, even with open messages to the user', () => {
-    for (const kind of ['subagent', 'other'] as const)
-      expect(conversationState({ id: 2, kind, runState: 'answered' }, toUser)).not.toBe('waits')
+  it('waits for a non-subagent question of its own, never for a subagent or an unrelated conversation', () => {
+    expect(conversationState({ id: 2, kind: 'other', runState: 'answered' }, toUser)).toBe('waits')
+    expect(conversationState({ id: 2, kind: 'subagent', runState: 'answered' }, toUser)).not.toBe(
+      'waits',
+    )
+    expect(conversationState({ id: 3, kind: 'other', runState: 'answered' }, toUser)).not.toBe(
+      'waits',
+    )
   })
 
   it('awaits the primary agent while its reply-expected message to it is open', () => {

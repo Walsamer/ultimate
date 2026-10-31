@@ -169,6 +169,11 @@ it('loads external project facets over user and built-in names, actions and tran
   })
   expect(record().server?.error).toBeUndefined()
   const added = join(projectRoot, '.ultimate/extensions/added')
+  expect(
+    (await server.vite.ssrLoadModule('virtual:ultimate/web-facets')).loaders[
+      join(added, 'web.tsx')
+    ],
+  ).toBeUndefined()
   await mkdir(added, { recursive: true })
   await writeFile(join(added, 'web.tsx'), 'export default {}')
   await until(

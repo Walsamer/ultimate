@@ -1,9 +1,8 @@
 import { cn } from 'cn'
 import { ChevronRightIcon } from 'lucide-react'
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCompact, useConversation } from '../sdk/hooks.ts'
-import { ThreadContext } from '../sdk/thread.ts'
 
 /** Where a card's expand state lives: `ultimate.fold.<conversation>.<card>`, the card an entry id or a tool call id. */
 export const foldKey = (conversation: number | undefined, card: string | number) =>
@@ -21,9 +20,7 @@ export function writeFold(key: string, open: boolean) {
  * open across reloads; elsewhere it never folds and is always open.
  */
 export function useFold(card: string | number) {
-  // A thread is read for its messages: there they show whole.
-  const inThread = useContext(ThreadContext) !== undefined
-  const folds = !!useCompact() && !inThread
+  const folds = !!useCompact()
   const key = foldKey(
     useConversation((conversation) => conversation.id),
     card,

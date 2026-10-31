@@ -297,9 +297,7 @@ function TaskRow({
         {child && parent !== undefined && <IsolateRow child={child} parent={parent} />}
         {task.verdict && (
           <div className="rounded-md border border-border/70 bg-card/50 px-3 py-2 text-[12.5px]">
-            <div className="pb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">
-              Verdict
-            </div>
+            <div className="pb-1 section-label">Verdict</div>
             <MessageResponse>{task.verdict}</MessageResponse>
           </div>
         )}
@@ -310,9 +308,7 @@ function TaskRow({
             </div>
             {task.notes.length > 0 && (
               <div className="space-y-1">
-                <div className="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">
-                  Notes
-                </div>
+                <div className="section-label">Notes</div>
                 {task.notes.map((note, index) => (
                   // oxlint-disable-next-line react/no-array-index-key -- Notes are append-only; timestamps can repeat.
                   <Note key={index} note={note} />
@@ -391,7 +387,7 @@ function EpicCard({
         >
           <div
             className={cn(
-              'pb-1 font-mono text-[10px] tracking-wider uppercase',
+              'pb-1 section-label',
               approved ? 'text-success' : 'text-muted-foreground/80',
             )}
           >
@@ -400,9 +396,9 @@ function EpicCard({
           <MessageResponse>{epic.verdict}</MessageResponse>
         </div>
       )}
-      <div className="flex items-center px-3 pb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">
+      <div className="flex items-center px-3 pb-1 section-label">
         Tasks
-        <span className="ml-auto tracking-normal normal-case">
+        <span className="ml-auto">
           {done}/{list.length} done
         </span>
       </div>

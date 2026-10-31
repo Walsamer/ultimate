@@ -5,6 +5,7 @@ import { projectHome } from './project.ts'
 import type { Source } from './project.ts'
 import { compareExtensions } from './discovery.ts'
 import { acquireLock } from './lock.ts'
+import { identify } from '../lib/process-group.ts'
 import { join } from 'node:path'
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context'
 import type { FauxProviderHandle } from '@earendil-works/pi-ai/providers/faux'
@@ -216,9 +217,12 @@ export async function prepareHarness(options: HostOptions) {
     extensionSources,
     faux,
     async open(resume = true) {
+      // The supervisor checks this start identity before it signals a stale owner (retireStorageOwner).
+      const coreStart = identify(process.pid)
+      if (!coreStart) throw new Error(`Cannot identify Ultimate core pid ${process.pid}`)
       const owner = await acquireLock(
         join(home, 'storage.lock'),
-        { pid: process.pid },
+        { pid: process.pid, coreStart },
         process.env.ULTIMATE_SUPERVISED === '1' ? 10000 : 0,
       )
       let harness: Harness | undefined

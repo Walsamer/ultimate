@@ -330,7 +330,6 @@ function Details({ extension }: { extension: ExtensionInfo }) {
         ['composer', web?.composer],
         ['links', web?.link],
         ['compact', web?.compact],
-        ['intro', web?.intro],
       ] as const
     )
       .filter(([, value]) => value)

@@ -104,9 +104,10 @@ it.concurrent('orders facets by source so a project bash tool and renderer win r
 
 const serviceFacet = (detail: string, fail = false) => `
 import { defineExtension } from '@earendil-works/pi-durable'
-export const actions = { lookup: async (_args, { host }) => host.use('service-test') }
+const Api = { name: 'service-test' }
+export const actions = { lookup: async (_args, { host }) => ({ detail: host.want(Api)?.detail }) }
 export default (host) => {
-  host.provide('service-test', { detail: '${detail}' })
+  host.implement(Api, { detail: '${detail}' })
   ${fail ? "throw new Error('failed service installation')" : ''}
   host.onOpen(async () => {})
   return defineExtension({ name: 'service-test' })
@@ -150,7 +151,7 @@ it.concurrent('drops a provider from the extensions using it when it is disabled
     join(consumer, 'server.ts'),
     `
     import { defineExtension } from '@earendil-works/pi-durable'
-    export const actions = { lookup: async (_args, { host }) => host.use('service-test') ?? null }
+    export const actions = { lookup: async (_args, { host }) => host.want({ name: 'service-test' })?.detail ?? null }
     export default defineExtension({ name: 'service-consumer' })
   `,
   )

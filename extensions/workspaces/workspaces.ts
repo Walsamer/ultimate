@@ -165,6 +165,17 @@ async function listedBySource(workspace: WorkspaceIndex['items'][string]) {
     .split('\n\n')
     .some((entry) => entry.split('\n').includes(`worktree ${workspace.path}`))
 }
+/** Whether the folder at the path holds only what the source's ignore rules ignore, such as `.vite/` or `node_modules/`. */
+async function onlyIgnored(workspace: WorkspaceIndex['items'][string]) {
+  const entries = await readdir(workspace.path, { withFileTypes: true })
+  if (!entries.length) return true
+  const paths = entries.map((entry) => (entry.isDirectory() ? `${entry.name}/` : entry.name))
+  const ignored = await git(workspace.source, 'check-ignore', '--no-index', '--', ...paths).catch(
+    () => '',
+  )
+  const matched = new Set(ignored.split('\n'))
+  return paths.every((path) => matched.has(path))
+}
 async function registeredCheckout(workspace: WorkspaceIndex['items'][string]) {
   if (!(await onDisk(workspace.path))) return false
   const listed = await git(workspace.path, 'worktree', 'list', '--porcelain').catch(
@@ -539,9 +550,13 @@ export function workspaces(host: Host) {
           workspace.path,
           treeName(workspace.branch),
         )
-      } else if (await onDisk(workspace.path))
-        // Release clears the leftover folder of its own checkout first; any other folder there is not ours to remove.
-        throw new Error(`Workspace path is not a registered checkout: ${workspace.path}`)
+      } else if (await onDisk(workspace.path)) {
+        // A process left running in the released checkout (a dev server) can re-create ignored state there; any
+        // other folder at the path is not ours to remove.
+        if (!(await onlyIgnored(workspace)))
+          throw new Error(`Workspace path is not a registered checkout: ${workspace.path}`)
+        await rm(workspace.path, { recursive: true, force: true })
+      }
       if (await git(workspace.source, 'branch', '--list', workspace.branch)) {
         const merged = await git(
           workspace.source,
@@ -847,6 +862,12 @@ export function workspaces(host: Host) {
       workspace = (await get(id, context))!
       if (workspace.state === 'failed')
         return `Workspace setup failed: ${workspace.error}; fix the cause, then call a tool again to retry the setup`
+    }
+    if (workspace.state === 'removed') {
+      // A released checkout comes back on its first tool call, also mid-run.
+      const kept = await ready(id, context)
+      if (kept) return `Workspace is removed: ${kept.reason ?? 'its checkout keeps changes'}`
+      workspace = (await get(id, context))!
     }
     if (workspace.state !== 'ready')
       return `Workspace is ${workspace.state}: ${workspace.error ?? 'checkout is not ready; send a new input to retry'}`

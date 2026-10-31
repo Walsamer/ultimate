@@ -756,7 +756,7 @@ export function AutomationsPanel() {
   )
 }
 
-const heading = 'font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase'
+const heading = 'section-label'
 
 /** A script automation beside its watcher: what it watches and what a fire does, then its running script. */
 function ScriptDetail({

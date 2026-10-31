@@ -507,9 +507,7 @@ function Form({
           />
         </div>
         <div className="flex min-h-[20rem] min-w-0 flex-1 flex-col gap-1.5">
-          <div className="font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
-            Instructions
-          </div>
+          <div className="section-label">Instructions</div>
           <InstructionsEditor
             file={shown && (!creating || !shown.definition) ? shown.raw : undefined}
             onChange={(instructions) => set({ instructions })}
@@ -518,9 +516,7 @@ function Form({
         </div>
       </div>
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border/70 px-5 py-3">
-        <span className="font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
-          Save to
-        </span>
+        <span className="section-label">Save to</span>
         <div className="w-36">
           <Segmented
             label="Save to"

@@ -16,7 +16,6 @@ import {
   formatDuration,
   formatTime,
   useConversation,
-  Provided,
   useNow,
   useToolDuration,
   useTranscript,
@@ -24,7 +23,7 @@ import {
 } from '@/sdk'
 import type { EntryRecord, ToolCallView } from '@/sdk'
 import { useWorkspaceIndex } from './data.tsx'
-import { LandingAfter, LandingCard, Open, Subject } from './landing.tsx'
+import { LandingCard, Open, Subject } from './landing.tsx'
 import type { LandingTone } from './landing.tsx'
 import { inProgress, runningStep, superseded } from './steps.tsx'
 import type {
@@ -118,14 +117,6 @@ export function LanderReport({ entry }: { entry: EntryRecord }) {
           steps={outcome.steps}
         />
       </LandingCard>
-      {outcome.outcome !== 'failed' && (
-        <Provided
-          input={{ from: outcome.conversationId ?? own, sha: outcome.sha }}
-          point={LandingAfter}
-        >
-          {(after) => after}
-        </Provided>
-      )}
     </div>
   )
 }
@@ -194,7 +185,7 @@ function StepLine({
         icon={<LoaderCircleIcon className="size-3 shrink-0 animate-spin" />}
         took={<Elapsed since={row.at} />}
       >
-        <span className="animate-pulse">{row.step}</span>
+        <span>{row.step}</span>
       </Line>
     )
   const duration = took !== undefined && took >= 1000 ? formatDuration(took) : undefined

@@ -50,10 +50,10 @@ export type ExtensionHost = Pick<
 > & {
   access: Pick<Access, 'allow'>
   notice(message: string): void
-  provide(name: string, value: unknown): void
-  // oxlint-disable-next-line typescript/no-unnecessary-type-parameters
-  use<T>(name: string): T | undefined
-  /** Provide the service of `api`, with the reload semantics of `provide`. Facet scope only. */
+  /**
+   * Provide the service of `api`. Facet scope only: staged until the facet installs, replaced on reload, kept when a
+   * reload fails, and removed when the facet is disabled, removed or closed.
+   */
   implement<S>(api: Api<string, S>, value: NoInfer<S>): void
   /** A handle to the current provider of `api`; throws while none is enabled, except during facet setup. */
   need<S>(api: Api<string, S>): S
@@ -171,12 +171,10 @@ export async function loadExtensions(
       get chapter() {
         return extensionHost.chapter
       },
-      provide: (serviceName, value) => {
-        provided.get(facetHost)!.set(serviceName, value)
-        if (facetHosts.get(name) === facetHost)
-          providers.set(serviceName, { owner: facetHost, value })
+      implement: (api, value) => {
+        provided.get(facetHost)!.set(api.name, value)
+        if (facetHosts.get(name) === facetHost) providers.set(api.name, { owner: facetHost, value })
       },
-      implement: (api, value) => facetHost.provide(api.name, value),
       need: <S>(api: Api<string, S>): S =>
         apis.need(facetHost, name, api, facetHosts.get(name) !== facetHost),
       want: <S>(api: Api<string, S>): S | undefined => apis.want(facetHost, name, api),
@@ -322,11 +320,6 @@ export async function loadExtensions(
       throw new Error('Reactors require a facet scope')
     },
     eventLog: log.eventLog,
-    provide: () => {
-      throw new Error('Providers require a facet scope')
-    },
-    // oxlint-disable-next-line typescript/no-unnecessary-type-parameters
-    use: <T>(name: string) => providers.get(name)?.value as T | undefined,
     implement: () => {
       throw new Error('Providers require a facet scope')
     },

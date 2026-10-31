@@ -122,9 +122,7 @@ export const ToolSection = ({
   ...props
 }: ComponentProps<'div'> & { label?: string }) => (
   <div className={cn('space-y-1 px-2.5 py-2', className)} {...props}>
-    {label && (
-      <div className="text-[10px] tracking-wider text-muted-foreground/80 uppercase">{label}</div>
-    )}
+    {label && <div className="section-label">{label}</div>}
     {children}
   </div>
 )

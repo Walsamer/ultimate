@@ -37,8 +37,8 @@ Never claim a UI change works without an image of it.
   `{event: 'user.input', where: {conversation: <id>, kind: 'prompt'}}`, not the prompt. Each event's fields are in
   `extensions/browser/README.md` and its `defineEvent`. Tool calls live inside `pi.assistant`; there is no
   `pi.toolCall` entry.
-- Open a conversation with `?conversation=<id>`. Right-panel section titles are uppercased by CSS: find them with
-  `textContent.startsWith('Skills')`, not by their shown text.
+- Open a conversation with `?conversation=<id>`. Right-panel section titles show their source text in sentence case
+  (the `section-label` utility); match them with `textContent.startsWith('Skills')`, since counts and meta follow.
 - Seed real state with real prompts on a preview; do not inject entries.
 
 ## What to check

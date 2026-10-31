@@ -80,7 +80,7 @@ export function MorningCard({ entry }: { entry: EntryRecord }) {
           <ul className="space-y-1">
             {data.learned.map((line) => (
               <li
-                className="border-l-2 border-brand/30 pl-3 text-[13.5px] leading-snug text-foreground/85 italic"
+                className="border-l-2 border-brand/30 pl-3 text-[13.5px] leading-snug text-foreground/85"
                 key={line}
               >
                 {line}

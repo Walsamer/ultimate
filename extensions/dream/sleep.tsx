@@ -79,7 +79,7 @@ export function NextChapter({
       <ul className="space-y-1.5 px-4 pt-4 pb-3" data-dream-learned>
         {prepared.learned.map((line) => (
           <li
-            className="border-l-2 border-brand/30 pl-3 text-[14.5px] leading-snug text-foreground/90 italic"
+            className="border-l-2 border-brand/30 pl-3 text-[14.5px] leading-snug text-foreground/90"
             key={line}
           >
             {line}

@@ -101,7 +101,7 @@ function Popup({
   const { limit } = state
   return (
     <>
-      <div className="border-b border-border/70 px-3 py-2 text-[10.5px] tracking-wider text-muted-foreground uppercase">
+      <div className="border-b border-border/70 px-3 py-2 section-label">
         {limit ? 'Rate limited' : 'Pause'}
       </div>
       <div className="space-y-2 px-3 py-2 text-[11.5px] leading-[1.55]">

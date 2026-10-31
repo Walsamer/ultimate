@@ -324,7 +324,7 @@ describe('side chats', () => {
     await f.call(side, 'message', { to: 'user', text: 'must fail' })
     expect((await f.server.harness.snapshot(Side, side, context))!.effects).toBe(true)
     expect(JSON.stringify(await entries(f.server, side))).toContain(
-      'Only @ultimate messages the user',
+      'Only @ultimate and branches message the user',
     )
     expect((await f.action('discard', { id: side })).data.error).toMatch(/has effects/)
     servers.splice(servers.indexOf(f.server), 1)
@@ -377,7 +377,7 @@ describe('side chats', () => {
     expect(JSON.stringify(await entries(f.server, side))).toContain('You cannot message yourself')
     await f.call(side, 'message', { to: 'user', text: 'user' })
     expect(JSON.stringify(await entries(f.server, side))).toContain(
-      'Only @ultimate messages the user',
+      'Only @ultimate and branches message the user',
     )
   })
 

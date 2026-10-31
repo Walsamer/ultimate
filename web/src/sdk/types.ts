@@ -244,70 +244,30 @@ export interface CompactContribution {
   /** Kinds of the root conversation's documents `when` and the tests read; the transcript follows them and passes them in. */
   docs?: readonly string[]
   /**
-   * Rows that are background to the conversation, such as traffic between agents: two or more in a row, with the runs of work
-   * between them, fold into one line that expands to them. A row is a stored entry with the visible calls it shows.
-   */
-  quiet?: CompactQuietTest
-  /** The line a folded group of quiet rows shows; the first matching facet's wins, a step count otherwise. */
-  summary?: ComponentType<CompactSummaryProps>
-  /**
    * Rows that are the conversation the reader follows, such as @ultimate's messages to the user: everything between two of
-   * them recedes into one faded stretch.
+   * them recedes into one faded stretch. A row is a stored entry with the visible calls it shows; `hidden` marks one that
+   * renders nothing, so a stretch of only those shows no line.
    */
-  thread?: (row: CompactRow, docs: CompactDocs) => boolean
-  /**
-   * Threads of the conversation, such as one per branch @ultimate talks with: which loaded entries each thread holds
-   * (`of`), which of them leave the main stream (`hidden`), and where each thread's root row stands in it (`roots`,
-   * thread → entry). The main stream shows an entry of kind `root` (`data: { thread }`, rendered by the contribution's
-   * entry renderer) after each root's entry, and `ThreadView` shows one thread's entries.
-   */
-  threads?: (entries: readonly EntryRecord[], docs: CompactDocs, conversation: number) => Threading
-}
-export type Threading = {
-  /** The entry kind of a thread's root row, which the contributing extension renders. */
-  root: string
-  of: ReadonlyMap<number, readonly number[]>
-  hidden: ReadonlySet<number>
-  roots: ReadonlyMap<number, number>
-  /**
-   * The threads the run in progress belongs to, known from the inputs that woke it: its streaming reply and working line
-   * show in that thread, never in the main stream, when it is exactly one.
-   */
-  live: readonly number[]
+  thread?: (row: CompactRow, docs: CompactDocs) => boolean | 'hidden'
+  /** The line a receded stretch shows; the first matching facet's wins, an update count otherwise. */
+  summary?: ComponentType<CompactSummaryProps>
 }
 /** A compact transcript row: an entry, and the visible tool calls it shows when it shows only some of its blocks. */
 export interface CompactRow {
   entry: EntryRecord
   calls: readonly ToolCall[]
 }
-/** Whether a row is background; `hidden` for one that renders nothing, which joins a group without counting. */
-export type CompactQuietTest = (row: CompactRow, docs: CompactDocs) => boolean | 'hidden'
 export interface CompactSummaryProps {
-  /** The group's rows that are no runs of work. */
+  /** The stretch's rows that are no runs of work. */
   rows: readonly CompactRow[]
   /** Steps in its runs of work. */
   steps: number
   /** Whether the agent still works in it. */
   working: boolean
-  /** Whether it sums up a whole stretch between thread rows (`thread`), landings and notes included, not one quiet group. */
-  between?: boolean
 }
 /** The root conversation's documents of the contributions' `docs` kinds, by kind, as `useDocOf(1, kind)` reads them. */
 export type CompactDocs = Readonly<Record<string, Readonly<JsonObject> | null | undefined>>
 export type CompactCallTest = (call: ToolCall, docs: CompactDocs) => boolean
-
-/**
- * What an empty conversation says it is, and its composer's placeholder, for matching conversations; the last matching
- * facet wins. The core's own wording applies otherwise.
- */
-export interface IntroContribution {
-  when: (conversation: ConversationSummary) => boolean
-  title: string
-  hint?: string
-  placeholder?: string
-  /** Shown under the empty state, such as a setup card the conversation needs first. */
-  card?: ComponentType
-}
 
 /**
  * A value one extension's browser code asks for and another provides: the web's extension point. The asking extension
@@ -349,6 +309,15 @@ export const MessageReference = definePoint<
   { conversation: number; id: number },
   string | undefined
 >('ultimate.messageReference')
+
+/**
+ * Where an error card can hand its report for debugging (`subagents` provides it: into @ultimate's composer, unsent):
+ * `title` labels the card's button. No button while nothing provides it.
+ */
+export const ErrorReport = definePoint<
+  null,
+  { title: string; send: (report: string) => void } | undefined
+>('ultimate.errorReport')
 
 /** What a facet provides for a point: `useValue` is a hook, run once per `<Provided>` with its input. */
 export interface Provision {
@@ -393,8 +362,6 @@ export interface WebExtension {
   userBubble?: readonly ComponentType<{ entry: EntryRecord }>[]
   /** Shows matching conversations in compact mode; the visible tools of every matching facet combine. */
   compact?: CompactContribution
-  /** The empty state's wording and the composer's placeholder for matching conversations. */
-  intro?: IntroContribution
   /** Document renderers; a later facet wins a kind. */
   documents?: readonly DocumentContribution[]
   commands?: readonly CommandContribution[]

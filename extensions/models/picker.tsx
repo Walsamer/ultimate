@@ -197,7 +197,7 @@ export function ModelPicker() {
           setup; other models you are not logged in for open the login.
         </DialogDescription>
         <Command
-          className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10.5px] [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:uppercase"
+          className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:section-label"
           defaultValue={ref ? `${ref.provider}/${ref.modelId}` : undefined}
           shouldFilter={false}
         >
@@ -307,22 +307,20 @@ function ProviderHeading({ id, provider }: { id: string; provider: ProviderInfo 
     <span className="flex items-center gap-2">
       {id}
       {provider && provider.name !== id && (
-        <span className="truncate tracking-normal normal-case text-muted-foreground/60">
-          {provider.name}
-        </span>
+        <span className="truncate text-muted-foreground/60">{provider.name}</span>
       )}
       {label ? (
-        <span className="ml-auto tracking-normal normal-case text-success/80">
+        <span className="ml-auto text-success/80">
           ✓ {label}
           {provider?.isUsingSubscription ? ' · subscription' : ''}
         </span>
       ) : id === 'claude-code' ? (
-        <span className="ml-auto flex items-center gap-1 tracking-normal normal-case text-warning/80">
+        <span className="ml-auto flex items-center gap-1 text-warning/80">
           <TerminalIcon className="size-3" />
           external setup · ↵ opens setup
         </span>
       ) : (
-        <span className="ml-auto flex items-center gap-1 tracking-normal normal-case text-warning/80">
+        <span className="ml-auto flex items-center gap-1 text-warning/80">
           <KeyRoundIcon className="size-3" />
           not logged in · ↵ logs in
         </span>

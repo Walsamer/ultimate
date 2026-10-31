@@ -9,7 +9,7 @@ A dream is ordinary work, and nothing in code tracks it:
    `start` gives @ultimate a `dream.requested` input), or a built-in automation fires (below).
 2. **Dreamed.** In that turn @ultimate writes its handoff into the prompt of one dream branch, which runs the six
    passes as `dream-pass` subagents (`agents/dream-pass.md`) and answers with its journal and a `Decisions:` block.
-3. **Decided.** @ultimate relays the proposals as a questions card; approved ones become ordinary branches or
+3. **Decided.** @ultimate weighs in and the dream branch asks the user with a questions card; approved ones become ordinary branches or
    `remember` batches.
 4. **Prepared.** Once that work is done and a fresh chapter is worth it, @ultimate calls `prepare {chapter, learned,
    handoff}`: the chapter's name, three learned lines and a fresh handover (at most 12,000 characters). It is kept in

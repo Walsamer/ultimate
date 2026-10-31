@@ -49,9 +49,10 @@ async function fixture() {
   await copyApis(ultimateRoot)
   await mkdir(join(ultimateRoot, 'web'), { recursive: true })
   await linkDependencies(ultimateRoot)
+  // Immutable after boot; do not restart Vite for a replay of the fixture's initial config write.
   await writeFile(
     join(ultimateRoot, 'vite.config.ts'),
-    "import { defineConfig } from 'vite-plus'; export default defineConfig({ root: 'web', cacheDir: '.vite-cache', optimizeDeps: { noDiscovery: true } })",
+    "import { fileURLToPath } from 'node:url'; import { defineConfig } from 'vite-plus'; export default defineConfig({ root: 'web', cacheDir: '.vite-cache', optimizeDeps: { noDiscovery: true }, server: { watch: { ignored: [(file) => file === fileURLToPath(import.meta.url)] } } })",
   )
   await writeFile(join(ultimateRoot, 'web/index.html'), '<html>Codemode</html>')
   // The copy reaches the definitions module in the checkout, as `ultimate.agents()` reads them through it.

@@ -69,9 +69,7 @@ function Body({ onClose }: { onClose: () => void }) {
           </DialogDescription>
         </div>
         <section className="space-y-1.5">
-          <h3 className="font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
-            Six passes
-          </h3>
+          <h3 className="section-label">Six passes</h3>
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[13px] leading-5">
             {PASSES.map((pass) => (
               <Fragment key={pass}>

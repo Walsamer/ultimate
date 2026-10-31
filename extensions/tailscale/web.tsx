@@ -98,13 +98,9 @@ function split(hint: string) {
 
 function Heading({ children, meta }: { children: ReactNode; meta?: ReactNode }) {
   return (
-    <div className="flex items-center gap-2 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+    <div className="flex items-center gap-2 section-label">
       {children}
-      {meta !== undefined && (
-        <span className="ml-auto flex items-center gap-1.5 tracking-normal normal-case">
-          {meta}
-        </span>
-      )}
+      {meta !== undefined && <span className="ml-auto flex items-center gap-1.5">{meta}</span>}
     </div>
   )
 }

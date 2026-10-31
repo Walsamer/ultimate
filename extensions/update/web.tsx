@@ -145,9 +145,7 @@ function Popup({
   return (
     <>
       <div className="border-b border-border/70 px-3 py-2 text-[11.5px]">
-        <div className="text-[10.5px] tracking-wider text-muted-foreground uppercase">
-          Ultimate update
-        </div>
+        <div className="section-label">Ultimate update</div>
         <div className="truncate text-muted-foreground" title={state.root}>
           {short(state.root)}
         </div>

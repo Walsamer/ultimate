@@ -110,13 +110,14 @@ document, tools and model-facing text, where agents and stored entries already u
   on the root, never evicted, keeps it to one per landing. The task resolves the summary model
   (`summaryModelStatus()`) and memoizes it; without one it completes without asking. It memoizes its input (the
   landing note's text, the submitter's abstract, frozen into the landing or still open, and every memory in full) and
-  the summary model's answer, then asks for JSON `{"ops": [...]}` under rules that default to no ops, prefer updating
+  the summary model's answer, then asks for JSON `{"ops": [...]}`, with an output budget of `MEMORIZE_TOKENS` (16384, reasoning included) instead
+  of a summary's 2048, under rules that default to no ops, prefer updating
   to near-duplicates, delete or rewrite memories a landing removes or replaces, and merge at the cap, with one example
   answer. The parser takes the one object with an `ops` array (extra keys ignored) or a bare array of ops, also inside
   one code fence or between prose; two fences, no batch or invalid JSON refuse it, the last with the JSON error; adds and
   updates take the landing's `#<submitter>/<at>` as source. Since nobody corrects a landing's batch, `normalizeMemoryOp`
   first collapses each `line` to one line and cuts a long `line` or `body` at a word boundary with `…`, and kebab-cases
-  a slug outside the pattern; the `remember` tool stays strict. The ops commit with the task's completion, so a resumed task applies them once. An unparsable answer or a refused batch writes nothing and is asked once
+  a slug outside the pattern; the `remember` tool stays strict. The ops commit with the task's completion, so a resumed task applies them once. An unparsable answer, one cut off at the budget, or a refused batch writes nothing and is asked once
   more with the refused answer and the reason appended (a memo of its own); when that is refused too, it leaves a notice. The landing itself never fails on it.
 - **Go back** (`rewind.ts`, `rewind.tsx`): the message action **Go back to here** on any stored message of a non-root
   conversation (standing agents included) opens a confirm dialog fed by `rewindPreview {conversation, at}`: steps set
@@ -182,8 +183,8 @@ cleaned up by a review branch that @ultimate starts. The review coordinator read
 conversations (codemode `ultimate.entries` and `ultimate.search`, with `{project}` for another project), the code and
 `git log`. It fact-checks each memory: still true, outdated (with evidence), or contradicted by a later decision; and
 proposes new memories, each with its source `#conversation/entry` and date. It never writes: it returns add, update
-and delete ops, each with a one-line reason, as a `Decisions:` block. @ultimate relays it, and after the user decides
-applies the chosen ops with one `remember` batch.
+and delete ops, each with a one-line reason, as a `Decisions:` block. @ultimate weighs in, the review branch asks the user, and once their answer
+reaches @ultimate it applies the chosen ops with one `remember` batch.
 
 Other extensions use `host.want(LineageApi)` (`api.ts`, with the `Roots` document): `rootOf(id, ctx)` resolves tree membership,
 `leaveNote(to, text, source?)` writes without waking, and `branchOf(id, ctx)` returns `{ root, intent? }` for top-level

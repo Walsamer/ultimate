@@ -144,7 +144,7 @@ function Decisions({ goal, latest }: { goal: Goal; latest?: number }) {
   if (!shown.length) return null
   return (
     <div className="border-t border-border/60 px-4 pt-1.5 pb-1">
-      <h3 className="pt-1 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+      <h3 className="pt-1 section-label">
         {latest && goal.decisions.length > latest
           ? `Latest decisions · ${goal.decisions.length} in all`
           : `Decisions I took for you · ${goal.decisions.length}`}

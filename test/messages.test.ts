@@ -15,6 +15,7 @@ import {
   defineExtension,
   defineTask,
   defineTool,
+  InboxDoc,
   LiveDoc,
   ROOT_CONVERSATION_ID,
 } from '@earendil-works/pi-durable'
@@ -30,6 +31,7 @@ import { emit } from '../server/events.ts'
 import messagesExtension, { actions } from '../extensions/messages/server.ts'
 import pauseExtension, { actions as pauseActions } from '../extensions/pause/server.ts'
 import { Messages, MessageSent } from '../extensions/messages/api.ts'
+import { send as sendMessage } from '../extensions/messages/send.ts'
 import { UserInputEvent } from '../shared/events.ts'
 import type { MessagesService } from '../extensions/messages/api.ts'
 import { BranchReceipts, Tally, rootOf, startBranch } from '../extensions/lineage/server.ts'
@@ -258,6 +260,19 @@ async function fixture(
     if (last.role === 'user' && (text === 'HOLD' || text.includes('\nHOLD')))
       return fauxAssistantMessage([fauxToolCall('hold', {})], { stopReason: 'toolUse' })
     if (last.role === 'user' && text.startsWith('Message from') && text.includes('NOANSWER'))
+      return fauxAssistantMessage([])
+    // A branch's reply that keeps @ultimate busy, so another branch's reply steers into the same run.
+    if (last.role === 'user' && text.startsWith('Reply from #') && text.includes('STALL'))
+      return fauxAssistantMessage([fauxToolCall('hold', {})], { stopReason: 'toolUse' })
+    // @ultimate (#1) answers a branch's reply or report only to weigh in: any other final answer would go down to it.
+    const fromBranch = /^(Reply|Message) from #(\d+)/.exec(text)
+    if (
+      last.role === 'user' &&
+      fromBranch &&
+      fromBranch[2] !== '1' &&
+      (fromBranch[1] === 'Reply' || text.includes('\nOne-way message:')) &&
+      !text.includes('WEIGH')
+    )
       return fauxAssistantMessage([])
     if (last.role === 'user' && text.startsWith('Message from') && text.includes('\nASK'))
       return fauxAssistantMessage([fauxText('Scope changed. Proceed?\n1. Yes\n2. No')])
@@ -627,13 +642,13 @@ it('allows one-way updates to the sender while answering', async () => {
     { from: f.recipient.id, to: 1, re: 1 },
   ])
 })
-it('refuses messages to the user from anyone but @ultimate', async () => {
+it('refuses messages to the user from non-branch conversations other than @ultimate', async () => {
   const f = await fixture()
   await f.send('@scout', 'SEND ' + JSON.stringify({ to: 'user', text: 'Update' }))
   await until(async () => (await replies(f)).length === 1)
   expect((await f.log())!.messages).toHaveLength(2)
   expect(f.observed.join('\n')).toContain(
-    'Only @ultimate messages the user; send this to @ultimate (reply: false) and it relays it.',
+    'Only @ultimate and branches message the user; send this to the conversation that started you.',
   )
   await f.send('user', 'Relayed update')
   expect((await f.log())!.messages.at(-1)).toMatchObject({
@@ -839,7 +854,7 @@ it('lets a subagent message only the conversation that started it', async () => 
   const run = await child(false)
   await send(run, 'user')
   expect((await f.log())!.messages).toHaveLength(1)
-  expect(f.observed.join('\n')).toContain('Only @ultimate messages the user')
+  expect(f.observed.join('\n')).toContain('Only @ultimate and branches message the user')
 })
 it('refuses self, unknown ids, tally roots and unknown names with valid names', async () => {
   const f = await fixture()
@@ -1297,21 +1312,22 @@ it('forwards tool-result images, finds latest past a page, and checks every imag
   expect(f.observed.join('\n')).toContain(`entry ${elsewhere} is not in this conversation`)
   expect((await f.log())!.messages.filter((m) => m.from === 1)).toHaveLength(1)
 })
-async function branched(f: Awaited<ReturnType<typeof fixture>>) {
+async function branched(f: Awaited<ReturnType<typeof fixture>>, prompt = 'Explore') {
   const tool = (await f.opened.root.agent(context)).deferred.find(
     (candidate) => candidate.name === 'branch',
-  )!
+  )
   await f.opened.harness.commit(async (tx) => {
     ;(await tx.doc(Roots, ROOT_CONVERSATION_ID)).roots = [1]
-    await configure(tx, f.opened.root.id, { modelTools: { add: [tool] } })
+    if (tool) await configure(tx, f.opened.root.id, { modelTools: { add: [tool] } })
   }, context)
   await f.opened.root.submit(
-    { type: 'input', content: 'BRANCH ' + JSON.stringify({ prompt: 'Explore', isolated: false }) },
+    { type: 'input', content: 'BRANCH ' + JSON.stringify({ prompt, isolated: false }) },
     context,
   )
-  await until(async () => (await replies(f)).length === 1)
+  const before = (await replies(f)).length
+  await until(async () => (await replies(f)).length === before + 1)
   await f.opened.root.waitForIdle(context)
-  const id = (await f.log())!.messages[0].to as number
+  const id = (await f.log())!.messages.findLast((m) => m.from === 1)!.to as number
   const branch = (await f.opened.harness.conversation(id as ConversationId, context))!
   await branch.waitForIdle(context)
   const from = async () => (await f.log())!.messages.filter((m) => m.from === id)
@@ -1331,6 +1347,65 @@ async function branched(f: Awaited<ReturnType<typeof fixture>>) {
   await settled()
   return { id, branch, from, later, settled }
 }
+it('lets a branch ask the user directly and leaves passive question and answer notes for @ultimate', async () => {
+  const f = await fixture()
+  const b = await branched(f)
+  const entries = async (kind: string) => {
+    const view = await f.opened.root.viewState(context)
+    const found = view.value.entries.filter((entry) => entry.kind === kind)
+    view.dispose()
+    return found
+  }
+  const before = await f.opened.root.viewState(context)
+  const generations = before.value.entries.filter((entry) => entry.kind === 'pi.assistant').length
+  before.dispose()
+  await b.later(
+    'SEND ' +
+      JSON.stringify({
+        to: 'user',
+        text: 'Choose the implementation',
+        questions: [{ text: 'Use the smaller change?', kind: 'confirm' }],
+      }),
+  )
+  const question = (await f.log())!.messages.find((m) => m.from === b.id && m.to === 'user')!
+  expect(question).toMatchObject({
+    reply: true,
+    state: 'delivered',
+    questions: [{ kind: 'confirm' }],
+  })
+  await until(async () => (await entries('board.asked')).length === 1)
+  const [asked] = await entries('board.asked')
+  expect(asked.data).toMatchObject({ message: question.id, from: b.id })
+  expect(asked.input).not.toBe(true)
+  expect(JSON.stringify(asked.model)).toContain('Use the smaller change?')
+  expect(
+    (await f.opened.harness.snapshot(LiveDoc, ROOT_CONVERSATION_ID, context))?.run,
+  ).toBeUndefined()
+  const after = await f.opened.root.viewState(context)
+  expect(after.value.entries.filter((entry) => entry.kind === 'pi.assistant')).toHaveLength(
+    generations,
+  )
+  after.dispose()
+
+  const text = 'Q: Use the smaller change?\nA: Yes'
+  await f.service().answer(question.id, text, context)
+  await until(async () => (await entries('board.answered')).length === 1)
+  await b.settled()
+  const [answered] = await entries('board.answered')
+  expect(answered.data).toMatchObject({ message: question.id, from: b.id })
+  expect(answered.input).not.toBe(true)
+  expect(JSON.stringify(answered.model)).toContain('A: Yes')
+  const reply = (await f.log())!.messages.find((m) => m.from === 'user' && m.re === question.id)!
+  expect(reply).toMatchObject({ to: b.id, text, state: 'answered', entry: expect.any(Number) })
+  expect(f.observed).toContainEqual(expect.stringContaining(`Message from user:\n${text}`))
+  // The user's answer is input, so the branch's final result still reports to its starter.
+  expect((await b.from()).find((m) => m.report)).toMatchObject({
+    to: 1,
+    text: expect.stringContaining('A: Yes'),
+  })
+  expect(await entries('board.asked')).toHaveLength(1)
+  expect(await entries('board.answered')).toHaveLength(1)
+})
 it('forwards images into a new branch with its prompt', async () => {
   const f = await fixture()
   const tool = (await f.opened.root.agent(context)).deferred.find((t) => t.name === 'branch')!
@@ -1474,6 +1549,52 @@ it("places a branch's one-way message to its starter as a note", async () => {
   expect(note?.data).toMatchObject({ delivery: 'note' })
   expect(note?.input).toBeUndefined()
   view.dispose()
+})
+it("routes @ultimate's final answer to a branch's reply back to the branch, once", async () => {
+  // #468703 replied with its decisions; @ultimate's weigh-in, a final answer to that reply, stayed in its own transcript.
+  const f = await fixture()
+  const b = await branched(f, 'Explore, then WEIGH')
+  await until(async () => (await f.log())!.messages.some((m) => m.from === 1 && m.routed))
+  await b.settled()
+  await b.branch.waitForIdle(context)
+  await b.settled()
+  await f.opened.root.waitForIdle(context)
+  await b.settled()
+  const toBranch = (await f.log())!.messages.filter((m) => m.from === 1 && m.to === b.id)
+  expect(toBranch.map((m) => [m.reply, m.routed])).toEqual([
+    [true, undefined],
+    [false, true],
+  ])
+  expect(toBranch[1].text).toContain('Reply from')
+  // The branch woke, and its answer to the routed weigh-in is an echo: @ultimate's answer to it stays local.
+  expect((await b.from()).map((m) => [m.re, m.report, m.echo])).toEqual([
+    [1, undefined, undefined],
+    [undefined, true, true],
+  ])
+})
+it("routes @ultimate's final answer to every branch whose reply shared its run", async () => {
+  // omarchy-config: #45921's reply started @ultimate's run, #46397's steered into it 14 s later; the weigh-in reached
+  // neither, and both branches waited on it.
+  const f = await fixture()
+  const a = await branched(f)
+  const b = await branched(f)
+  const ask = (to: number, text: string) =>
+    sendMessage(f.host, 1, { to: `#${to}`, text, reply: true }, context, { requestId: `ask:${to}` })
+  await ask(a.id, 'STALL')
+  await until(f.holding)
+  await ask(b.id, 'WEIGH')
+  await until(
+    async () =>
+      (await f.opened.harness.snapshot(InboxDoc, f.opened.root.id, context))!.items.length > 0,
+  )
+  f.hold.release()
+  await until(
+    async () => (await f.log())!.messages.filter((m) => m.from === 1 && m.routed).length === 2,
+  )
+  await b.settled()
+  const routed = (await f.log())!.messages.filter((m) => m.from === 1 && m.routed)
+  expect(new Set(routed.map((m) => m.to))).toEqual(new Set([a.id, b.id]))
+  expect(routed[0].text).toContain(`answers #${a.id} and #${b.id} together`)
 })
 it("does not route an answer to the starter's reply-enabled message", async () => {
   const f = await fixture()

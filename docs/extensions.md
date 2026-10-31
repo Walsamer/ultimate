@@ -12,7 +12,7 @@ The Documents tab shows each exported kind through the renderer a web facet regi
 Local imported modules reload with the facet. Failed loads leave the previous version installed.
 
 Server extensions coordinate through typed contracts in each provider's `api.ts`: services, extension points,
-documents and durable events (below); lint rejects the untyped `host.provide` and `host.use` in `extensions/`. The
+documents and durable events (below). The
 browser has its own ephemeral `events`/`useEvent` bus from `@/sdk`. Use `<extension>:<event>` channels there, reserve
 `ultimate:*` for core, and keep durable state in documents. `useReady()` becomes true once the initial facets settle and a system snapshot
 arrives, stays true across hot reloads, and exposes failed facet names. Overlays render as facets install, even while
@@ -136,7 +136,6 @@ so lint (`lint/ultimate.ts`) keeps them small and documented:
   `defineEvent('<folder>.<event>')` and `actionRef('<folder>', name)`.
 - `api-only-imports`: a server-side `.ts` file imports another extension's runtime code only from its `api.ts`, a
   browser `.tsx` file only from its `ui.tsx`; types come with `import type`, pure helpers from `lib/`.
-- `no-raw-services`: no `host.provide` or `host.use` in `extensions/`.
 
 `api.ts` type-imports server code, so the browser never imports it. The browser's contract is two more files:
 

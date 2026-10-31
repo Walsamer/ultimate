@@ -410,11 +410,9 @@ function useOnce<T>(
 
 function Heading({ children, count }: { children: ReactNode; count?: number }) {
   return (
-    <div className="flex items-center gap-2 px-3 pt-3 pb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">
+    <div className="flex items-center gap-2 px-3 pt-3 pb-1 section-label">
       {children}
-      {count !== undefined && (
-        <span className="tracking-normal text-muted-foreground/60">{count}</span>
-      )}
+      {count !== undefined && <span className="text-muted-foreground/60">{count}</span>}
     </div>
   )
 }
@@ -428,10 +426,10 @@ function Background({ tasks, tree }: { tasks: TaskGraphNode[]; tree: Tree }) {
   const folded = tasks.filter((task) => !loud(task))
   return (
     <Collapsible className="group/bg">
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-1.5 px-3 pt-3 pb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase hover:text-foreground">
+      <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-1.5 px-3 pt-3 pb-1 section-label hover:text-foreground">
         <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]/bg:rotate-90" />
         Background
-        <span className="tracking-normal text-muted-foreground/60">{tasks.length}</span>
+        <span className="text-muted-foreground/60">{tasks.length}</span>
       </CollapsibleTrigger>
       {shown.map((task) => (
         <TaskRow depth={0} key={task.id} task={task} tree={tree} />
@@ -500,9 +498,9 @@ function TasksPanel() {
   const parked = tasks.filter((task) => task.blocked === 'restart_limit').length
   return (
     <div className="py-2">
-      <div className="flex items-center gap-2 px-3 pb-1 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+      <div className="flex items-center gap-2 px-3 pb-1 section-label">
         Task graph
-        <span className="ml-auto tracking-normal normal-case text-muted-foreground/70">
+        <span className="ml-auto text-muted-foreground/70">
           {tasks.length} live{busy > 0 && ` · ${busy} running`}
           {parked > 0 && <span className="text-warning"> · {parked} parked</span>}
         </span>

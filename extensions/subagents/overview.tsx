@@ -395,9 +395,7 @@ function MoveMenu({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 font-mono">
-        <DropdownMenuLabel className="text-[10.5px] font-normal tracking-wider text-muted-foreground uppercase">
-          Run {label} on
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="section-label">Run {label} on</DropdownMenuLabel>
         {view.families.map((item) => {
           const model = runsOn(item)
           return (

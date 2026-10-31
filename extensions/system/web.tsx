@@ -145,7 +145,7 @@ function Lanes({ parked }: { parked: ReadonlySet<number> }) {
         <section className="mx-auto max-w-6xl px-3 py-3 md:px-5">
           <div className="rounded-lg border border-border/70 bg-card/40">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/70 px-3 py-2 font-mono text-[11px] text-muted-foreground">
-              <span className="text-[10.5px] tracking-wider uppercase">Agents</span>
+              <span className="section-label">Agents</span>
               <span className="flex items-center gap-1.5" data-running={running}>
                 <span className={cn(dot, 'bg-brand', running > 0 && 'animate-pulse-dot')} />
                 {running} running
@@ -211,7 +211,7 @@ function Lanes({ parked }: { parked: ReadonlySet<number> }) {
         <section className="mx-auto max-w-6xl px-3 pb-6 md:px-5">
           <button
             aria-expanded={streamOpen}
-            className="flex w-full cursor-pointer items-center gap-1.5 py-1.5 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase hover:text-foreground"
+            className="flex w-full cursor-pointer items-center gap-1.5 py-1.5 section-label hover:text-foreground"
             onClick={() => setStreamOpen(!streamOpen)}
             type="button"
           >

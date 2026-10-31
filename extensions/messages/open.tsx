@@ -26,9 +26,7 @@ function Section({
   if (!messages.length) return null
   return (
     <div className="grid gap-0.5">
-      <div className="px-1.5 text-[10px] tracking-wider text-muted-foreground uppercase">
-        {title}
-      </div>
+      <div className="px-1.5 section-label">{title}</div>
       {messages.map((m) => (
         <button
           className="grid w-full min-w-0 gap-0.5 rounded-sm px-1.5 py-1 text-left transition-colors hover:bg-accent disabled:pointer-events-none"

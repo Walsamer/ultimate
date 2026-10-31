@@ -49,7 +49,9 @@ the database in the lander's checkout, and when to ask about Postgres) is the "W
 The first model request waits for preparation. Before every tool call, the workspace must be ready with a
 present, registered checkout. Otherwise the tool is blocked with the reason; the model can still reply and
 explain why it cannot use the checkout.
-A removed workspace is recreated at the same path on the next model request. An existing branch with unlanded
+A removed workspace is recreated at the same path on the next model request, or by the next tool call when it was
+released mid-run. A leftover folder there that holds only files the source ignores (a dev server's `.vite/` cache) is
+cleared first; any other folder is refused. An existing branch with unlanded
 commits is checked out unchanged, with its tip as the new base; a merged or missing branch starts at the current
 target tip. Nested isolates prepare their source ancestor checkouts first.
 The existing `workspace_workflow` prompt section starts and waits for the same durable preparation task used

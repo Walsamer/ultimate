@@ -22,6 +22,9 @@ import {
   api,
   cn,
   defineWebExtension,
+  ErrorReport,
+  insertIntoComposer,
+  provide,
   Provided,
   useConversation,
   useDocOf,
@@ -246,10 +249,10 @@ function Landed({ output }: { output: string }) {
       )}
       {files.length > 0 && (
         <ToolSection>
-          <div className="flex items-center gap-2 text-[10px] tracking-wider text-muted-foreground/80 uppercase">
+          <div className="flex items-center gap-2 section-label">
             {files.length} changed file{files.length === 1 ? '' : 's'}
             {result.files && (
-              <span className="normal-case">
+              <span>
                 <span className="text-diff-add">+{added}</span>{' '}
                 <span className="text-diff-del">−{removed}</span>
               </span>
@@ -308,6 +311,24 @@ function ChildList({ output }: { output: string }) {
   )
 }
 
+/** An error card's report goes into @ultimate's draft, unsent, beside whatever the user had typed there. */
+function useErrorReport() {
+  const { switchConversation, showSurface, focusComposer } = useUltimate()
+  return {
+    title: 'Debug with @ultimate',
+    send: (report: string) =>
+      void api
+        .action(StandingAction, { name: 'ultimate' })
+        .then((id) => {
+          insertIntoComposer(id, report)
+          showSurface('agent')
+          switchConversation(id)
+          requestAnimationFrame(focusComposer)
+        })
+        .catch((error: unknown) => console.error('Could not open @ultimate', error)),
+  }
+}
+
 /** With no conversation chosen, show @ultimate's (see `landing`). */
 function LandOnUltimate() {
   const loaded = useStore((state) => state.shared !== undefined)
@@ -334,6 +355,7 @@ export default defineWebExtension({
   ],
   entries: { 'subagents.instruction': AgentInput, 'subagents.report': AgentInput },
   inbox: AgentInbox,
+  provides: [provide(ErrorReport, useErrorReport)],
   slots: { overlay: [DefinitionDialog, LandOnUltimate], 'header.right': [AgentMessages] },
   commands: [
     {

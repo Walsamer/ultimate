@@ -97,7 +97,7 @@ function PartHeading({
   return (
     <div className="flex items-baseline gap-2 px-3 pt-3 pb-1">
       {tone && <span className={cn('size-2 shrink-0 translate-y-[-1px] rounded-[2px]', tone)} />}
-      <span className="text-[10px] tracking-wider text-muted-foreground uppercase">{title}</span>
+      <span className="section-label">{title}</span>
       {count && <span className="text-muted-foreground/70">{count}</span>}
       <span className="ml-auto text-foreground/85 tabular-nums">{formatTokens(tokens)}</span>
       <span className="w-9 text-right text-muted-foreground/70 tabular-nums">
@@ -275,6 +275,7 @@ function Header({ breakdown }: { breakdown: Breakdown }) {
     <Collapsible
       className="group/context rounded-md border border-border/70 bg-card/40 font-mono text-[11.5px]"
       data-context-header={breakdown.start?.id ?? 'start'}
+      data-ui="turn-header"
       onOpenChange={setOpen}
       open={open}
     >

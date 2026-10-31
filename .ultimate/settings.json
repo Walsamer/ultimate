@@ -1,8 +1,6 @@
 {
   "extensions": {
-    "disable": [
-      "voice"
-    ]
+    "disable": ["voice"]
   },
   "modelFamilies": {
     "families": {
@@ -33,9 +31,7 @@
   },
   "isolates": {
     "worktree": {
-      "setup": [
-        "pnpm install --frozen-lockfile --prefer-offline"
-      ]
+      "setup": ["pnpm install --frozen-lockfile --prefer-offline"]
     }
   },
   "lander": {

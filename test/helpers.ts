@@ -146,12 +146,13 @@ export async function sourceCopy(parent: string) {
   await linkDependencies(root)
   const config = join(root, 'vite.config.ts')
   // Optimize on page requests, not fixture boot; React's plugin otherwise eagerly includes deps.
+  // This config is immutable after boot: ignore stale native events replayed from the initial copy.
   await writeFile(
     config,
     (await readFile(config, 'utf8'))
       .replace(
         'export default defineConfig({',
-        "export default defineConfig({ cacheDir: '.vite-cache', optimizeDeps: { entries: [] },",
+        "export default defineConfig({ cacheDir: '.vite-cache', optimizeDeps: { entries: [] }, server: { watch: { ignored: [(file) => file === fileURLToPath(import.meta.url)] } },",
       )
       .replace(
         'plugins: [react(), tailwindcss()],',

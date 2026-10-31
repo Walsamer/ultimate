@@ -64,9 +64,7 @@ function Dependents({ dependents }: { dependents: readonly RewindDependent[] }) 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-4">
-      <p className="mb-1.5 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
-        {title}
-      </p>
+      <p className="mb-1.5 section-label">{title}</p>
       {children}
     </div>
   )

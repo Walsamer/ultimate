@@ -6,7 +6,7 @@ description: Start, reset and stop an untouched demo preview of a worktree on a 
 # Demo preview on a fresh project
 
 `instance start` runs a worktree with that worktree as its project, which suits looking at Ultimate's own UI. When
-the user wants to try a flow themselves (branches, threads, landings) on a small, unrelated project from an empty
+the user wants to try a flow themselves (branches, their questions, landings) on a small, unrelated project from an empty
 @ultimate, it needs its own project directory. That means a scratch server, as in `ultimate-provider-smoke`. `demo.ts`
 does it in one call:
 
@@ -55,7 +55,7 @@ Please start three coordinators in parallel, one each, all small: (1) dark mode 
 Then the follow-ups that fit the flow under test, for example:
 
 1. From @ultimate, with the search branch's number from its card: `Ask the search branch (#<id>) via a codemode script that calls message to it (reply: true) whether the search is case-insensitive. Tell me its answer when it comes.`
-2. Inside a branch's thread: `Also make the search case-insensitive.`
+2. Typed into a branch's conversation: `Also make the search case-insensitive.`
 3. `Sort the recipes alphabetically and keep the order when searching.`
 
 Say what to expect, in the terms of the feature being previewed. Stop the demo when the round is over.

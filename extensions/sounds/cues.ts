@@ -13,7 +13,7 @@ export const sounds: { sound: Sound; label: string }[] = [
 /** What is due to sound: `key` names the event, so it sounds once. */
 export type Cue = { key: string; sound: Sound }
 
-/** What the cues read about the primary agent (@ultimate): only it talks to the user. */
+/** What the cues read about @ultimate's news and questions from any conversation. */
 export type Watched = {
   /** The primary agent's conversation id, once it exists. */
   agent?: number
@@ -30,7 +30,7 @@ export type Watched = {
 export function cuesOf({ agent, row, messages, landings = [] }: Watched): Cue[] {
   if (agent === undefined) return []
   const cues = messages
-    .filter((message) => message.from === agent && message.to === 'user')
+    .filter((message) => message.to === 'user' && (message.reply || message.from === agent))
     .map((message): Cue => ({
       key: `message:${message.id}`,
       sound: message.reply ? 'input' : 'finished',

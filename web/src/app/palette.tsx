@@ -48,7 +48,7 @@ export function CommandPalette() {
       showCloseButton={false}
     >
       <CommandInput className="text-[13px]" placeholder="Run a command…" />
-      <CommandList className="max-h-[50vh]">
+      <CommandList className="max-h-[50vh]" data-ui="palette">
         <CommandEmpty className="py-6 text-center text-[12px] text-muted-foreground">
           No matching command.
         </CommandEmpty>

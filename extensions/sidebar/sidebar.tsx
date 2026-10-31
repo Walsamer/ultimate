@@ -675,7 +675,7 @@ function Tree({
       <div className="mt-auto pt-3">
         {earlier.length > 0 && (
           <Collapsible className="pt-1" open={earlierOpen} onOpenChange={setEarlierOpen}>
-            <CollapsibleTrigger className="group/earlier flex w-full cursor-pointer items-center gap-1 px-4 py-1 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase outline-none hover:text-foreground">
+            <CollapsibleTrigger className="group/earlier flex w-full cursor-pointer items-center gap-1 px-4 py-1 section-label outline-none hover:text-foreground">
               <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]/earlier:rotate-90" />
               Earlier · {earlier.length}
             </CollapsibleTrigger>
@@ -690,7 +690,7 @@ function Tree({
         )}
         {hidden.length > 0 && (
           <Collapsible className="pt-1" open={concludedOpen} onOpenChange={setConcludedOpen}>
-            <CollapsibleTrigger className="group/concluded flex w-full cursor-pointer items-center gap-1 px-4 py-1 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase outline-none hover:text-foreground focus-visible:text-foreground">
+            <CollapsibleTrigger className="group/concluded flex w-full cursor-pointer items-center gap-1 px-4 py-1 section-label outline-none hover:text-foreground focus-visible:text-foreground">
               <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]/concluded:rotate-90" />
               Concluded · {hidden.length}
             </CollapsibleTrigger>

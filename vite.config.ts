@@ -115,7 +115,6 @@ export default defineConfig({
               ],
             },
           ],
-          'ultimate/no-raw-services': 'error',
         },
       },
       {

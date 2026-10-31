@@ -112,7 +112,7 @@ export function RememberCall({ call, core }: { call: ToolCallView; core: ReactNo
             <div className="flex min-w-0 items-center gap-2">
               <span
                 className={cn(
-                  'shrink-0 text-[10px] tracking-wider uppercase',
+                  'shrink-0 section-label',
                   op.op === 'delete' ? 'text-error/80' : 'text-muted-foreground/80',
                 )}
               >
