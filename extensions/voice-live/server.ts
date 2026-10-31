@@ -1,6 +1,3 @@
-import { createHash } from 'node:crypto'
-import { appendFile, mkdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { BACKGROUND_CONTEXT as context, awaitWithContext } from '@earendil-works/chord/context'
 import {
   AssistantEntry,
@@ -16,45 +13,25 @@ import type { ConversationId, Cursor, ToolTaskInput, Tx } from '@earendil-works/
 import { Type } from '@earendil-works/pi-ai'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { implementAction } from '../../lib/actions.ts'
-import { git } from '../../lib/git.ts'
 import { readSecret } from '../../lib/secrets.ts'
-import { readSettings, userSettingsPath } from '../../lib/settings.ts'
 import { Messages, MessagesApi } from '../messages/api.ts'
 import type { Question } from '../messages/api.ts'
 import { Standing, SubagentsApi } from '../subagents/api.ts'
 import { ConversationsApi } from '../conversations/api.ts'
 import { LineageApi } from '../lineage/api.ts'
-import {
-  DiagnoseAction,
-  EndAction,
-  HeardAction,
-  LogAction,
-  StartAction,
-  StartLocalAction,
-  StatusAction,
-  VersionAction,
-} from './refs.ts'
-import type {
-  VoiceAnswer,
-  VoiceContext,
-  VoiceEngine,
-  VoiceLine,
-  VoicePause,
-  VoiceSession,
-  VoiceTurnNote,
-  VoiceVersion,
-} from './refs.ts'
+import { EndAction, HeardAction, LogAction, StartAction, StatusAction } from './refs.ts'
+import type { VoiceAnswer, VoiceContext, VoiceLine, VoiceSession } from './refs.ts'
 import { voiceBrief } from './brief.ts'
-import { PAUSES } from './pause.ts'
-import { END_PHRASES } from './turn.ts'
-import type { VoiceTurns } from './turn.ts'
 
 const SECRET = 'OPENAI_API_KEY'
 const NO_KEY = `Live voice needs an OpenAI API key: add ${SECRET} in ⌘K → Secrets`
-/** Filled at install for the GPT-Live engine only: the local engine needs no key, so setup does not ask for one. */
-export const secrets: { name: string; description: string; url: string }[] = []
-/** Reinstall when settings change, so a switched engine declares its secrets again. */
-export const reloadOnSettings = true
+export const secrets = [
+  {
+    name: SECRET,
+    description: 'OpenAI API key for live voice',
+    url: 'https://platform.openai.com/api-keys',
+  },
+]
 
 /** The same API-key-only policy as composer voice; an OpenAI OAuth login is not an API key. */
 async function apiKey(host: ExtensionHost, signal: AbortSignal) {
@@ -65,133 +42,6 @@ async function apiKey(host: ExtensionHost, signal: AbortSignal) {
     return undefined
   return (await runtime.getAuth('openai', { signal }))?.auth.apiKey
 }
-
-/** The `voiceLive.engine` setting, project over user; GPT-Live unless it says `local`. */
-export async function voiceEngine(
-  host: Pick<ExtensionHost, 'userHome' | 'projectSettings'>,
-): Promise<VoiceEngine> {
-  // Invalid settings JSON is reported where settings load; here it counts as unset.
-  const user = await readSettings(userSettingsPath(host.userHome)).catch(() => ({}))
-  for (const settings of [await host.projectSettings(), user]) {
-    const section = (settings as { voiceLive?: unknown }).voiceLive
-    const engine =
-      section && typeof section === 'object' && (section as { engine?: unknown }).engine
-    if (engine === 'local' || engine === 'gpt-live') return engine
-  }
-  return 'gpt-live'
-}
-
-/** The `voiceLive.pause` setting, project over user: `relaxed`, `snappy`, or `{ cutMs, holdMs }`; `relaxed` unless set. */
-export async function voicePause(
-  host: Pick<ExtensionHost, 'userHome' | 'projectSettings'>,
-): Promise<VoicePause> {
-  const user = await readSettings(userSettingsPath(host.userHome)).catch(() => ({}))
-  for (const settings of [await host.projectSettings(), user]) {
-    const section = (settings as { voiceLive?: unknown }).voiceLive
-    const pause = section && typeof section === 'object' && (section as { pause?: unknown }).pause
-    if (pause === 'relaxed' || pause === 'snappy') return PAUSES[pause]
-    if (pause && typeof pause === 'object') {
-      const { cutMs, holdMs } = pause as Partial<VoicePause>
-      const ms = (value: unknown, fallback: number) =>
-        typeof value === 'number' && value >= 100 && value <= 30_000 ? value : fallback
-      return { cutMs: ms(cutMs, PAUSES.relaxed.cutMs), holdMs: ms(holdMs, PAUSES.relaxed.holdMs) }
-    }
-  }
-  return PAUSES.relaxed
-}
-
-/** `voiceLive.turns` (`auto` unless `dictation`) and `voiceLive.endPhrases` (a list of short phrases), project over user. */
-export async function voiceTurns(
-  host: Pick<ExtensionHost, 'userHome' | 'projectSettings'>,
-): Promise<{ turns: VoiceTurns; endPhrases: string[] }> {
-  const user = await readSettings(userSettingsPath(host.userHome)).catch(() => ({}))
-  let turns: VoiceTurns | undefined
-  let endPhrases: string[] | undefined
-  for (const settings of [await host.projectSettings(), user]) {
-    const section = (settings as { voiceLive?: { turns?: unknown; endPhrases?: unknown } })
-      .voiceLive
-    if (!section || typeof section !== 'object') continue
-    if (!turns && (section.turns === 'auto' || section.turns === 'dictation')) turns = section.turns
-    if (
-      !endPhrases &&
-      Array.isArray(section.endPhrases) &&
-      section.endPhrases.every((phrase) => typeof phrase === 'string' && phrase.trim())
-    )
-      endPhrases = (section.endPhrases as string[]).map((phrase) => phrase.trim())
-  }
-  return { turns: turns ?? 'auto', endPhrases: endPhrases ?? END_PHRASES }
-}
-
-/** `voiceLive.diagnostics: true`, project over user: local sessions log every turn decision under the home. */
-export async function voiceDiagnostics(host: Pick<ExtensionHost, 'userHome' | 'projectSettings'>) {
-  const user = await readSettings(userSettingsPath(host.userHome)).catch(() => ({}))
-  for (const settings of [await host.projectSettings(), user]) {
-    const value = (settings as { voiceLive?: { diagnostics?: unknown } }).voiceLive?.diagnostics
-    if (typeof value === 'boolean') return value
-  }
-  return false
-}
-
-/** The files the browser runs: their hash names the client code a tab loaded. */
-const CLIENT_FILES = [
-  'web.tsx',
-  'live.tsx',
-  'session.ts',
-  'session-local.ts',
-  'turn.ts',
-  'pause.ts',
-  'relay.ts',
-  'refs.ts',
-]
-let versionRead: Promise<VoiceVersion> | undefined
-/**
- * Read on first use and kept for this facet load, which every change to these files causes: the code this server
- * serves now. Never rejects: what cannot be read is `unknown`.
- */
-const version = () =>
-  (versionRead ??= (async () => {
-    const client = await Promise.all(
-      CLIENT_FILES.map((file) => readFile(join(import.meta.dirname, file))),
-    )
-      .then((files) => {
-        const digest = createHash('sha256')
-        for (const file of files) digest.update(file)
-        return digest.digest('hex').slice(0, 8)
-      })
-      .catch(() => 'unknown')
-    const commit = await git(import.meta.dirname, 'rev-parse', '--short', 'HEAD').catch(
-      () => 'unknown',
-    )
-    const dirty = await git(import.meta.dirname, 'status', '--porcelain', '.').catch(() => '')
-    return { commit: dirty ? `${commit}+dirty` : commit, client }
-  })())
-
-const diagnosticsDir = (host: Pick<ExtensionHost, 'home'>) =>
-  join(host.home, 'voice-live', 'diagnostics')
-
-const NO_LOCAL =
-  'Local voice needs the speak extension and its open-model venv (~/.ultimate/extensions/speak/README.md)'
-
-/** Whether the speak extension's worker can transcribe and speak here; never throws. */
-async function localStatus(host: ExtensionHost, signal: AbortSignal) {
-  try {
-    const status = (await host.invoke('speak', 'sttStatus', {}, signal)) as {
-      ready: boolean
-      hint?: string
-    }
-    return status.ready
-      ? { available: true as const }
-      : { available: false as const, reason: status.hint ?? NO_LOCAL }
-  } catch {
-    return { available: false as const, reason: NO_LOCAL }
-  }
-}
-
-/** What the brief tells Voice about the audio layer, so one definition serves both engines. */
-const engineNote = (engine: VoiceEngine) =>
-  engine === 'local'
-    ? 'Audio for this session: local speech recognition and synthesis, no GPT-Live. Nothing answers the user unless you do: answer connection checks, greetings, thanks and small talk yourself with one short voice_say. voice_note has no listener; do not use it.'
-    : 'Audio for this session: GPT-Live, which answers connection checks, greetings, thanks and small talk itself.'
 
 /** GPT-Live is only the audio interface; the standing Voice agent decides and answers. */
 export function liveInstructions() {
@@ -214,7 +64,7 @@ const Forwarded = defineDoc<{ scheduled: boolean }>({
   scope: 'task',
   initial: () => ({ scheduled: false }),
 })
-export const userActions = ['status', 'start', 'startLocal', 'heard', 'log', 'end', 'diagnose']
+export const userActions = ['status', 'start', 'heard', 'log', 'end']
 const terminal = {
   status: 'terminal',
   outcome: { status: 'completed', result: null },
@@ -239,9 +89,6 @@ async function lines(tx: Tx, id: ConversationId, limit: number) {
   } while (cursor)
   return result.toReversed()
 }
-
-/** How a heard line that ended on silence alone is marked for Voice, which confirms it before forwarding anything. */
-export const UNSURE = 'MAY BE UNFINISHED: do not forward it yet; confirm it first'
 
 /** The brief each Voice conversation's session is still putting together; a heard line waits for it. */
 const pending = (host: ExtensionHost) =>
@@ -336,28 +183,6 @@ const userLine = (input: { text: string }): VoiceLine => ({
   forwarded: true,
   at: Date.now(),
 })
-
-/** The forwarded line whose answer is Voice's newest input and has no spoken line yet; else undefined. */
-export async function unspokenAnswer(tx: Tx, id: ConversationId) {
-  let cursor: Cursor | undefined
-  const spoken = new Set<number>()
-  do {
-    const page = await tx.scanEntries({ conversationId: id, order: 'descending' }, 100, cursor)
-    for (const entry of page.items) {
-      if (entry.kind === 'voice.line') {
-        const line = entry.data as VoiceLine
-        if (line.role === 'ultimate' && line.re !== undefined) spoken.add(line.re)
-      }
-      if (entry.kind === 'voice.heard') return undefined
-      if (entry.kind === 'voice.answer') {
-        const re = (entry.data as VoiceAnswer).re
-        return spoken.has(re) ? undefined : re
-      }
-    }
-    cursor = page.next
-  } while (cursor)
-  return undefined
-}
 
 /** A stable input request id makes answer delivery safe if the task resumes after submitting it. */
 async function answerVoice(
@@ -574,117 +399,37 @@ export function answerTask(host: ExtensionHost) {
   })
 }
 
-/** Put Voice's brief together for a session starting now; a failure becomes a brief that says so, never a failed start. */
-async function sessionBrief(host: ExtensionHost, engine: VoiceEngine): Promise<VoiceContext> {
-  const main = (await host.harness().snapshot(Standing, ROOT_CONVERSATION_ID, context))?.ultimate
-  const started = performance.now()
-  return (
-    main ? voiceBrief(host, main, context) : Promise.reject(new Error('@ultimate is not available'))
-  ).then(
-    (made) => ({
-      ...made,
-      text: made.text.replace('</voice_context>', `\n${engineNote(engine)}\n</voice_context>`),
-      ms: Math.round(performance.now() - started),
-    }),
-    (error: unknown): VoiceContext => ({
-      text: '',
-      memories: 0,
-      requests: 0,
-      branches: 0,
-      tokens: 0,
-      at: Date.now(),
-      error: error instanceof Error ? error.message : String(error),
-    }),
-  )
-}
-
-/** One line of local session `session`'s diagnostics log, `<home>/voice-live/diagnostics/<session>.jsonl`. */
-async function appendDiagnostic(
-  host: Pick<ExtensionHost, 'home'>,
-  session: string,
-  record: Record<string, unknown>,
-) {
-  const dir = diagnosticsDir(host)
-  await mkdir(dir, { recursive: true })
-  await appendFile(
-    join(dir, `${session}.jsonl`),
-    `${JSON.stringify({ at: new Date().toISOString(), ...record })}\n`,
-  )
-}
-
-/** The fields of a turn note a heard entry keeps, nothing else the browser sent. */
-const turnNote = ({ rule, why, probability }: VoiceTurnNote): VoiceTurnNote => ({
-  rule: rule.slice(0, 20),
-  ...(typeof why === 'string' ? { why: why.slice(0, 80) } : {}),
-  ...(typeof probability === 'number' ? { probability } : {}),
-})
-
-/** Mark session `session` started in Voice's transcript and place its brief; heard lines wait for the brief. */
-async function begin(
-  host: ExtensionHost,
-  id: ConversationId,
-  session: string,
-  brief: Promise<VoiceContext>,
-) {
-  await write(
-    host,
-    id,
-    'voice.session',
-    { phase: 'started', at: Date.now() },
-    `voice:start:${session}`,
-  )
-  const briefs = pending(host)
-  const placing = brief
-    .then((made) => placeBrief(host, id, session, made))
-    .catch((error: unknown) => console.error('Voice brief:', error))
-    .finally(() => {
-      if (briefs.get(id) === placing) briefs.delete(id)
-    })
-  briefs.set(id, placing)
-}
-
 export const actions = {
-  status: implementAction(StatusAction, async (_args, { host, signal }) => {
-    const engine = await voiceEngine(host)
-    if (engine === 'local') return { engine, ...(await localStatus(host, signal)) }
-    return (await apiKey(host, signal))
-      ? { engine, available: true as const }
-      : { engine, available: false as const, reason: NO_KEY }
-  }),
-  startLocal: implementAction(StartLocalAction, async (_args, { host, signal }) => {
-    const status = await localStatus(host, signal)
-    if (!status.available) throw new Error(status.reason)
-    const id = await host.need(SubagentsApi).standing('voice', context)
-    const session = `local-${crypto.randomUUID()}`
-    await begin(host, id, session, sessionBrief(host, 'local'))
-    const settings = {
-      pause: await voicePause(host),
-      ...(await voiceTurns(host)),
-      diagnostics: await voiceDiagnostics(host),
-    }
-    if (settings.diagnostics)
-      await appendDiagnostic(host, session, { event: 'server', ...(await version()), ...settings })
-    return { conversation: id, session, ...settings }
-  }),
-  version: implementAction(VersionAction, () => version()),
-  diagnose: implementAction(DiagnoseAction, async (args, { host }) => {
-    const { session, event, ...rest } =
-      args && typeof args === 'object' && !Array.isArray(args) ? args : ({} as never)
-    if (typeof session !== 'string' || !/^local-[\w-]+$/.test(session))
-      throw new Error('Expected a local session id')
-    if (typeof event !== 'string' || !event) throw new Error('Expected an event')
-    if (!(await voiceDiagnostics(host))) return {}
-    await appendDiagnostic(host, session, { event, ...rest })
-    return {}
-  }),
+  status: implementAction(StatusAction, async (_args, { host, signal }) =>
+    (await apiKey(host, signal))
+      ? { available: true as const }
+      : { available: false as const, reason: NO_KEY },
+  ),
   start: implementAction(StartAction, async (args, { host, signal }) => {
     const sdp = args && typeof args === 'object' && !Array.isArray(args) ? args.sdp : undefined
     if (typeof sdp !== 'string' || !sdp.trim()) throw new Error('Expected an SDP offer')
     const key = await apiKey(host, signal)
     if (!key) throw new Error(NO_KEY)
     const id = await host.need(SubagentsApi).standing('voice', context)
-    // Put together while the session connects.
-    const brief = sessionBrief(host, 'gpt-live')
+    // Put together while the session connects; a failure becomes a brief that says so, never a failed start.
+    const main = (await host.harness().snapshot(Standing, ROOT_CONVERSATION_ID, context))?.ultimate
+    const started = performance.now()
+    const brief = (
+      main
+        ? voiceBrief(host, main, context)
+        : Promise.reject(new Error('@ultimate is not available'))
+    ).then(
+      (made) => ({ ...made, ms: Math.round(performance.now() - started) }),
+      (error: unknown): VoiceContext => ({
+        text: '',
+        memories: 0,
+        requests: 0,
+        branches: 0,
+        tokens: 0,
+        at: Date.now(),
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    )
     const recent = await host.harness().commit((tx) => lines(tx, id, 10), context)
     // Bound both messages and input size, leaving room below the 8,192-token session seed cap.
     const input = recent
@@ -724,15 +469,26 @@ export const actions = {
     }
     if (!answer.session?.id || answer.transport?.type !== 'webrtc' || !answer.transport.sdp)
       throw new Error('OpenAI returned no WebRTC session answer')
-    await begin(host, id, answer.session.id, brief)
+    await write(
+      host,
+      id,
+      'voice.session',
+      { phase: 'started', at: Date.now() },
+      `voice:start:${answer.session.id}`,
+    )
+    const briefs = pending(host)
+    const placing = brief
+      .then((made) => placeBrief(host, id, answer.session!.id!, made))
+      .catch((error: unknown) => console.error('Voice brief:', error))
+      .finally(() => {
+        if (briefs.get(id) === placing) briefs.delete(id)
+      })
+    briefs.set(id, placing)
     return { sdp: answer.transport.sdp, conversation: id }
   }),
   heard: implementAction(HeardAction, async (args, { host }) => {
-    const { text, raw, unsure, turn } =
-      args && typeof args === 'object' && !Array.isArray(args) ? args : {}
+    const text = args && typeof args === 'object' && !Array.isArray(args) ? args.text : undefined
     if (typeof text !== 'string' || !text.trim()) throw new Error('Expected text')
-    const misheard =
-      typeof raw === 'string' && raw.trim() && raw.trim() !== text.trim() ? raw.trim() : undefined
     const id = await voiceId(host)
     // The first line of a session goes in after its brief, so Voice reads it with the context.
     await pending(host).get(id)
@@ -741,20 +497,8 @@ export const actions = {
       {
         type: 'input',
         whenBusy: 'steer',
-        entry: {
-          kind: 'voice.heard',
-          data: {
-            text: text.trim(),
-            ...(misheard ? { raw: misheard } : {}),
-            ...(unsure === true ? { unsure: true } : {}),
-            ...(turn && typeof (turn as Partial<VoiceTurnNote>).rule === 'string'
-              ? { turn: turnNote(turn as VoiceTurnNote) }
-              : {}),
-          },
-        },
-        content: `The user, by voice (live transcript, may contain mistakes${
-          unsure === true ? `; ${UNSURE}` : ''
-        }):\n${text.trim()}`,
+        entry: { kind: 'voice.heard', data: { text: text.trim() } },
+        content: `The user, by voice (live transcript, may contain mistakes):\n${text.trim()}`,
       },
       context,
     )
@@ -796,14 +540,7 @@ export const actions = {
   }),
 }
 
-export default async (host: ExtensionHost) => {
-  secrets.length = 0
-  if ((await voiceEngine(host)) === 'gpt-live')
-    secrets.push({
-      name: SECRET,
-      description: 'OpenAI API key for live voice',
-      url: 'https://platform.openai.com/api-keys',
-    })
+export default (host: ExtensionHost) => {
   host.need(MessagesApi)
   host.need(SubagentsApi)
   host.need(LineageApi)
@@ -837,33 +574,6 @@ export default async (host: ExtensionHost) => {
             return again
           }, ctx)
           return message ? { messages: [...request.messages, message] } : undefined
-        },
-        // Nothing reads Voice's plain text aloud: an answer from @ultimate it wrote instead of saying is spoken as written.
-        onYield: async (answer, api, ctx) => {
-          const text = answer.content
-            .flatMap((part) => (part.type === 'text' ? [part.text] : []))
-            .join(' ')
-            .trim()
-          if (!text) return undefined
-          if (
-            (await api.snapshot(Standing, ROOT_CONVERSATION_ID, ctx))?.voice !== api.conversationId
-          )
-            return undefined
-          const re = await host
-            .harness()
-            .commit((tx) => unspokenAnswer(tx, api.conversationId), ctx)
-          if (re === undefined) return undefined
-          const conversation = (await host.harness().conversation(api.conversationId, ctx))!
-          // Admitted, not awaited: the write lands beside this answer once the generation commits it.
-          await conversation.submit(
-            {
-              type: 'write',
-              requestId: `voice:yield:${api.taskId}`,
-              entry: { kind: 'voice.line', data: { role: 'ultimate', text, speech: true, re } },
-            },
-            ctx,
-          )
-          return undefined
         },
       }),
     ],
@@ -929,7 +639,7 @@ export default async (host: ExtensionHost) => {
         name: 'voice_ask_ultimate',
         deferred: true,
         description:
-          'Pass a clear, self-contained request in the user’s words to @ultimate. Its answer returns as input; do not wait here. Refused while the user’s newest line is marked MAY BE UNFINISHED: ask it back with voice_say instead.',
+          'Pass a clear, self-contained request in the user’s words to @ultimate. Its answer returns as input; do not wait here.',
         parameters: Type.Object({ request: Type.String({ minLength: 1 }) }),
         // A transactional receipt schedules once; the forwarded line has a stable write request id.
         replay: 'safe',
@@ -938,30 +648,6 @@ export default async (host: ExtensionHost) => {
             throw new Error('Only Voice forwards requests')
           const main = (await api.snapshot(Standing, ROOT_CONVERSATION_ID, ctx))?.ultimate
           if (!main) throw new Error('@ultimate is not available')
-          // A request from a line that ended on silence alone is confirmed with the user first, never sent as it stands.
-          const unconfirmed = await api.commit(async (tx) => {
-            let cursor: Cursor | undefined
-            do {
-              const page = await tx.scanEntries(
-                { conversationId: api.conversationId, order: 'descending' },
-                100,
-                cursor,
-              )
-              const heard = page.items.find((entry) => entry.kind === 'voice.heard')
-              if (heard) return (heard.data as { unsure?: boolean }).unsure === true
-              cursor = page.next
-            } while (cursor)
-            return false
-          }, ctx)
-          if (unconfirmed)
-            return {
-              output: [
-                {
-                  type: 'text',
-                  text: 'Not sent: the user’s last line may be unfinished. voice_say it back as one short question and forward after they confirm.',
-                },
-              ],
-            }
           const input = {
             voice: api.conversationId,
             main,

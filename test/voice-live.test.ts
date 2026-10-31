@@ -187,8 +187,6 @@ async function fixture() {
       if (last.role === 'toolResult') return call('voice_say', { text: 'Passing that on.' })
       if (text.startsWith('@ultimate answered')) {
         answers.push(text)
-        // Haiku sometimes writes the answer instead of saying it.
-        if (text.includes('PLAIN')) return fauxAssistantMessage('Written, not said.')
         return call('voice_say', { text: 'The spoken answer. Details are on screen.' })
       }
       if (text.includes('can you hear me'))
@@ -332,52 +330,6 @@ it('forwards the cleaned request and feeds the actual answer back to Voice to sp
   expect((await f.entries(f.voice)).at(-1)?.data).toMatchObject({ phase: 'ended', seconds: 23 })
 })
 
-it('never forwards a line that ended on silence alone, and keeps what the lexicon corrected', async () => {
-  const f = await fixture()
-  await f.action('heard', {
-    text: 'Currently group mode',
-    raw: 'Currently grip mode',
-    unsure: true,
-  })
-  await until(async () => (await f.entries(f.voice)).some((e) => e.kind === 'voice.line'))
-  await (await f.server.harness.conversation(f.voice, context))!.waitForIdle(context)
-  expect((await f.entries(f.voice)).find((e) => e.kind === 'voice.heard')?.data).toEqual({
-    text: 'Currently group mode',
-    raw: 'Currently grip mode',
-    unsure: true,
-  })
-  expect(f.requests.at(-1)?.at(-1)).toContain('MAY BE UNFINISHED')
-  expect(
-    (await f.entries(f.voice)).some(
-      (e) => e.kind === 'voice.line' && (e.data as VoiceLine).forwarded,
-    ),
-  ).toBe(false)
-  expect((await f.entries(f.main)).filter((e) => e.kind === 'voice.utterance')).toHaveLength(0)
-})
-
-it('speaks an answer Voice wrote as plain text instead of calling voice_say', async () => {
-  const f = await fixture()
-  f.setAnswer('PLAIN answer.')
-  await f.action('heard', { text: 'check the tests' })
-  const spoken = await f.waitAnswer(1)
-  const forwarded = (await f.entries(f.voice)).find(
-    (e) => e.kind === 'voice.line' && (e.data as VoiceLine).forwarded,
-  )!
-  expect(spoken.data).toEqual({
-    role: 'ultimate',
-    text: 'Written, not said.',
-    speech: true,
-    re: forwarded.id,
-  })
-  // Plain text that answers no answer (small talk Voice wrote down) stays unspoken.
-  await (await f.server.harness.conversation(f.voice, context))!.waitForIdle(context)
-  expect(
-    (await f.entries(f.voice)).filter(
-      (e) => e.kind === 'voice.line' && (e.data as VoiceLine).role === 'ultimate',
-    ),
-  ).toHaveLength(2)
-})
-
 it('speaks a tool-terminated question and answers it through Messages, without a new utterance', async () => {
   const f = await fixture()
   f.setAnswer('QUESTION')
@@ -400,68 +352,6 @@ it('speaks a tool-terminated question and answers it through Messages, without a
   ).toBe('answered')
   expect((await f.entries(f.main)).filter((e) => e.kind === 'voice.utterance')).toHaveLength(1)
   expect((await f.entries(f.main)).some((e) => e.kind === 'board.message')).toBe(true)
-})
-
-it('starts a local-engine session without an OpenAI key, when speak can transcribe, and tells Voice its audio is local', async () => {
-  const f = await fixture()
-  await writeFile(
-    join(f.server.host.userHome, '.ultimate/settings.json'),
-    JSON.stringify({ voiceLive: { engine: 'local' } }),
-  )
-  // The local engine asks setup for no OpenAI key.
-  await until(
-    () =>
-      f.server.extensions.info().find((e) => e.name === 'voice-live')?.server?.secrets?.length ===
-      0,
-  )
-  // No speak extension in this home: the status says what is missing, and a start is refused.
-  expect(await f.action('status', null)).toMatchObject({ engine: 'local', available: false })
-  const refused = await post(f.server, '/api/extensions/voice-live/actions/startLocal', {
-    args: null,
-  })
-  expect(refused.data.error).toContain('Local voice needs the speak extension')
-  const speak = join(f.server.host.userHome, '.ultimate/extensions/speak')
-  await mkdir(speak, { recursive: true })
-  await writeFile(
-    join(speak, 'server.ts'),
-    `export const actions = { sttStatus: () => ({ ready: true }) }\nexport default { name: 'speak' }\n`,
-  )
-  await until(async () => (await f.action('status', null)).available === true)
-  expect(await f.action('startLocal', null)).toEqual({
-    conversation: f.voice,
-    session: expect.stringMatching(/^local-/),
-    pause: { cutMs: 900, holdMs: 12_000 },
-    turns: 'auto',
-    endPhrases: ['over', 'go ahead', 'send it', 'done'],
-    diagnostics: false,
-  })
-  const briefs = async () => (await f.entries(f.voice)).filter((e) => e.kind === 'voice.context')
-  await until(async () => (await briefs()).length === 2)
-  expect((await briefs())[1].data).toMatchObject({
-    text: expect.stringContaining('Audio for this session: local speech recognition'),
-  })
-  expect((await briefs())[0].data).toMatchObject({
-    text: expect.stringContaining('Audio for this session: GPT-Live'),
-  })
-  // Diagnostics on: the session logs the server's version, and each turn decision the tab reports, under the home.
-  await writeFile(
-    join(f.server.host.userHome, '.ultimate/settings.json'),
-    JSON.stringify({ voiceLive: { engine: 'local', diagnostics: true } }),
-  )
-  const { session, diagnostics } = await f.action('startLocal', null)
-  expect(diagnostics).toBe(true)
-  await f.action('diagnose', { session, event: 'decision', kind: 'hold', why: 'ends on "the"' })
-  const log = (
-    await readFile(join(f.server.host.home, 'voice-live/diagnostics', `${session}.jsonl`), 'utf8')
-  )
-    .trim()
-    .split('\n')
-    .map((line) => JSON.parse(line))
-  expect(log).toMatchObject([
-    { event: 'server', commit: expect.any(String), client: expect.any(String), diagnostics: true },
-    { event: 'decision', kind: 'hold', why: 'ends on "the"' },
-  ])
-  expect((await f.action('version', null)).client).toMatch(/^[0-9a-f]{8}$/)
 })
 
 it('briefs each session, waits for the brief before the first line, and lets only the newest reach Voice', async () => {
