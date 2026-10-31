@@ -10,7 +10,7 @@ demo, and a checkbox and a play button for each notification; the choices live i
 
 Only the primary standing agent sounds, read from the root's documents:
 
-- **Needs input:** its reply-expected `message` to the user (`messages`); every question goes that way.
+- **Needs input:** any reply-expected `message` to the user (`messages`), from @ultimate or a branch.
 - **Finished:** its one-way `message` to the user, or its answer to your typed input.
 - **Failed:** its run ended in an error (`ultimate.conversation-overview`); a stop or a reset does not.
 - **Landed:** a submission landed on the project's target branch (the `workspaces.landed` event), from any branch.

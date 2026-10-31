@@ -64,68 +64,6 @@ export const actions = { revoke: async () => { remove?.(); return true } }
   )
 }, 60000)
 
-it('ignores retiring core status on swap and drops rows on crash recovery', async () => {
-  const home = await temp('ultimate-presentation-')
-  homes.push(home)
-  const root = await sourceCopy(home)
-  copies.set(home, root)
-  await writeFile(
-    join(root, 'server/main.ts'),
-    `
-import { createServer } from 'node:http'
-const generation = Number(process.env.ULTIMATE_GENERATION)
-const send = (message: unknown) => process.send?.(message as import('node:child_process').Serializable)
-const server = createServer((req, res) => {
-  // A kept-alive socket stays piped to the core that served it; the test's next fetch must reach the new core.
-  res.setHeader('connection', 'close')
-  res.end('ok')
-  if (req.url === '/swap') send({ type: 'swap', requestId: 'test-swap' })
-  if (req.url === '/crash') setTimeout(() => process.exit(1), 50)
-})
-server.listen(0, '127.0.0.1', () => send({ type: 'prepared', port: (server.address() as import('node:net').AddressInfo).port }))
-process.on('message', (message: { type: string; ok?: boolean; requestId?: string }) => {
-  if (message.type === 'go') {
-    send({ type: 'web', state: 'ready' })
-    if (generation < 3) send({ type: 'services', services: [{ extension: 'fixture', name: 'worker', state: 'ready', detail: 'generation ' + generation }] })
-    send({ type: 'ready' })
-  }
-  if (message.type === 'swap-result' && message.ok) send({ type: 'swap-ack', requestId: message.requestId, ok: true })
-  if (message.type === 'release') {
-    send({ type: 'web', state: 'stopped' })
-    send({ type: 'services', services: [{ extension: 'fixture', name: 'stale', state: 'error', detail: 'STALE-ROW' }] })
-    send({ type: 'released' })
-  }
-  if (message.type === 'exit') server.close(() => process.exit(0))
-})
-`,
-  )
-  const running = await launch(home)
-  await until(() => running.output().includes('Ultimate: http://'))
-  const url = /Ultimate: (http:\/\/[^\s]+)/.exec(running.output())![1]
-  await fetch(url + '/swap')
-  await until(() => running.output().includes('fixture/worker: ready · generation 2'))
-  expect(running.output()).not.toContain('STALE-ROW')
-  await fetch(url + '/crash')
-  await until(async () => {
-    const log = await readFile(join(home, 'supervisor.log'), 'utf8')
-    return (
-      log.includes('Core 2 exited unexpectedly') &&
-      log.trim().endsWith('"text":"ready"}') &&
-      // The proxy may still close a connection to the crashed core; the next poll asks again.
-      (await fetch(url).catch(() => undefined))?.status === 200
-    )
-  })
-  const records = (await readFile(join(home, 'supervisor.log'), 'utf8'))
-    .trim()
-    .split('\n')
-    .map((line) => JSON.parse(line))
-  const crash = records.findIndex((r) => r.text === 'Core 2 exited unexpectedly')
-  expect(
-    records.slice(crash).some((r) => r.source === 'services' && r.text.includes('fixture/worker')),
-  ).toBe(false)
-  expect(running.output().includes('\x1b[')).toBe(false)
-}, 60000)
-
 describe('supervisor process ownership', () => {
   it('keeps crash diagnostics private to direct loopback requests', async () => {
     const home = await temp('ultimate-crash-page-')

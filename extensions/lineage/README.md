@@ -182,8 +182,8 @@ cleaned up by a review branch that @ultimate starts. The review coordinator read
 conversations (codemode `ultimate.entries` and `ultimate.search`, with `{project}` for another project), the code and
 `git log`. It fact-checks each memory: still true, outdated (with evidence), or contradicted by a later decision; and
 proposes new memories, each with its source `#conversation/entry` and date. It never writes: it returns add, update
-and delete ops, each with a one-line reason, as a `Decisions:` block. @ultimate relays it, and after the user decides
-applies the chosen ops with one `remember` batch.
+and delete ops, each with a one-line reason, as a `Decisions:` block. @ultimate weighs in, the review branch asks the user, and once their answer
+reaches @ultimate it applies the chosen ops with one `remember` batch.
 
 Other extensions use `host.want(LineageApi)` (`api.ts`, with the `Roots` document): `rootOf(id, ctx)` resolves tree membership,
 `leaveNote(to, text, source?)` writes without waking, and `branchOf(id, ctx)` returns `{ root, intent? }` for top-level

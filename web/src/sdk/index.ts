@@ -7,6 +7,7 @@ export {
   ConversationKind,
   defineWebExtension,
   definePoint,
+  ErrorReport,
   MessageReference,
   ParkedRuns,
   provide,
@@ -17,15 +18,12 @@ export { resumed } from './resume.ts'
 export type {
   CompactCallTest,
   CompactContribution,
-  CompactQuietTest,
   CompactRow,
   CompactSummaryProps,
   ComposerDrop,
   ComposerInput,
   ComposerInputContribution,
   ComposerPaste,
-  IntroContribution,
-  Threading,
   CompactDocs,
   CommandContribution,
   CodeBlockRenderer,
@@ -75,8 +73,6 @@ export { UserText, UserView } from '../app/user-turn.tsx'
 /** Renders with the value another extension provides for your point; see `definePoint`. */
 export { AllProvided, Provided } from '../app/boundary.tsx'
 export { ConversationScope } from './conversation-scope.tsx'
-/** One thread of the shown conversation as a transcript of its own (`compact.threads`), such as a side pane. */
-export { ThreadView } from '../app/transcript.tsx'
 /** Sends what the composer inside it submits somewhere else, such as a new side chat; see `composer` renderers. */
 export { Composer, ComposerRedirect, fillComposer, insertIntoComposer } from '../app/composer.tsx'
 export type { ComposerTarget } from '../app/composer.tsx'
@@ -105,11 +101,11 @@ export {
   useEvents,
   useExtensionUiState,
   useExtensions,
-  useIntro,
   useCopy,
   useModels,
   useNotices,
   useNow,
+  usePanels,
   useRestart,
   useReady,
   useStore,
@@ -150,7 +146,6 @@ export type {
   Notice,
   SystemInfo,
 } from '../../../shared/protocol.ts'
-/** The image types the composer attaches: what an input handler routes to `addImages`. */
 export { imageMimeTypes } from '../../../shared/protocol.ts'
 export type {
   AgentState,

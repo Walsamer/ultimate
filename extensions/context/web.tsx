@@ -275,6 +275,7 @@ function Header({ breakdown }: { breakdown: Breakdown }) {
     <Collapsible
       className="group/context rounded-md border border-border/70 bg-card/40 font-mono text-[11.5px]"
       data-context-header={breakdown.start?.id ?? 'start'}
+      data-ui="turn-header"
       onOpenChange={setOpen}
       open={open}
     >

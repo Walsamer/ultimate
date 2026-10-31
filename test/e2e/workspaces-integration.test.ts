@@ -2389,6 +2389,43 @@ it.concurrent('recovery does not mark an unregistered folder ready or run tools 
   expect(await readFile(join(workspace.path, 'unrelated.txt'), 'utf8')).toBe('keep me')
 })
 
+it.concurrent('a tool call recreates a released checkout over a leftover folder of ignored files', async () => {
+  const f = await fixture()
+  const id = await f.create()
+  await f.service.ready(id, context)
+  const workspace = (await f.service.get(id, context))!
+  await f.service.release([id], context)
+  // A dev server still running in the released folder writes its cache back.
+  await writeFile(join(f.projectRoot, '.git/info/exclude'), '.vite/\n')
+  await mkdir(join(workspace.path, '.vite/deps'), { recursive: true })
+  await writeFile(join(workspace.path, '.vite/deps/chunk.js'), '')
+  const result = await f.call(id, 'bash', { command: 'pwd' })
+  expect(JSON.stringify(result)).toContain(workspace.path)
+  expect(JSON.stringify(result)).not.toContain('Workspace is removed')
+  expect((await f.service.get(id, context))!.state).toBe('ready')
+  await expect(access(join(workspace.path, '.vite'))).rejects.toThrow('ENOENT')
+})
+it.concurrent('a tool call mid-run recreates a checkout released after the run began', async () => {
+  const f = await fixture()
+  const id = await f.create()
+  await f.service.ready(id, context)
+  const workspace = (await f.service.get(id, context))!
+  f.prepared.faux!.setResponses([
+    async () => {
+      await git(workspace.source, 'worktree', 'remove', workspace.path)
+      await f.opened.harness.commit(async (tx) => {
+        ;(await tx.doc(Workspaces, ROOT_CONVERSATION_ID)).items[String(id)].state = 'removed'
+      }, context)
+      return fauxAssistantMessage(fauxToolCall('write_commit', {}), { stopReason: 'toolUse' })
+    },
+    fauxAssistantMessage('done'),
+  ])
+  const result = await f.call(id, 'write_commit')
+  expect(result?.role === 'toolResult' && result.isError).toBe(false)
+  expect(f.writes).toBe(1)
+  expect((await f.service.get(id, context))!.state).toBe('ready')
+})
+
 /** A ready workspace whose worktree Git removed, leaving its folder with only ignored local state, as `wrangler dev` does. */
 async function leftover(unlanded: boolean) {
   const f = await fixture()

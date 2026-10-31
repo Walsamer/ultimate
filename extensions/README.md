@@ -77,9 +77,10 @@ paste the clipboard's images and a block past the composer's fold limit as a `[p
 paste replaces both. A handler that throws is reported once as a notice naming its extension and skipped, so a broken
 one leaves the composer working.
 
+
 Wrap `<Conversation/>` in `<ConversationScope id={id}>` (both from `@/sdk`) to render another live conversation without
 switching the shell. `useConversation(select?)`, `useTranscript`, `useDoc`/`useDocKind`, `useUltimate().conversationId`,
-`useIntro`, `useCompact`/`useCompactQuiet`, and `useAction` follow the nearest scope, as do transcript/composer
+`useCompact`/`useCompactThread`, and `useAction` follow the nearest scope, as do transcript/composer
 contributions. Scopes of the same id share a stream; the last unmount releases it. Outside a scope these hooks keep
 their existing behaviour. A shortcut pressed inside a scope runs its command with the scope's id as
 `context.conversationId` (Escape stops the scoped run). Explicit `useDocOf` ids, root UI state, shell navigation, the
@@ -143,8 +144,7 @@ Server factories receive exactly these `ExtensionHost` fields (import its type o
 - `build()`, `system()`, `extensions()`: current build, system and extension inspection.
 - `conversations()`: every conversation's summary, as `useConversations()` gives the web; empty until the harness is open.
 - `harness()`, `uiState(context)`, `doc(kind)`: durable harness, root UI snapshot and exported conversation document token.
-- `provide(name, value)`, `use<T>(name)`: publish and look up typed process-local behaviour. Import the provider's contract with `import type`, never its implementation. Registrations are staged until installation succeeds, replaced on reload, and removed when the facet is disabled, removed or closed; a missing provider returns `undefined`. Look up at call time rather than retaining a provider across reloads. A failed replacement keeps the old provider. For example, workspaces provides `WorkspaceService` under `workspaces`; lineage provides `LineageService` under `lineage`. Shared branches and landings work without the other extension; isolated branches require workspaces.
-- `implement(api, value)`, `need(api)`, `want(api)`, `catalogue()`: the typed successors of `provide`/`use`; see [Extension APIs](#extension-apis).
+- `implement(api, value)`, `need(api)`, `want(api)`, `catalogue()`: publish and use typed process-local services; see [Extension APIs](#extension-apis). Registrations are staged until installation succeeds, replaced on reload, and removed when the facet is disabled, removed or closed; a failed replacement keeps the old provider.
 - `metadata`: the core's `ultimate.metadata` conversation document, `{ title?, label? }`; the shell names a conversation
   by them, so set them on conversations you create (`subagents` labels each child with its definition).
 - `emit(tx, event, data)`, `react(name, events, handler)`, `eventLog`: durable events; see [Events](#events).
@@ -252,8 +252,7 @@ providers and dependency cycles, each a sorted group of extensions that depend o
 
 Which channel to use: services for calls between extensions; documents for durable state; durable events for "this
 happened" (`host.emit` in your commit, `host.react` to act on it; see
-[docs/extensions.md](../docs/extensions.md#durable-events)); actions for the UI and user boundary. Extensions never call the untyped `host.provide` and `host.use`
-(`ultimate/no-raw-services`).
+[docs/extensions.md](../docs/extensions.md#durable-events)); actions for the UI and user boundary.
 
 ## Lifecycle
 
@@ -346,7 +345,7 @@ No restart, no reload.
 
 ## Contributions
 
-`defineWebExtension({ slots, panels, surfaces, tools, toolLines, entries, link, messageActions, messageDetails, answerLabels, userBubble, compact, intro, documents, commands, composerInput })`; every key is optional. Extensions load
+`defineWebExtension({ slots, panels, surfaces, tools, toolLines, entries, link, messageActions, messageDetails, answerLabels, userBubble, compact, documents, commands, composerInput })`; every key is optional. Extensions load
 in parallel, installing independently; contributions follow discovery order: built-in → user → project, then folder name within each source. Give a slot item `{ component, order }` to move it (default order 0, lower first).
 
 ### Slots
@@ -515,12 +514,9 @@ follows and passes to them by kind. The tools of every matching facet combine. R
 test for the shown conversation or `undefined`, to adapt to it. Messages turns it on for @ultimate's conversation, found
 by the standing agents' index (`StandingDoc`) rather than its title, keeping messages, branch starts,
 workspace outcomes and scripts its log says messaged you, and shows its messages to you as bubbles. Revealing an entry
-in a folded run opens the run.
-
-`intro` says what a matching conversation is before its first message: `{ when(conversation), title, hint?, placeholder?, card? }`
-replaces the empty state's line under ULTIMATE, adds a hint below it, and sets the composer's placeholder while it is
-idle; `card`, a component, renders under the empty state, such as a setup card the conversation needs first. The last
-matching facet wins.
+in a folded run opens the run. `thread: (row, docs) => boolean` names the rows the reader follows; everything between two
+of them recedes into one line that opens it, worded by the first matching facet's `summary` component (`rows`, `steps`,
+`working`), an update count otherwise. Messages marks your inputs and @ultimate's messages to you as thread.
 
 ### Entry renderers
 
@@ -1025,6 +1021,11 @@ Keep UI state that should survive a reload in `useExtensionUiState`; keep throwa
   `text-warning`, `text-error`, `text-diff-add`, `text-diff-del`. Opacity modifiers work: `bg-error/10`. They follow
   the light and dark themes; never hard-code colours.
 - No new CSS files, no inline style objects for colours.
+- A theme extension (a CSS file imported from its `web.tsx`) targets the app through stable `data-ui` hooks, never
+  Tailwind classes: `titlebar`, `surface-tabs`, `wordmark`, `ultimate-button`, `sidebar-row`, `sidebar-section-header`,
+  `conversation-header`, `turn-header`, `empty-state`, `card`, `message-card` (with `data-sender`), `composer`,
+  `side-chat-hint`, `side-chat-switch`, `palette` and `status-line`; selected rows and tabs carry `data-selected`. Keep
+  these when changing that markup.
 - Dense and quiet: 12–14 px, monospace (`font-mono`) for meta such as paths, counts, ids, and durations; proportional
   for prose. Subtle borders (`border-border/70`), little motion.
 

@@ -2,6 +2,7 @@ import type { EntryRecord } from '@earendil-works/pi-durable'
 import { useEffect, useState } from 'react'
 import {
   api,
+  attention,
   ConversationKind,
   defineWebExtension,
   events,
@@ -13,15 +14,14 @@ import {
 } from '@/sdk'
 import {
   Address,
-  BackgroundSummary,
   MessageInput,
   BranchCall,
   CompactAnswer,
   MessageCall,
+  StretchSummary,
 } from './cards.tsx'
 import {
   answeredMessages,
-  backgroundRow,
   emptyMessages,
   scriptMessaged,
   threadRow,
@@ -29,6 +29,7 @@ import {
 } from './data.tsx'
 import { callerOf } from './caller.ts'
 import { OpenMessages } from './open.tsx'
+import { QuestionPointer } from './pointer.tsx'
 import { StandingDoc } from '../subagents/ui.tsx'
 import { MessagesDoc, CallerAction } from './refs.ts'
 import type { MessagesData } from './refs.ts'
@@ -86,6 +87,8 @@ export default defineWebExtension({
   entries: {
     'board.message': MessageInput,
     'board.reply': MessageInput,
+    'board.asked': attention(QuestionPointer),
+    'board.answered': () => null,
     // Retired: triage's wake-up pointer in older transcripts.
     'board.wake': () => null,
     // The agent's reminder of the questions still open; the user sees them in the To-dos panel.
@@ -103,11 +106,9 @@ export default defineWebExtension({
       (call, docs) => scriptMessaged(call, docs.board as MessagesData | null | undefined),
     ],
     docs: ['board', StandingDoc.kind],
-    // Traffic between agents is background to your conversation with @ultimate: each stretch of it folds into one line.
-    quiet: (row, docs) => backgroundRow(row, docs.board as MessagesData | null | undefined),
-    summary: BackgroundSummary,
-    // Your inputs and @ultimate's messages to you are what you read; everything between recedes.
+    // Your inputs and @ultimate's messages to you are what you read; everything between recedes into one line.
     thread: (row, docs) => threadRow(row, docs.board as MessagesData | null | undefined),
+    summary: StretchSummary,
   },
   answerLabels: [MessageAnswerLabel],
   // The `branch` tool labels the coordinator branches it starts; the title bar names their kind before the agent.

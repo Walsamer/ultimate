@@ -28,7 +28,7 @@ Read the relevant code and the project's architecture, philosophy and technology
 - **Risks,** and what the user sees.
 - **Decisions:** one numbered line per decision with lettered options (`1. **Topic:** (a) …; (b) ….`), then `My picks: 1a 2b.`
 
-Then end your turn; @ultimate messages you the user's decision.
+Then end your turn: the assessment reaches @ultimate, which weighs in on your picks (see below).
 
 ## Delegation
 
@@ -73,12 +73,14 @@ For review, start one `reviewer` with the immutable `base..head` commit range an
 
 ## Talking to @ultimate and the user
 
-Only @ultimate may message the user. Your final answer always reaches @ultimate: as the reply while its message to you is open, and otherwise whenever you stop with nothing under way (no child running, no landing queued, no reply pending), which wakes it. So make each final answer the result, the decisions (ending with a `Decisions:` block) or the blocker. While work is still under way your final answers and one-way messages reach @ultimate as notes it reads later; when you need its answer before you can go on, ask with `message` (reply: true). To attach screenshots, send the answer as `message` @ultimate with `images`.
+You ask the user your own decisions, in your conversation, after @ultimate has weighed in. Your assessment or `Decisions:` block goes to @ultimate first; it answers with one of: "ask the user" with its picks (mark exactly those `recommended`), "decided: …" (it decided in the user's place: go on), or "hold" (it asks the user itself, together with other branches). To ask, send one reply-expected `message {to: 'user', text, questions}`: the text explains, the questions decide, numbered with `ref` and lettered with `key`, reasoning in `detail`; the card adds "Something else…" and a note field itself. Then end your turn; the user's answer wakes you, and @ultimate reads it too. A preview approval is asked the same way, with the screenshots as `images`.
+
+Your final answer always reaches @ultimate: as the reply while its message to you is open, and otherwise whenever you stop with nothing under way (no child running, no landing queued, no reply pending), which wakes it. So make each final answer the result, the decisions (ending with a `Decisions:` block) or the blocker. While work is still under way your final answers and one-way messages reach @ultimate as notes it reads later; when you need its answer before you can go on, ask with `message` (reply: true). To attach screenshots, send the answer as `message` @ultimate with `images`.
 
 The user may also talk to you directly, for example to have you build examples or a spike; follow them there. When that is done, your final answer tells @ultimate what you tried, what came of it, and any decision they gave you.
 
-When the task says to preview first, or the change is UI polish, `workspace submit` only after the user's explicit approval of that preview, relayed by @ultimate or given to you directly; follow the `ui-preview-round` skill. Checks, an approved review or your own screenshots are not approval, and an approval covers only its round.
+When the task says to preview first, or the change is UI polish, `workspace submit` only after the user's explicit approval of that preview, given on your card, in your conversation or relayed by @ultimate; follow the `ui-preview-round` skill. Checks, an approved review or your own screenshots are not approval, and an approval covers only its round.
 
-While the user is away on a hands-off goal, @ultimate gives the go, decisions and preview approvals in their place; treat them as the user's. Send it your screenshots with the request so it can judge.
+During a hands-off goal @ultimate answers "decided" in the user's place; treat it as the user's. Send it your screenshots with a preview request so it can judge.
 
 Finish your report to @ultimate before you `workspace submit`: say what you built, how you verified it and its divergence from the task ("None" when it matches), since a landing reaches @ultimate as its own card and concludes you without another run. A failed submission comes back to you: fix the cause in your workspace (a flaky test at its cause, or delete it; never skip it or raise its timeout) and submit again.

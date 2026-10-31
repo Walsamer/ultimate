@@ -24,6 +24,7 @@ import { actingAs } from '../../lib/acting-as.ts'
 import { imagesParameter, SCAN_PAGE } from './images.ts'
 import { parentOf, Started, starterOf } from './addresses.ts'
 import { delivery } from './delivery.ts'
+import { notice } from './notice.ts'
 import { send } from './send.ts'
 import { route, working } from './route.ts'
 import { remoteAction, remoteReplyAction, tell } from './remote.ts'
@@ -127,13 +128,19 @@ export default function messages(host: ExtensionHost) {
   })
   return defineExtension({
     name: 'messages',
-    tasks: [delivery(host), route(host)],
+    tasks: [delivery(host), route(host), notice(host)],
     hooks: [
       hook(GenerationTask, {
         // Pi upstream: @earendil-works/pi-durable@1.4.0 — patched transactional beforeInput hook.
         beforeInput: (_input, api) => openQuestionsNote(api.tx, api.conversationId, Date.now()),
         onYield: async (_answer, api, ctx) => {
-          const by = (await api.snapshot(Started, api.conversationId, ctx))?.by
+          // A branch's answers go up to its starter; the primary agent's answers to a branch go down to it.
+          let by = (await api.snapshot(Started, api.conversationId, ctx))?.by
+          const down =
+            by === undefined &&
+            (await api.snapshot(Standing, ROOT_CONVERSATION_ID, ctx))?.ultimate ===
+              api.conversationId
+          if (down) by = api.conversationId
           if (by === undefined) return undefined
           await host.harness().commit(async (tx) => {
             // One observer per generation, decided in the commit that creates it.
@@ -146,6 +153,7 @@ export default function messages(host: ExtensionHost) {
                 generation: api.taskId as TaskId<GenerationResult>,
                 inputs: [...((await tx.doc(LiveDoc, api.conversationId)).run?.inputs ?? [])],
                 by,
+                ...(down ? { down } : {}),
               },
               {
                 ownership: { kind: 'conversation' },
@@ -170,7 +178,7 @@ export default function messages(host: ExtensionHost) {
           starter === undefined
             ? ''
             : ` #${starter} started you: when you stop with nothing under way (no subagent, landing or reply pending), your final answer goes to it and wakes it; while work is under way it arrives as a note, and so do your one-way messages to it.`
-        return `Use message to contact #id or @name. Only @ultimate messages user. Messages wake their recipient; its answer returns as a reply and wakes you. End your turn instead of waiting. A one-way message (reply: false) gets no answer; use reply: true when you need one. Inputs identify their sender; answer here and your answer is sent to the sender automatically; do not use message to reply. A message to an agent whose message you still owe an answer becomes that answer and ends your run; use it only to attach images.${upward}\n${agents.map((a) => `@${a.name} — ${a.description}`).join('\n')}`
+        return `Use message to contact #id or @name. @ultimate and branches may message user. Messages wake their recipient; its answer returns as a reply and wakes you. End your turn instead of waiting. A one-way message (reply: false) gets no answer; use reply: true when you need one. Inputs identify their sender; answer here and your answer is sent to the sender automatically; do not use message to reply. A message to an agent whose message you still owe an answer becomes that answer and ends your run; use it only to attach images.${upward}\n${agents.map((a) => `@${a.name} — ${a.description}`).join('\n')}`
       }),
     ],
     tools: [
@@ -178,7 +186,7 @@ export default function messages(host: ExtensionHost) {
       defineTool({
         name: 'message',
         description:
-          'Send a message to #id or @name (only @ultimate may send to user). Returns immediately; the answer comes back as a reply. A busy recipient gets it after its current run, or during it with steer: true (the default for @ultimate). images forwards screenshots or other images from your conversation, to an agent or to the user. To an agent or the user whose message you owe an answer, it is that answer (with its images and questions) and ends your run.',
+          'Send a message to #id or @name (@ultimate and branches may send to user). Returns immediately; the answer comes back as a reply. A busy recipient gets it after its current run, or during it with steer: true (the default for @ultimate). images forwards screenshots or other images from your conversation, to an agent or to the user. To an agent or the user whose message you owe an answer, it is that answer (with its images and questions) and ends your run.',
         parameters: Type.Object({
           to: Type.String(),
           text: Type.String({ minLength: 1 }),

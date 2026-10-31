@@ -28,17 +28,17 @@ it('tells a question, a finished answer and a failed run apart', () => {
   ])
 })
 
-it('stays quiet for everything that is not @ultimate talking to the user', () => {
+it('cues branch questions but keeps other conversations and one-way branch messages quiet', () => {
   // Answering another agent's message, not the user.
   expect(sounds(watched({ row: answered(10, { internalInput: true }) }))).toEqual([])
-  // Messages from other agents to the user, and @ultimate's messages to branches.
+  // A branch question needs input; one-way branch news and messages between agents stay quiet.
   const messages = [
     { id: 1, from: 30726, to: 'user' as const, reply: true },
     { id: 2, from: 110108, to: 'user' as const, reply: false },
     { id: 3, from: agent, to: 158849, reply: true },
     { id: 4, from: 'user' as const, to: agent, reply: false },
   ]
-  expect(sounds(watched({ messages }))).toEqual([])
+  expect(sounds(watched({ messages }))).toEqual(['input'])
   expect(sounds(watched({ row: { runState: 'working', inputId: 9 } }))).toEqual([])
   expect(cuesOf({ messages })).toEqual([])
 })

@@ -41,14 +41,7 @@ import { Branch, Branched, LineageApi, Rooted, Roots } from './api.ts'
 import { ConversationsApi, Trees } from '../conversations/api.ts'
 import { Standing, Started } from '../subagents/api.ts'
 import { spawn } from 'node:child_process'
-import {
-  AbstractAction,
-  CompactAction,
-  ForgetAction,
-  OpenEditorAction,
-  RecentAction,
-  TallyDoc,
-} from './refs.ts'
+import { CompactAction, ForgetAction, OpenEditorAction, RecentAction, TallyDoc } from './refs.ts'
 import {
   applyMemoryOps,
   BODY_CHARS,
@@ -1190,38 +1183,6 @@ export const actions = {
       return { events, older }
     }, context)
     return withCompare(host.projectRoot, scanned.events, scanned.older)
-  }),
-  /** `{id}`: branch `id`'s open abstract, else the one its newest landing froze, from its tree's tally. */
-  abstract: implementAction(AbstractAction, async (args, { host }) => {
-    const id = conversationArg(args)
-    const sha = (args as { sha?: unknown }).sha
-    if (typeof sha !== 'string' || !sha) throw new Error('Expected the landed sha')
-    const roots = await rootsOf(host, context)
-    return host.harness().commit(async (tx) => {
-      const root = await tallyRoot(tx, id, roots)
-      if (root === undefined) return null
-      let cursor: Cursor | undefined
-      do {
-        const page = await tx.scanEntries({ conversationId: root }, 100, cursor)
-        for (const entry of page.items) {
-          const data = (entry.data ?? {}) as {
-            source?: unknown
-            from?: unknown
-            sha?: unknown
-            abstract?: unknown
-          }
-          if (
-            entry.kind === 'lineage.note' &&
-            data.source === 'lander' &&
-            data.from === id &&
-            data.sha === sha
-          )
-            return data.abstract ? (data.abstract as Omit<OpenAbstract, 'anchor'>) : null
-        }
-        cursor = page.next
-      } while (cursor)
-      return null
-    }, context)
   }),
   /** `{id, instructions?}`: compact root tally `id`, for the history footer and the palette. */
   compact: implementAction(CompactAction, async (args, { host }) => {

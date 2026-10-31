@@ -1,4 +1,7 @@
-/** `board.route`: a branch's final answers reach the conversation that started it. */
+/**
+ * `board.route`: a branch's final answers reach the conversation that started it, and that conversation's final answer
+ * to a branch's report or reply reaches the branch.
+ */
 import { defineTask, InboxDoc, LiveDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type {
   ConversationId,
@@ -14,6 +17,7 @@ import { WorkspacesApi } from '../workspaces/api.ts'
 import { Messages } from './api.ts'
 import { terminal } from './log.ts'
 import { send } from './send.ts'
+import { Started } from './addresses.ts'
 
 /** Every task state but `terminal`: queried by status, so finished tasks are never scanned. */
 const LIVE = ['pending', 'running', 'waiting', 'sleeping', 'completing'] as const
@@ -88,10 +92,41 @@ async function children(tx: Tx, id: ConversationId): Promise<boolean> {
 }
 
 /**
+ * The branch whose report or reply alone made up the starter's run `answered`, when the starter's final answer to it
+ * should reach it: the branch is the starter's, not concluded, the starter did not message it during the run, and the
+ * report was no echo (a branch's answer to a routed answer), so routing goes back and forth at most once.
+ */
+async function reported(host: ExtensionHost, tx: Tx, starter: number, answered: number[]) {
+  let branch: number | undefined
+  let latest = 0
+  for (const entryId of answered) {
+    const entry = await tx.entry(entryId as never)
+    const data = entry?.data as
+      | { id?: number; from?: unknown; reply?: unknown; echo?: unknown }
+      | undefined
+    const report =
+      entry?.kind === 'board.reply' || (entry?.kind === 'board.message' && data?.reply === false)
+    if (!report || typeof data?.from !== 'number' || data.echo === true) return undefined
+    if (branch !== undefined && data.from !== branch) return undefined
+    if ((await tx.doc(Started, data.from as ConversationId)).by !== starter) return undefined
+    branch = data.from
+    latest = Math.max(latest, data.id ?? 0)
+  }
+  if (branch === undefined) return undefined
+  if ((await host.need(ConversationsApi).concludedIn(tx)).has(branch as ConversationId))
+    return undefined
+  const log = await tx.doc(Messages, ROOT_CONVERSATION_ID)
+  if (log.messages.some((m) => m.from === starter && m.to === branch && m.id > latest))
+    return undefined
+  return branch
+}
+
+/**
  * After a branch's run, its final answer reaches the conversation that started it, unless it already goes back as the
  * answer to a reply-enabled message, the starter's or another conversation's. A branch that stops with nothing under way reports: its answer wakes
- * the starter. One that still waits on work (subagents, the lander, a reply) leaves it as a note. Routing goes only
- * from a branch to its starter, which existed first, and a routed message is one-way: it cannot ping-pong.
+ * the starter. One that still waits on work (subagents, the lander, a reply) leaves it as a note. With `down`, after a
+ * run of the starter, its final answer to one branch's report or reply goes to that branch and wakes it (`reported`).
+ * Each routed message is one-way, and an answer to a routed answer is an echo that routes no further: no ping-pong.
  */
 export function route(host: ExtensionHost) {
   return defineTask<
@@ -99,6 +134,8 @@ export function route(host: ExtensionHost) {
       generation: TaskId<GenerationResult>
       inputs: SubmissionId[]
       by: number
+      /** The starter's own run: route its answer down to the branch it answers. */
+      down?: boolean
     },
     { phase: 'observe' },
     null
@@ -129,17 +166,6 @@ export function route(host: ExtensionHost) {
               : [],
           )
           if (!answered.length) return undefined
-          // board.delivery returns an answer to a reply-enabled message to whoever sent it. To the starter's, that is
-          // where the answer goes; when every input was another conversation's question (a sibling's, a subagent's),
-          // it goes back to them, not also to the starter.
-          let elsewhere = true
-          for (const entryId of answered) {
-            const entry = await tx.entry(entryId)
-            const data = entry?.data as { from?: unknown; reply?: unknown } | undefined
-            const asked = entry?.kind === 'board.message' && data?.reply === true
-            if (asked && data.from === by) return undefined
-            if (!asked) elsewhere = false
-          }
           const message = (await tx.entry(answer))?.model?.[0]
           if (
             message?.role !== 'assistant' ||
@@ -147,6 +173,28 @@ export function route(host: ExtensionHost) {
             message.stopReason === 'aborted'
           )
             return undefined
+          const text = message.content.flatMap((p) => (p.type === 'text' ? [p.text] : [])).join('')
+          if (task.input.down) {
+            const branch = await reported(host, tx, by, answered)
+            return branch === undefined ? undefined : { text, to: branch }
+          }
+          // board.delivery returns an answer to a reply-enabled message to whoever sent it. To the starter's, that is
+          // where the answer goes; when every input was another conversation's question (a sibling's, a subagent's),
+          // it goes back to them, not also to the starter.
+          let elsewhere = true
+          // An answer to the starter's routed answers only is an echo: the starter's answer to it stays local.
+          let echo = true
+          for (const entryId of answered) {
+            const entry = await tx.entry(entryId)
+            const data = entry?.data as
+              | { from?: unknown; reply?: unknown; routed?: unknown }
+              | undefined
+            const asked =
+              entry?.kind === 'board.message' && data?.reply === true && data.from !== 'user'
+            if (asked && data.from === by) return undefined
+            if (!asked) elsewhere = false
+            if (data?.routed !== true) echo = false
+          }
           const report = !(await underway(host, tx, id))
           if (elsewhere) {
             if (!report) return undefined
@@ -157,16 +205,16 @@ export function route(host: ExtensionHost) {
             )
             if (last?.from !== id || last.reply || last.report || last.re !== undefined)
               return undefined
-            return { text: last.text, report }
+            return { text: last.text, to: by, report }
           }
-          const text = message.content.flatMap((p) => (p.type === 'text' ? [p.text] : [])).join('')
-          return { text, report }
+          return { text, to: by, report, echo }
         }, ctx)
         if (routed?.text.trim())
-          await send(host, id, { to: `#${by}`, text: routed.text, reply: false }, ctx, {
+          await send(host, id, { to: `#${routed.to}`, text: routed.text, reply: false }, ctx, {
             requestId: `route:${answer}`,
-            note: !routed.report,
-            report: routed.report,
+            ...('report' in routed
+              ? { note: !routed.report, report: routed.report, echo: routed.echo }
+              : { routed: true }),
           })
         await runtime.commit(() => terminal, ctx)
       },

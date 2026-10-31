@@ -61,6 +61,8 @@ export async function prepareServer(options: Partial<ServerOptions> = {}) {
     for (const origin of remote)
       if (!origins.includes(origin)) console.log(`Ultimate: ${origin} (remote) is no longer served`)
     remote = origins
+    // The supervisor's dashboard keeps the current ones on screen; the log lines above are the history.
+    reportCore({ type: 'access', origins })
     void system
       ?.changed()
       .catch((error: unknown) => console.error('Publishing access changes failed:', error))

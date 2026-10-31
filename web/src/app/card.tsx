@@ -18,6 +18,7 @@ export function Card({
         className,
       )}
       data-attention={attention || undefined}
+      data-ui="card"
       {...props}
     />
   )

@@ -1,6 +1,5 @@
 import type { EntryRecord } from '@earendil-works/pi-durable'
 import {
-  ArrowLeftRightIcon,
   CheckIcon,
   CornerDownRightIcon,
   CornerLeftUpIcon,
@@ -45,7 +44,6 @@ import { accentOf } from './accent.tsx'
 import {
   answerTo,
   answeredMessages,
-  callFailed,
   backgroundRow,
   counterparts,
   emptyMessages,
@@ -108,7 +106,12 @@ export function Address({
     return (
       <span className="flex items-center gap-1.5" title="@ultimate">
         <AgentMark name={name} size="sm" />
-        <span className="font-sans text-[10.5px] font-semibold tracking-[0.28em]">ULTIMATE</span>
+        <span
+          className="font-sans text-[10.5px] font-semibold tracking-[0.28em]"
+          data-ui="wordmark"
+        >
+          ULTIMATE
+        </span>
       </span>
     )
   return (
@@ -204,6 +207,8 @@ export function Bubble({
     <section
       data-message-outgoing={message?.id}
       data-compact-bubble
+      data-sender={accent === accentOf('ultimate') ? 'ultimate' : undefined}
+      data-ui="message-card"
       className="group/bubble mt-2 w-full min-w-0"
     >
       <header className="flex h-6 min-w-0 items-center gap-2 font-mono text-[11px] text-muted-foreground">
@@ -312,75 +317,11 @@ function AttachedAnswer({ answer, question }: { answer: Message; question: Messa
   )
 }
 
-/** A catch-up on the tally and main, the note a conversation gets when it resumes after they moved. */
-const catchup = (entry: EntryRecord) =>
-  entry.kind === 'lineage.note' && (entry.data as { source?: unknown })?.source === 'main'
-
-/** What one background row is, in a few words that its counterpart follows. */
-function backgroundWord(
-  { entry, calls }: CompactSummaryProps['rows'][number],
-  failed: (call: string) => boolean,
-) {
-  if (catchup(entry)) return 'Catch-up'
-  const words: Record<string, string> = {
-    'board.message': 'Message from',
-    'board.reply': 'Reply from',
-    'lineage.note': 'Note from',
-    'lineage.finished': 'Finished:',
-    'lineage.abstract': 'Summary of',
-    'lineage.woken': 'Woke up after compaction',
-    'subagents.report': 'Report from',
-    'subagents.instruction': 'Instruction from',
-    'workspaces.lander-report': 'Landing report from',
-  }
-  if (words[entry.kind]) return words[entry.kind]
-  if (calls.length) {
-    const branches = calls.every((call) => call.name === 'branch')
-    // A failed call did not do what its name says.
-    if (calls.every((call) => failed(call.id))) return branches ? 'Branch failed' : 'Message failed'
-    return branches ? (calls.length === 1 ? 'Started branch' : 'Started branches') : 'Message to'
-  }
-  return 'Answered'
-}
-
-/** A background group's line: who it was with, how many updates, and the work between them. */
-export function BackgroundSummary({ rows, steps, working, between }: CompactSummaryProps) {
-  const log = useDocOf(1, MessagesDoc) ?? emptyMessages
-  const transcript = useTranscript()
-  if (between) return <StretchSummary rows={rows} steps={steps} working={working} />
-  const shown = rows.filter((row) => backgroundRow(row, log) === true)
-  const who = [...new Set(shown.flatMap((row) => counterparts(row, log)))]
-  const count = shown.length
-  const what =
-    count === 1
-      ? backgroundWord(shown[0], (call) => callFailed(transcript, call))
-      : `${count} updates ${who.length ? 'with' : 'between agents'}`
-  const Icon = count === 1 && catchup(shown[0].entry) ? GitBranchIcon : ArrowLeftRightIcon
-  return (
-    <span className="flex min-w-0 items-center gap-1.5" data-compact-background>
-      <Icon className="size-3 shrink-0 text-brand/80" />
-      <span className="shrink-0">{what}</span>
-      {who.slice(0, 2).map((id) => (
-        <span className="flex min-w-0 text-foreground/80" key={id}>
-          {id === 'lander' ? '@lander' : <Address id={id} />}
-        </span>
-      ))}
-      {who.length > 2 && <span className="shrink-0">+{who.length - 2}</span>}
-      {steps > 0 && (
-        <span className="shrink-0 max-sm:hidden">
-          · {steps} step{steps === 1 ? '' : 's'}
-        </span>
-      )}
-      {working && <span className="shrink-0 text-brand">· working</span>}
-    </span>
-  )
-}
-
 /**
  * A whole stretch between @ultimate's messages in one line: how many updates, who with, what landed and whether the
  * app reloaded, so the reader knows whether to open it.
  */
-function StretchSummary({ rows, steps, working }: CompactSummaryProps) {
+export function StretchSummary({ rows, steps, working }: CompactSummaryProps) {
   const log = useDocOf(1, MessagesDoc) ?? emptyMessages
   const counted = rows.filter(
     (row) => backgroundRow(row, log) !== 'hidden' && row.entry.kind !== 'pi.system',
@@ -667,6 +608,8 @@ export function MessageInput({ entry }: { entry: EntryRecord }) {
     >
       <section
         data-message-input={origin.id}
+        data-sender={accent === accentOf('ultimate') ? 'ultimate' : undefined}
+        data-ui="message-card"
         className={cn('group/bubble min-w-0 rounded-lg border', accent.edge, accent.fill)}
       >
         <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-muted-foreground">

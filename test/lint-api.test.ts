@@ -278,17 +278,3 @@ const later = () => import('../questions/web.tsx')`
   expect(lint('core-tier-deps', 'extensions/phase/web.tsx', source)).toEqual([])
   expect(lint('core-tier-deps', 'test/example.test.ts', source)).toEqual([])
 })
-
-it('rejects host.provide and host.use, also through an action context', () => {
-  const source = `host.provide('echo', {})
-host.use('echo')?.echo()
-ctx.host.use('echo')
-host.implement(EchoApi, {})
-host.want(EchoApi)
-service.use('echo')`
-  expect(lint('no-raw-services', 'extensions/echo/server.ts', source)).toEqual([
-    'host.provide is untyped: declare a token in api.ts and use host.implement, host.need or host.want for services, host.emit and host.react for events.',
-    'host.use is untyped: declare a token in api.ts and use host.implement, host.need or host.want for services, host.emit and host.react for events.',
-    'host.use is untyped: declare a token in api.ts and use host.implement, host.need or host.want for services, host.emit and host.react for events.',
-  ])
-})

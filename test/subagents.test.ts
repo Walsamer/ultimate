@@ -157,8 +157,6 @@ async function fixture(
       ...prepared,
       access: { allow: () => () => {} },
       notice: () => {},
-      provide: () => {},
-      use: () => undefined,
       implement: () => {},
       need: () => {
         throw new Error('Not used')
