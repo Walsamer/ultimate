@@ -1,5 +1,9 @@
 {
-  "extensions": {},
+  "extensions": {
+    "disable": [
+      "voice"
+    ]
+  },
   "modelFamilies": {
     "families": {
       "lead": {
