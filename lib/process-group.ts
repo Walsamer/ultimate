@@ -28,7 +28,10 @@ export type Group = { child: GroupProcess; ended: Promise<boolean>; closed: Prom
 export function identify(pid: number): string | undefined {
   if (process.platform === 'darwin') {
     try {
-      return execFileSync('ps', ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8' }).trim()
+      // The absolute path: `ps` lives in /bin on macOS, and the caller's PATH may not hold it (a stub CLI's folder).
+      return execFileSync('/bin/ps', ['-o', 'lstart=', '-p', String(pid)], {
+        encoding: 'utf8',
+      }).trim()
     } catch {
       // ps exits 1 when the pid is gone.
       return undefined

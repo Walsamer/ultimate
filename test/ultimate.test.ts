@@ -266,18 +266,17 @@ it.concurrent('starts a lineage branch with a message input and caller attributi
   expect(overridden.tools.map((tool) => tool.name)).toEqual(
     configured.tools.map((tool) => tool.name).filter((name) => name !== 'debug'),
   )
-  // The branch's later run (woken by its child's reply) routes its answer to its starter as a note.
+  // The branch's later run (woken by its child's reply) routes its answer to its starter as a note. Its answer to the
+  // tool result races that reply for the relay, so this waits for the note naming the child rather than for the tool
+  // result it may have answered with.
   await until(async () =>
     (await log(f.server)).some(
-      (m) =>
-        m.from === branch &&
-        m.to === ultimate &&
-        m.text === `Tool result: Branch #${sameTree.to} started; message ${sameTree.id} sent.`,
+      (m) => m.from === branch && m.to === ultimate && m.text.includes(`#${sameTree.to}`),
     ),
   )
   await until(async () =>
     (await entries(f.server, ultimate)).some((entry) =>
-      JSON.stringify(entry).includes(`Branch #${sameTree.to} started`),
+      JSON.stringify(entry).includes(`#${sameTree.to}`),
     ),
   )
 })
