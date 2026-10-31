@@ -1,6 +1,32 @@
 import { expect, it } from 'vitest'
 import { QUIET_MS, Relay, TRAILING_MS } from '../extensions/voice-live/relay.ts'
 import type { LiveEvent } from '../extensions/voice-live/relay.ts'
+import { sentences, speakable } from '../extensions/voice-live/session-local.ts'
+
+it('speaks @mentions and URLs as words, and branch ids never as numbers', () => {
+  expect(speakable('Passing that on to @ultimate; @voice heard you.')).toBe(
+    'Passing that on to Ultimate; Voice heard you.',
+  )
+  expect(speakable('#12 started; conversation #44 waits on branch 7633.')).toBe(
+    'a branch started; a conversation waits on a branch.',
+  )
+  expect(speakable('See https://github.com/jamesgroat/ultimate/pull/12.')).toBe(
+    'See github dot com.',
+  )
+  expect(speakable('Mail james@groat.com about C#5.')).toBe('Mail james@groat.com about C#5.')
+})
+
+it('splits a local-engine line into sentences, so the first plays while the rest render', () => {
+  expect(sentences('Yes, it landed. Passing the restart on now! Want details?')).toEqual([
+    'Yes, it landed.',
+    'Passing the restart on now!',
+    'Want details?',
+  ])
+  expect(sentences('One: a, keep both… or b, local only')).toEqual([
+    'One: a, keep both…',
+    'or b, local only',
+  ])
+})
 
 const said = (delta: string): LiveEvent => ({ type: 'session.input_transcript.delta', delta })
 const spoken = (delta: string): LiveEvent => ({ type: 'session.output_transcript.delta', delta })
