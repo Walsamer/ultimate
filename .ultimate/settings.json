@@ -1,14 +1,27 @@
 {
-  "extensions": {
-    "enable": ["voice-live"]
-  },
+  "extensions": {},
   "modelFamilies": {
     "families": {
-      "lead": { "model": "deepseek/deepseek-flash", "thinking": "high", "color": "orange" },
-      "review": { "model": "deepseek/deepseek-flash", "thinking": "high" },
-      "fast": { "model": "deepseek/deepseek-flash" },
-      "tiny": { "model": "deepseek/deepseek-flash", "thinking": "low" },
-      "design": { "model": "deepseek/deepseek-flash", "thinking": "high" }
+      "lead": {
+        "model": "deepseek/deepseek-flash",
+        "thinking": "high",
+        "color": "orange"
+      },
+      "review": {
+        "model": "deepseek/deepseek-flash",
+        "thinking": "high"
+      },
+      "fast": {
+        "model": "deepseek/deepseek-flash"
+      },
+      "tiny": {
+        "model": "deepseek/deepseek-flash",
+        "thinking": "low"
+      },
+      "design": {
+        "model": "deepseek/deepseek-flash",
+        "thinking": "high"
+      }
     },
     "assign": {
       "preview": "fast"
@@ -16,12 +29,17 @@
   },
   "isolates": {
     "worktree": {
-      "setup": ["pnpm install --frozen-lockfile --prefer-offline"]
+      "setup": [
+        "pnpm install --frozen-lockfile --prefer-offline"
+      ]
     }
   },
   "lander": {
     "checks": [
-      { "command": "pnpm check", "timeout": 120 },
+      {
+        "command": "pnpm check",
+        "timeout": 120
+      },
       {
         "command": "mkdir -p \"$HOME/.ultimate/tmp\" && TMPDIR=\"$HOME/.ultimate/tmp\" pnpm test",
         "timeout": 300
