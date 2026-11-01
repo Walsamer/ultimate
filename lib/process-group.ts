@@ -12,10 +12,15 @@ export const handshake = 'read -r _ || exit 1; exec "$0" "$@"'
 
 export type GroupProcess = ChildProcessByStdio<Writable, Readable, Readable>
 /**
- * A process group this process started. `ended` resolves once the leader has exited and nothing of its group is left:
- * `true`, or `false` when a member survived KILL. `closed` resolves when its output pipes have closed.
+ * What the leader's exit left behind: `drained` is `true` once nothing of its group is left, `false` when a member
+ * survived KILL. `stopped` counts the live members the drain had to stop (0 when the group was already empty).
  */
-export type Group = { child: GroupProcess; ended: Promise<boolean>; closed: Promise<void> }
+export type GroupEnded = { drained: boolean; stopped: number }
+/**
+ * A process group this process started. `ended` resolves once the leader has exited and its group's remains were
+ * stopped; `closed` resolves when its output pipes have closed.
+ */
+export type Group = { child: GroupProcess; ended: Promise<GroupEnded>; closed: Promise<void> }
 
 /**
  * Signalling a group needs positive evidence that it is ours: its leader not yet reaped by this process, or a pid file
@@ -87,6 +92,27 @@ export function groupAlive(pid?: number) {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ESRCH' || darwinEnded(pid, error)) return false
     throw error
+  }
+}
+
+/**
+ * How many live members group `pid` has, by the same single `ps` the Darwin probe reads: zombies do not count. 0 when
+ * the group is already gone; 1 when `ps` cannot tell and the group is still there (something is, its size unknown).
+ */
+function memberCount(pid: number) {
+  if (!groupAlive(pid)) return 0
+  try {
+    const output = execFileSync('ps', ['-A', '-o', 'pgid=,stat='], { encoding: 'utf8' })
+    let count = 0
+    for (const line of output.split('\n')) {
+      const [group, state] = line.trim().split(/\s+/)
+      // A zombie has exited already; what still runs is what the drain stops.
+      if (Number(group) === pid && state && !state.startsWith('Z')) count++
+    }
+    return count
+  } catch {
+    // Nothing to inspect with: one member at least is there.
+    return 1
   }
 }
 
@@ -170,10 +196,15 @@ export function spawnGroup(
     })
   })
   const ended = left
-    .then((remains) => !remains || drain(child.pid!, grace))
+    .then(async (remains) => {
+      // Counted before the drain signals anything: what the leader's exit left running, which is what the drain stops.
+      const stopped = remains ? memberCount(child.pid!) : 0
+      return { drained: remains ? await drain(child.pid!, grace) : true, stopped }
+    })
     .catch(
-      // A member this process may not signal survived; stopGroup reports that the group did not exit.
-      () => false,
+      // A member this process may not signal survived; stopGroup reports that the group did not exit. It is there, so
+      // the stopped count is at least one.
+      () => ({ drained: false, stopped: 1 }),
     )
   const closed = new Promise<void>((resolve) => child.once('close', () => resolve()))
   if (child.pid === undefined) return { child, ended, closed }
@@ -232,7 +263,7 @@ export async function stopGroup(
     }
     // After a KILL the leader's exit drains the rest of the group, with its own grace. `ended` is settled once and
     // for all, so a group that reported a survivor is probed again: once empty, it exited after all.
-    if (!(await within(leader.ended, grace + 3500)) && (unreaped() || probe(pid)))
+    if (!(await within(leader.ended, grace + 3500))?.drained && (unreaped() || probe(pid)))
       throw new Error(`Process group ${pid} did not exit`)
   } else {
     const recorded = pidFile && (await readPidFile(pidFile)) === pid

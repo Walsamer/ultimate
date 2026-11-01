@@ -108,10 +108,32 @@ it('stops what a leader left in its group when it exits', async () => {
   try {
     const childFile = join(directory, 'child')
     const group = spawnGroup('/bin/sh', ['-c', `sleep 60 & echo $! > '${childFile}'`], {})
-    expect(await group.ended).toBe(true)
+    expect(await group.ended).toEqual({ drained: true, stopped: 1 })
     expect(running(Number(await readFile(childFile, 'utf8')))).toBe(false)
     // Its leader is reaped, so stopping it again signals nothing and only confirms it is gone.
     await stopGroup(group.child.pid!, { leader: group })
+  } finally {
+    await removeTemp(directory)
+  }
+})
+
+it('counts the live members the leader left for the drain, and none when it was alone', async () => {
+  const directory = await temp('ultimate-process-group-')
+  try {
+    const first = join(directory, 'first')
+    const second = join(directory, 'second')
+    const group = spawnGroup(
+      '/bin/sh',
+      ['-c', `sleep 60 & echo $! > '${first}'; sleep 60 & echo $! > '${second}'`],
+      {},
+    )
+    // Both children were running in the group when the leader exited, so the drain had both to stop.
+    expect(await group.ended).toEqual({ drained: true, stopped: 2 })
+    const children = [Number(await readFile(first, 'utf8')), Number(await readFile(second, 'utf8'))]
+    expect(children).not.toContain(group.child.pid)
+    expect(children.map(running)).toEqual([false, false])
+    const alone = spawnGroup('/bin/sh', ['-c', 'exit 0'], {})
+    expect(await alone.ended).toEqual({ drained: true, stopped: 0 })
   } finally {
     await removeTemp(directory)
   }
@@ -126,7 +148,7 @@ it('reports a group it may not probe (EPERM) as not ended instead of throwing fr
   })
   try {
     const group = spawnGroup('/bin/sh', ['-c', `sleep 60 & echo $! > '${childFile}'`], {})
-    expect(await group.ended).toBe(false)
+    expect(await group.ended).toEqual({ drained: false, stopped: 1 })
     kill.mockRestore()
     await expect(stopGroup(group.child.pid!, { leader: group, grace: 50 })).rejects.toThrow(
       'did not exit',
@@ -150,7 +172,7 @@ it('stops a group that once reported a survivor once nothing of it is left', asy
     const group = spawnGroup('/bin/sh', ['-c', `sleep 60 & echo $! > '${childFile}'`], {
       pidFile,
     })
-    expect(await group.ended).toBe(false)
+    expect(await group.ended).toEqual({ drained: false, stopped: 1 })
     kill.mockRestore()
     // The survivor goes later on its own: the settled `ended` must not keep the group stuck.
     process.kill(Number(await readFile(childFile, 'utf8')), 'SIGKILL')
