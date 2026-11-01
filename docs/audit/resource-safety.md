@@ -17,7 +17,7 @@ restarted nothing. Where a statement rests on reading code rather than on an obs
 2. The agent's `bash` tool is **outside** the process-group machinery Ultimate otherwise trusts. Lander checks,
    automation scripts and previews spawn through `lib/process-group.ts` (pid file, start-time identity, sweep); the tool
    a worker runs a benchmark with spawns a detached shell with no pid file and no registry (`dist/env/node.js:742-749`).
-3. A timeout kills the whole group, but a *successful* call kills nothing. Bounded probes confirmed both: a call whose
+3. A timeout kills the whole group, but a _successful_ call kills nothing. Bounded probes confirmed both: a call whose
    timeout expired left no survivors; a child that outlived its call was still running in the following tool call.
 4. So a heavy job that is backgrounded inside a shell is invisible to Ultimate from the moment the call returns: no pid
    file, no sweep, no owner. That is the shape of the incident.
@@ -55,61 +55,61 @@ Two separate spawn universes exist:
 - **Unmanaged** (Pi's bash tool): what an agent's `bash` call actually runs. Detached, so children survive their parent,
   but with nothing that could find them later.
 
-Ownership therefore is: the *conversation's* task record owns a tool call; the shell it spawns owns its own process
+Ownership therefore is: the _conversation's_ task record owns a tool call; the shell it spawns owns its own process
 group; nothing owns a backgrounded grandchild. Process-tree tracking exists only where `runGroup` was used.
 
 ## 3. Safeguard coverage matrix
 
 "Effective?" means: does it prevent or detect a memory-exhausting workload? `VERIFIED` = observed, `CODE` = read only.
 
-| # | Safeguard | Exists? | Where? | Effective? | Gap | Pri |
-|---|---|---|---|---|---|---|
-| A1 | Host free/total memory read | yes | `server/system.ts:121-122` | no — display only | never consulted, not persisted | P2 |
-| A2 | Per-process / per-tree RSS | **no** | — | no | nothing reads RSS; no attribution to call, task or worker | P1 |
-| A3 | Aggregate across concurrent workers | **no** | — | no | no counter anywhere | P1 |
-| A4 | Swap / pressure / `vm_stat` / jetsam | **no** | — | no | no code path samples any of them | P1 |
-| A5 | CPU / load for decisions | **no** | `server/system.ts:98` | no | `cpus()` is display only; load never read | P3 |
-| A6 | Memory admission control | **no** | — | no | `start` and `bash` never ask | P1 |
-| B1 | Max concurrent subagents | **no** | `extensions/subagents/server.ts:940-1010` | no | `background` is a waiting style, not a quota | P2 |
-| B2 | Max concurrent bash calls | **no** | — | no | no semaphore, no queue | P2 |
-| B3 | Deferral instead of launch | partial | `harness.hold()`, `extensions/pause/server.ts:133-135` | only for pause/rate-limit | no resource-shaped caller | P2 |
-| C1 | Wall-clock timeout on bash | yes | `extensions/coding-tools/server.ts:45-50` | time only, 600 s default | a call may request far more; a pipeline can mask the exit code | P1 |
-| C2 | Timeout kills the process tree | yes | `dist/env/node.js:214-241,637-640` | yes, for in-group members | VERIFIED: a timed-out call left no survivors | — |
-| C3 | Group kill on *normal* completion | **no** | `dist/env/node.js:672-679` | no | VERIFIED: a child outlived its finished call | **P0** |
-| C4 | Escaped (`setsid`) children killed | **no** | pinned by `test/e2e/process-group.test.ts:260-291` | no | known and documented, not handled | P3 |
-| C5 | Lander check timeouts | yes | `extensions/workspaces/lander.ts:120-125,185-214` | yes | stall 2 min / total 10 min, whole group killed | — |
-| C6 | Isolate setup timeout kills tree | partial | `extensions/workspaces/setup.ts:18-25` | no | plain `execFile`: grandchildren survive | P2 |
-| C7 | Automation script timeout + cleanup | yes | `extensions/automations/supervisor.ts:430-450,575` | yes | pid file, TERM→KILL | — |
-| C8 | Graceful shutdown kills in-flight shells | yes | `server/harness.ts:293` | yes, on SIGINT/SIGTERM only | a crash runs none of it | P0 |
-| C9 | Retry respects a timeout | n/a | `extensions/watchdog/server.ts:31-32` | — | retries cover provider errors, not re-issued commands | P2 |
-| D1 | Normal completion cleans the tree | **no** | see C3 | no | the incident's mechanism | P0 |
-| D2 | Worker failure kills its tree | yes | `extensions/subagents/server.ts:1068-1166` | yes for the current call | earlier backgrounded children are unreachable | P1 |
-| D3 | Coordinator stop kills children | **no**, by design | `extensions/subagents/README.md` | — | only concluding a child aborts its work | P2 |
-| D4 | Operator interrupt kills the tree | yes | `extensions/coding-tools/server.ts:190-217` | yes | — | — |
-| D5 | Terminal/process killed → children reaped | **no** | — | no | detached children are reparented and keep running | P0 |
-| D6 | Orphan sweep after a crash | partial | lander + automation pid files only | for those two kinds | agent bash, isolate setup, previews: never | P0 |
-| D7 | Pid identity / reuse safety | yes | `lib/process-group.ts:28-50,222-250` | yes where used | Darwin `ps lstart` resolves to a second | — |
-| E1 | Durable record of what ran | yes | `state.sqlite` tasks/entries | yes | no resource fields | — |
-| E2 | Resource telemetry persisted | **no** | trace schema: timing only | no | nothing to attribute a spike to | P1 |
-| E3 | Resource failures distinguishable | **no** | `extensions/watchdog/server.ts:53-59` | no | a kill arrives as an exit code, or as success | P1 |
-| E4 | Automatic recovery re-runs work | yes | `server/main.ts:217`, `restartLimit` 5 | works — including for unsafe work | `bash` is not replay-safe, so the model re-decides | P1 |
-| E5 | Human gate before re-running dangerous work | **no** | — | no | repeated re-issues within minutes | P1 |
-| E6 | Task held on resource grounds | no | `extensions/pause/README.md` | — | `PauseApi` is user-only; no guard calls it | P1 |
+| #   | Safeguard                                   | Exists?           | Where?                                                 | Effective?                        | Gap                                                            | Pri    |
+| --- | ------------------------------------------- | ----------------- | ------------------------------------------------------ | --------------------------------- | -------------------------------------------------------------- | ------ |
+| A1  | Host free/total memory read                 | yes               | `server/system.ts:121-122`                             | no — display only                 | never consulted, not persisted                                 | P2     |
+| A2  | Per-process / per-tree RSS                  | **no**            | —                                                      | no                                | nothing reads RSS; no attribution to call, task or worker      | P1     |
+| A3  | Aggregate across concurrent workers         | **no**            | —                                                      | no                                | no counter anywhere                                            | P1     |
+| A4  | Swap / pressure / `vm_stat` / jetsam        | **no**            | —                                                      | no                                | no code path samples any of them                               | P1     |
+| A5  | CPU / load for decisions                    | **no**            | `server/system.ts:98`                                  | no                                | `cpus()` is display only; load never read                      | P3     |
+| A6  | Memory admission control                    | **no**            | —                                                      | no                                | `start` and `bash` never ask                                   | P1     |
+| B1  | Max concurrent subagents                    | **no**            | `extensions/subagents/server.ts:940-1010`              | no                                | `background` is a waiting style, not a quota                   | P2     |
+| B2  | Max concurrent bash calls                   | **no**            | —                                                      | no                                | no semaphore, no queue                                         | P2     |
+| B3  | Deferral instead of launch                  | partial           | `harness.hold()`, `extensions/pause/server.ts:133-135` | only for pause/rate-limit         | no resource-shaped caller                                      | P2     |
+| C1  | Wall-clock timeout on bash                  | yes               | `extensions/coding-tools/server.ts:45-50`              | time only, 600 s default          | a call may request far more; a pipeline can mask the exit code | P1     |
+| C2  | Timeout kills the process tree              | yes               | `dist/env/node.js:214-241,637-640`                     | yes, for in-group members         | VERIFIED: a timed-out call left no survivors                   | —      |
+| C3  | Group kill on _normal_ completion           | **no**            | `dist/env/node.js:672-679`                             | no                                | VERIFIED: a child outlived its finished call                   | **P0** |
+| C4  | Escaped (`setsid`) children killed          | **no**            | pinned by `test/e2e/process-group.test.ts:260-291`     | no                                | known and documented, not handled                              | P3     |
+| C5  | Lander check timeouts                       | yes               | `extensions/workspaces/lander.ts:120-125,185-214`      | yes                               | stall 2 min / total 10 min, whole group killed                 | —      |
+| C6  | Isolate setup timeout kills tree            | partial           | `extensions/workspaces/setup.ts:18-25`                 | no                                | plain `execFile`: grandchildren survive                        | P2     |
+| C7  | Automation script timeout + cleanup         | yes               | `extensions/automations/supervisor.ts:430-450,575`     | yes                               | pid file, TERM→KILL                                            | —      |
+| C8  | Graceful shutdown kills in-flight shells    | yes               | `server/harness.ts:293`                                | yes, on SIGINT/SIGTERM only       | a crash runs none of it                                        | P0     |
+| C9  | Retry respects a timeout                    | n/a               | `extensions/watchdog/server.ts:31-32`                  | —                                 | retries cover provider errors, not re-issued commands          | P2     |
+| D1  | Normal completion cleans the tree           | **no**            | see C3                                                 | no                                | the incident's mechanism                                       | P0     |
+| D2  | Worker failure kills its tree               | yes               | `extensions/subagents/server.ts:1068-1166`             | yes for the current call          | earlier backgrounded children are unreachable                  | P1     |
+| D3  | Coordinator stop kills children             | **no**, by design | `extensions/subagents/README.md`                       | —                                 | only concluding a child aborts its work                        | P2     |
+| D4  | Operator interrupt kills the tree           | yes               | `extensions/coding-tools/server.ts:190-217`            | yes                               | —                                                              | —      |
+| D5  | Terminal/process killed → children reaped   | **no**            | —                                                      | no                                | detached children are reparented and keep running              | P0     |
+| D6  | Orphan sweep after a crash                  | partial           | lander + automation pid files only                     | for those two kinds               | agent bash, isolate setup, previews: never                     | P0     |
+| D7  | Pid identity / reuse safety                 | yes               | `lib/process-group.ts:28-50,222-250`                   | yes where used                    | Darwin `ps lstart` resolves to a second                        | —      |
+| E1  | Durable record of what ran                  | yes               | `state.sqlite` tasks/entries                           | yes                               | no resource fields                                             | —      |
+| E2  | Resource telemetry persisted                | **no**            | trace schema: timing only                              | no                                | nothing to attribute a spike to                                | P1     |
+| E3  | Resource failures distinguishable           | **no**            | `extensions/watchdog/server.ts:53-59`                  | no                                | a kill arrives as an exit code, or as success                  | P1     |
+| E4  | Automatic recovery re-runs work             | yes               | `server/main.ts:217`, `restartLimit` 5                 | works — including for unsafe work | `bash` is not replay-safe, so the model re-decides             | P1     |
+| E5  | Human gate before re-running dangerous work | **no**            | —                                                      | no                                | repeated re-issues within minutes                              | P1     |
+| E6  | Task held on resource grounds               | no                | `extensions/pause/README.md`                           | —                                 | `PauseApi` is user-only; no guard calls it                     | P1     |
 
 ## 4. What the incident record showed
 
 Relative timing, from the project's durable record (exact timestamps and identifiers deliberately omitted):
 
-| When | What |
-|---|---|
-| T+0 | A branch starts and reads the benchmark code. |
-| T+6 to T+20 min | The benchmark is launched in the background and polled until it reports finished. |
-| T+20 min | A second, heavier inference call starts **in the foreground** with a 600 s timeout. |
-| ~T+27 min | The machine is rebooted (hard). |
-| T+31 min | Ultimate restarts for the project; recovery resumes the branch and tells the model its tool "was interrupted and may have partially run". |
-| T+31 to T+34 min | The model re-issues the same workload three times, within three minutes, with no gate. |
-| T+34 min | One attempt ends with a signal (`Killed: 9`) after ~150 s; the tool result is reported as **success**, because the pipeline's last command exited 0. |
-| ~T+35 min | The host is force-quit; the durable record is left with tasks `waiting` and `running`. |
+| When             | What                                                                                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T+0              | A branch starts and reads the benchmark code.                                                                                                        |
+| T+6 to T+20 min  | The benchmark is launched in the background and polled until it reports finished.                                                                    |
+| T+20 min         | A second, heavier inference call starts **in the foreground** with a 600 s timeout.                                                                  |
+| ~T+27 min        | The machine is rebooted (hard).                                                                                                                      |
+| T+31 min         | Ultimate restarts for the project; recovery resumes the branch and tells the model its tool "was interrupted and may have partially run".            |
+| T+31 to T+34 min | The model re-issues the same workload three times, within three minutes, with no gate.                                                               |
+| T+34 min         | One attempt ends with a signal (`Killed: 9`) after ~150 s; the tool result is reported as **success**, because the pipeline's last command exited 0. |
+| ~T+35 min        | The host is force-quit; the durable record is left with tasks `waiting` and `running`.                                                               |
 
 Which safeguards applied: the wall-clock timeout was on and never fired (it bounds a single call, not a backgrounded
 job); timeout→group-kill never triggered (no timeout, no abort); group cleanup on normal completion is absent; no pid
@@ -135,7 +135,7 @@ sweep that directory on start. Effort: 1–2 days (an upstream patch plus plumbi
 carries a Pi patch, so the precedent exists). Prevents: backgrounded workloads outliving their call; orphans after a
 crash; the incident's mechanism.
 
-*R1's limit, stated plainly:* it stops a backgrounded workload from outliving its call and stops orphans surviving a
+_R1's limit, stated plainly:_ it stops a backgrounded workload from outliving its call and stops orphans surviving a
 crash. It does **not** stop a single long foreground call — a legitimate heavy inference inside one tool call is still
 bounded only by the wall-clock timeout. R2 covers that case.
 
@@ -162,12 +162,12 @@ answer is a managed background-execution mechanism (owned, listed, stoppable, sw
 
 ## 7. Prioritized implementation plan
 
-| Order | Item | Effort | Prevents |
-|---|---|---|---|
-| 1 | **R1** ownership: pid file + drain on normal exit + sweep | 1–2 days | backgrounded workloads outliving their call; post-crash orphans |
-| 2 | **R3** peak RSS + "ended by signal" as an error | 0.5 day | a kill reading as success; no attribution |
-| 3 | **R2** resource guard: sample, warn, cancel, hold | 1–2 days | exhaustion inside a legitimate long call |
-| 4 | **R4** admission control under a hard threshold | ~1 day | several heavy workloads running together |
+| Order | Item                                                      | Effort   | Prevents                                                        |
+| ----- | --------------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| 1     | **R1** ownership: pid file + drain on normal exit + sweep | 1–2 days | backgrounded workloads outliving their call; post-crash orphans |
+| 2     | **R3** peak RSS + "ended by signal" as an error           | 0.5 day  | a kill reading as success; no attribution                       |
+| 3     | **R2** resource guard: sample, warn, cancel, hold         | 1–2 days | exhaustion inside a legitimate long call                        |
+| 4     | **R4** admission control under a hard threshold           | ~1 day   | several heavy workloads running together                        |
 
 ## 8. Test and verification strategy
 

@@ -438,6 +438,8 @@ function ConversationComposer({ dock }: { dock?: boolean }) {
           disabled={loading || sending || reading}
           remove={(index) => setImages((current) => current.filter((_, i) => i !== index))}
         />
+        {/* A drop needs no handler here: the shell's guard (`installDropGuard`) lands it on this composer, and the seam
+        gives it to an extension's handler, or to its images and text when none takes it. */}
         <PromptInputTextarea
           autoFocus={!touchKeyboard()}
           readOnly={loading || sending}

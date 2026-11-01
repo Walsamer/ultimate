@@ -44,7 +44,7 @@ export function useImagePaste({
     await add(files)
   }
 
-  /** Add image files as attachments, with the limits and errors pasting one has. */
+  /** Add image files as attachments, with the limits and errors pasting one has; a drop of images lands here too. */
   async function add(files: readonly File[]) {
     if (pending.current || disabled()) return
     if (
