@@ -62,12 +62,9 @@ it('reports what a finished call left running, and stays quiet when it left noth
     home: join(directory, 'home'),
     userHome: directory,
   })
-  const call = async (commands: { command: string }[], pidFile?: string) => {
+  const call = async (command: string) => {
     server.host.faux!.setResponses([
-      fauxAssistantMessage(
-        commands.map(({ command }) => fauxToolCall('bash', { command })),
-        { stopReason: 'toolUse' },
-      ),
+      fauxAssistantMessage([fauxToolCall('bash', { command })], { stopReason: 'toolUse' }),
       fauxAssistantMessage('Complete'),
     ])
     await (await server.root.submit({ type: 'input', content: 'Run' }, context)).wait(context)
@@ -83,7 +80,7 @@ it('reports what a finished call left running, and stays quiet when it left noth
   }
   try {
     const pidFile = join(directory, 'child.pid')
-    const leftovers = await call([{ command: `sleep 30 & echo $! > '${pidFile}'` }])
+    const leftovers = await call(`sleep 30 & echo $! > '${pidFile}'`)
     expect(leftovers.map((item) => item.message)).toContain(
       'Stopped 1 process the command left running. Use the background tool for work that should outlive the call.',
     )
@@ -91,7 +88,7 @@ it('reports what a finished call left running, and stays quiet when it left noth
     const child = Number(await readFile(pidFile, 'utf8'))
     expect(() => process.kill(child, 0)).toThrow('ESRCH')
     // A call that left nothing behind says nothing.
-    const plain = await call([{ command: 'echo plain' }])
+    const plain = await call('echo plain')
     expect(plain.some((item) => item.code === 'left_running')).toBe(false)
   } finally {
     await server.close()
