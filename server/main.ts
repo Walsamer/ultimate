@@ -167,6 +167,7 @@ export async function prepareServer(options: Partial<ServerOptions> = {}) {
     () => system?.changed(),
     {
       access,
+      shellLeftovers: host.shellLeftovers,
       harness: () => {
         if (!opened) throw new Error('Harness is not open')
         return opened.harness

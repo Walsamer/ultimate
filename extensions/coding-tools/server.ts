@@ -282,7 +282,14 @@ async function madeCommits(path: string, conversation: number) {
   return events
 }
 
-export default function codingTools(host: Pick<ExtensionHost, 'emit'>) {
+/**
+ * What a call that left work behind is told: the drain stopped it, and the tool that keeps it is named. This
+ * diagnostic is how the model learns `background`, so it says what happened and what to do instead.
+ */
+export const leftRunning = (count: number) =>
+  `Stopped ${count} ${count === 1 ? 'process' : 'processes'} the command left running. Use the background tool for work that should outlive the call.`
+
+export default function codingTools(host: Pick<ExtensionHost, 'emit' | 'shellLeftovers'>) {
   const shell = createBashTool()
   const parameters = Type.Object({
     ...shell.parameters.properties,
@@ -306,13 +313,22 @@ export default function codingTools(host: Pick<ExtensionHost, 'emit'>) {
         )
       // One log per invocation: task ids repeat across projects and a retried call reruns its task.
       const log = join(tmpdir(), `ultimate-commits-${randomUUID()}.log`)
+      // The environment records what this call's process group still ran when it ended under this id.
+      const shellCall = randomUUID()
       const call = createBashTool({
-        prepare: (execution) => prepareBash(execution, api, log),
+        prepare: (execution) => {
+          prepareBash(execution, api, log)
+          execution.env.ULTIMATE_SHELL_CALL = shellCall
+        },
       })
       const run = (command: Context) => call.execute(args, api, command)
+      let result: ToolExecutionResult | undefined
+      let stopped = 0
       try {
-        return await untilStopped(run, api, interruptible, context)
+        result = await untilStopped(run, api, interruptible, context)
       } finally {
+        // Read once here, so a call that threw (a timeout) leaves nothing behind under its id either.
+        stopped = host.shellLeftovers(shellCall)
         // A failed or stopped command may still have committed, so record what it made either way.
         const commits = await madeCommits(log, api.conversationId)
         if (commits.length)
@@ -324,6 +340,15 @@ export default function codingTools(host: Pick<ExtensionHost, 'emit'>) {
               // Recording is history only; the command's own result must stand.
               console.error('coding-tools: recording commits failed:', error),
             )
+      }
+      if (stopped === 0) return result
+      // The command finished and its leftovers are stopped: the call says so, so the model does not repeat it.
+      return {
+        ...result,
+        diagnostics: [
+          ...(result.diagnostics ?? []),
+          { severity: 'warn' as const, code: 'left_running', message: leftRunning(stopped) },
+        ],
       }
     },
   })

@@ -102,7 +102,8 @@ export function groupAlive(pid?: number) {
 function memberCount(pid: number) {
   if (!groupAlive(pid)) return 0
   try {
-    const output = execFileSync('ps', ['-A', '-o', 'pgid=,stat='], { encoding: 'utf8' })
+    // The absolute path, as `identify` uses: the caller's PATH may not hold ps (a stub CLI's folder).
+    const output = execFileSync('/bin/ps', ['-A', '-o', 'pgid=,stat='], { encoding: 'utf8' })
     let count = 0
     for (const line of output.split('\n')) {
       const [group, state] = line.trim().split(/\s+/)
