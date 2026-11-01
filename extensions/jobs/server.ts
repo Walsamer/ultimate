@@ -50,7 +50,7 @@ function lasted(ms: number) {
   return `${Math.floor(seconds / 3600)}h ${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}m`
 }
 
-/** How a job reads wherever it is reported: `J1 running 3m: npm run bench (pid 1234)`. */
+/** How a job reads wherever it is reported: `J1 running · 3m: npm run bench (pid 1234)`. */
 function line(job: Job, now = Date.now()) {
   const state =
     job.state === 'running'
@@ -62,7 +62,7 @@ function line(job: Job, now = Date.now()) {
         : 'stopped'
   const ran = lasted((job.endedAt ?? now) - job.startedAt)
   const first = job.command.trim().split('\n')[0]
-  return `${job.id} ${state} ${ran}: ${first}${job.pid ? ` (pid ${job.pid})` : ''}`
+  return `${job.id} ${state} · ${ran}: ${first}${job.pid ? ` (pid ${job.pid})` : ''}`
 }
 
 function required(value: unknown, field: string): string {
