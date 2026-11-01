@@ -2,7 +2,7 @@ Ultimate's awareness of its own code: the replay-safe `restart` tool requests a 
 
 Call after authorized changes to `server/` or `shared/`. Never call for `web/`, `extensions/`, or `agents/`: those reload without a core swap.
 
-An isolated conversation must first land into the running Ultimate clone. Restart requires that clone to be clean and its HEAD to equal the workspace's saved landed commit; otherwise it asks you to land first. A shared conversation, including one in a project subdirectory, uses ordinary restart behavior.
+An isolated conversation whose workspace **is** the running Ultimate clone must first land into it: restart requires that clone to be clean and its HEAD to equal the workspace's saved landed commit, otherwise it asks you to land first. A workspace of another project — and a shared conversation, including one in a project subdirectory — uses ordinary restart behavior, since it lands into its own project and its tip can never be the clone's HEAD. The running clone must be clean either way, because it is the code the swap loads; a dirty one is refused with the files to commit or discard.
 
 Restart affects all conversations. Landing never restarts automatically. `POST /api/restart` requests the same swap; reconnect to `/api/events` to observe readiness.
 

@@ -15,21 +15,21 @@ export default function self(host: ExtensionHost) {
       section('self', async (input, context) => {
         const own = await workspaces.get(input.conversationId, context)
         const cwd = input.env?.cwd ?? input.agent.cwd ?? host.projectRoot
-        const sourceRoot =
-          own && host.projectRoot === host.ultimateRoot ? own.path : host.ultimateRoot
+        const hostIsClone = host.projectRoot === host.ultimateRoot
+        const sourceRoot = own && hostIsClone ? own.path : host.ultimateRoot
         return [
           `Project (your work): ${cwd}`,
           `Host project: ${host.projectRoot}`,
           `Ultimate (running host): ${host.ultimateRoot}`,
-          ...(host.projectRoot === host.ultimateRoot
-            ? ['The host project is Ultimate itself.']
-            : []),
+          ...(hostIsClone ? ['The host project is Ultimate itself.'] : []),
           `Direct project edits to ${cwd}; project-specific extensions, agents, skills, and surfaces belong in ${cwd}/.ultimate/.`,
           `The running host loads project config and extensions from ${host.projectRoot}/.ultimate/ and built-ins from ${host.ultimateRoot}/extensions/. These are host-scoped, not switched by your work cwd.`,
           `When someone is new to Ultimate or asks how it works, guide them from ${sourceRoot}/README.md (what it is, how to start, what to try) and the "How work is organised" section of ${sourceRoot}/AGENTS.md (roots, branches, notes, landing): explain briefly, in their terms, and point at the UI they will use (@ultimate's row at the top of the sidebar, or the top-bar @ultimate button on phones, and its conversation, Ctrl+K or ⌘K commands, the right panel).`,
           `Before changing Ultimate, read ${sourceRoot}/AGENTS.md (layers, reloads, durability) and ${sourceRoot}/extensions/README.md (new UI is a new extension folder).`,
           'UI and extension changes in the running host reload live. Call restart only after editing server/ or shared/, never for web/, extensions/, or agents/.',
-          ...(own
+          // Landing first is a precondition only when the workspace is the clone being swapped; a branch of another
+          // project lands into that project, and its tip can never be the clone's HEAD.
+          ...(own && hostIsClone
             ? [
                 `Land your workspace into ${own.source} first; restart requires the running clone to be clean at that landed commit.`,
               ]
@@ -47,18 +47,30 @@ export default function self(host: ExtensionHost) {
         replay: 'safe',
         async execute(_args, api, context): Promise<ToolExecutionResult> {
           const own = await workspaces.get(api.conversationId, context)
-          if (
-            own &&
-            ((await realpath(own.source)) !== (await realpath(host.ultimateRoot)) ||
-              !own.landed ||
-              (await workspaces.git(host.ultimateRoot, 'status', '--porcelain')) ||
-              (await workspaces.git(host.ultimateRoot, 'rev-parse', 'HEAD')) !== own.landed)
-          ) {
-            const error = `Restart refused: land your workspace into ${own.source} first`
+          // The running clone is the code a swap loads, so it must be clean for every conversation that asks.
+          if (own && (await workspaces.git(host.ultimateRoot, 'status', '--porcelain'))) {
+            const error = `Restart refused: ${host.ultimateRoot} has uncommitted changes; commit or discard them first`
             return {
               isError: true,
               details: { refused: true, error },
               output: [{ type: 'text', text: error }],
+            }
+          }
+          // Landing first is a precondition only when the workspace *is* the clone being swapped. A branch of another
+          // project lands into that project's target; comparing its tip to the clone's HEAD refused every such
+          // conversation, including a shared project in a subdirectory of the clone (README: ordinary restart).
+          if (own && (await realpath(own.source)) === (await realpath(host.ultimateRoot))) {
+            const landed = own.landed
+            if (
+              !landed ||
+              (await workspaces.git(host.ultimateRoot, 'rev-parse', 'HEAD')) !== landed
+            ) {
+              const error = `Restart refused: land your workspace into ${own.source} first`
+              return {
+                isError: true,
+                details: { refused: true, error },
+                output: [{ type: 'text', text: error }],
+              }
             }
           }
           const key = `restart:${api.taskId}`

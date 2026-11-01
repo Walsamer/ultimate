@@ -663,7 +663,29 @@ it('isolated restart refuses before landing and accepts a clean running clone at
   expect(JSON.stringify(await f.call(id, 'restart'))).toContain('RESTART_CALLED')
   expect(f.restart).toHaveBeenCalledOnce()
   await writeFile(join(f.projectRoot, 'dirty.txt'), 'dirty')
-  expect(JSON.stringify(await f.call(id, 'restart'))).toContain('land your workspace into')
+  expect(JSON.stringify(await f.call(id, 'restart'))).toContain('has uncommitted changes')
+  expect(f.restart).toHaveBeenCalledOnce()
+})
+// A branch of another project lands into that project, so its tip can never be the running clone's HEAD: landing first
+// is a precondition only when the workspace *is* the clone being swapped. The clone itself must be clean either way.
+it('restarts a branch of another project without landing it, and still refuses a dirty running clone', async () => {
+  const f = await fixture()
+  const id = await f.create()
+  await f.service.ready(id, context)
+  const workspace = (await f.service.get(id, context))!
+  const other = join(f.directory, 'another-project')
+  await mkdir(other, { recursive: true })
+  await f.opened.harness.commit(async (tx) => {
+    ;(await tx.doc(Workspaces, ROOT_CONVERSATION_ID)).items[String(id)] = {
+      ...workspace,
+      source: await realpath(other),
+    }
+  }, context)
+  await writeFile(join(f.projectRoot, 'dirty.txt'), 'dirty')
+  expect(JSON.stringify(await f.call(id, 'restart'))).toContain('has uncommitted changes')
+  expect(f.restart).not.toHaveBeenCalled()
+  await unlink(join(f.projectRoot, 'dirty.txt'))
+  expect(JSON.stringify(await f.call(id, 'restart'))).toContain('RESTART_CALLED')
   expect(f.restart).toHaveBeenCalledOnce()
 })
 it.concurrent('starts a worker isolate, commits in the child and lands it through the parent tool', async () => {
