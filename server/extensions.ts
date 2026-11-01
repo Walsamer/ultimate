@@ -47,6 +47,7 @@ export type ExtensionHost = Pick<
   | 'skills'
   | 'restart'
   | 'chapter'
+  | 'shellLeftovers'
 > & {
   access: Pick<Access, 'allow'>
   notice(message: string): void
@@ -108,7 +109,10 @@ export async function loadExtensions(
   vite: ViteDevServer,
   host: PreparedHost,
   changed: () => void | Promise<void>,
-  runtime: Pick<ExtensionHost, 'harness' | 'system' | 'conversations' | 'access'>,
+  runtime: Pick<
+    ExtensionHost,
+    'harness' | 'system' | 'conversations' | 'access' | 'shellLeftovers'
+  >,
   watch: Watch,
   notice: (message: string) => void = () => {},
 ) {
@@ -363,6 +367,7 @@ export async function loadExtensions(
       return host.chapter
     },
     harness: runtime.harness,
+    shellLeftovers: runtime.shellLeftovers,
     system: runtime.system,
     conversations: runtime.conversations,
     projects: () => projects(host.userHome, host.home),

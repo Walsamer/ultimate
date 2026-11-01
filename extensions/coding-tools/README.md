@@ -12,6 +12,12 @@ Bash calls without `timeout` have a 600-second tripwire ceiling. `ULTIMATE_BASH_
 in seconds and is read at each call; it must be positive and finite. A tripwire timeout stops the process and reports
 how to request a longer explicit timeout. Explicit timeouts retain Pi's ordinary timeout error.
 
+Every shell runs as a recorded process group (`server/owned-env.ts`): when its leader exits, whatever it left running
+is stopped (TERM, then KILL), so nothing a call starts outlives it unseen. A call that had to stop something keeps its
+result and gains a warning diagnostic — “Stopped 2 processes the command left running. Use the background tool for work
+that should outlive the call.” Work that _should_ outlive the call (a benchmark, a dev server, a watcher) goes to the
+`background` tool (`extensions/jobs`), whose jobs survive the call, are listed, logged and stopped on purpose.
+
 A bash call with `interruptible: true` (waits and polls: CI checks, deploys, a file appearing) ends early when a steer
 is queued in its conversation: the tool watches the conversation's `pi.inbox` and cancels the command, which kills its
 process, then returns the output so far followed by "[Interrupted by a steering message after Ns; …]" (last, so
