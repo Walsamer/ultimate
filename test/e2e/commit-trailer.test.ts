@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { expect, it, vi } from 'vitest'
 import type { ConversationId } from '@earendil-works/pi-durable'
 import { type BashExecution } from '@earendil-works/pi-durable/tools'
-import { prepareBash } from '../../extensions/coding-tools/server.ts'
+import { prepareBash } from '../../lib/commit-log.ts'
 import { removeTemp, temp } from '../helpers.ts'
 
 const run = promisify(execFile)
