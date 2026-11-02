@@ -10,7 +10,7 @@
         "color": "orange"
       },
       "review": {
-        "model": "deepseek/deepseek-flash",
+        "model": "openai-codex/gpt-6.1-sol",
         "thinking": "high"
       },
       "fast": {
