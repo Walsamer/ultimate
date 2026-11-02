@@ -32,7 +32,7 @@ export type Ledger = {
 }
 
 /** The kind of the passive entry a job's end writes to its conversation, whose data is a `JobCard`. */
-export type JobCardKind = 'jobs.finished'
+export const JOB_CARD = 'jobs.finished'
 
 /** What a job's finish card shows: how it ended, where its log sits, and whether anyone watched it end. */
 export type JobCard = {

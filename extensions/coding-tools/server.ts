@@ -26,6 +26,7 @@ import { createNodePhotonImages } from '@earendil-works/pi-durable/images/node'
 import { madeCommits, prepareBash } from '../../lib/commit-log.ts'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { implementAction } from '../../lib/actions.ts'
+import { SHELL_CALL } from '../../shared/shell-call.ts'
 import { CancelAction, CancelledDoc, Committed } from './refs.ts'
 
 /** Lets Pi's read tool shrink an image past the model's limits (2000x2000 by default) instead of refusing it. */
@@ -207,11 +208,12 @@ export default function codingTools(host: Pick<ExtensionHost, 'emit' | 'shellLef
       const call = createBashTool({
         prepare: (execution) => {
           prepareBash(execution, api, log)
-          execution.env.ULTIMATE_SHELL_CALL = shellCall
+          execution.env[SHELL_CALL] = shellCall
         },
       })
       const run = (command: Context) => call.execute(args, api, command)
-      let result: ToolExecutionResult | undefined
+      // Assigned whenever the call settles: a thrown failure (a timeout, an abort) leaves through the finally instead.
+      let result: ToolExecutionResult
       let stopped = 0
       try {
         result = await untilStopped(run, api, interruptible, context)

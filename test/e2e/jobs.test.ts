@@ -8,7 +8,7 @@ import { ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type { JsonObject } from '@earendil-works/pi-durable'
 import { beforeAll, expect, it } from 'vitest'
 import { Committed } from '../../extensions/coding-tools/refs.ts'
-import type { JobCard } from '../../extensions/jobs/refs.ts'
+import type { JobCard } from '../../extensions/jobs/types.ts'
 import { groupAlive } from '../../lib/process-group.ts'
 import { EventFeed } from '../../server/events.ts'
 import { context } from '../../server/harness.ts'
@@ -225,6 +225,42 @@ it('attributes the commits a job makes to the conversation that started it', asy
     expect(emitted[0].data).toMatchObject({ conversation: app.root.id, subject: 'job work' })
     // Its card comes from the same end.
     await until(async () => (await cards(app)).length === 1)
+  } finally {
+    await app.close()
+  }
+})
+
+it('records the end of a job whose leader died while nobody watched, once, and not again on the open after', async () => {
+  const directory = await temp('ultimate-jobs-unwatched-')
+  const home = join(directory, 'home')
+  const userHome = join(directory, 'user')
+  let app = await fauxServer({ ultimateRoot, home, userHome })
+  scripted(app)
+  const reopen = async () => {
+    app = await fauxServer({ ultimateRoot, home, userHome })
+    scripted(app)
+    return app
+  }
+  try {
+    await job(app, { action: 'start', command: 'sleep 60' })
+    const pid = Number(await readFile(join(home, 'jobs', 'J1', 'pid'), 'utf8'))
+    // The host closes as it would in a crash, dropping its listeners; then the job's leader is killed behind its back.
+    await app.close()
+    process.kill(-pid, 'SIGKILL')
+    await until(() => !groupAlive(pid))
+
+    const reopened = await reopen()
+    expect(await job(reopened, { action: 'list' })).toContain('J1 exited')
+    const card = (await cards(reopened))[0].data as JobCard
+    // Nobody saw it exit: the card says so and carries no exit code it could not know.
+    expect(card).toMatchObject({ id: 'J1', state: 'exited', unknown: true })
+    expect(card).not.toHaveProperty('exitCode')
+
+    // The card is written after the end is recorded, so the open that reports it marks it reported: the next open,
+    // which re-announces every unreported end by design, writes nothing new.
+    await reopened.close()
+    const third = await reopen()
+    expect(await cards(third)).toHaveLength(1)
   } finally {
     await app.close()
   }

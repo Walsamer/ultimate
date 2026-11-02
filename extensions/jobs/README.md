@@ -41,6 +41,9 @@ started instead of starting a second one.
   of those.
 - `commits.log` — the job's own commit log, below.
 
+A job's pid file is not under `<home>/shell`, where a crash's leftovers are swept: a job outlives the host that started
+it on purpose, so it is adopted instead (see below).
+
 ## Commits
 
 A job carries the Git hooks a bash call carries ([commit-log](../../lib/commit-log.ts), `prepareBash`), pointed at its
@@ -52,7 +55,7 @@ the lineage trail like any call's.
 ## End and adoption
 
 A watched job's exit is one commit: state, exit code and end time, and — exactly once per job — a passive
-`jobs.finished` entry in the conversation that started it. Its data is a `JobCard` (`refs.ts`): how the job ended, its
+`jobs.finished` entry in the conversation that started it. Its data is a `JobCard` (`types.ts`): how the job ended, its
 log path, and `unknown` when nobody watched it end. `stop` claims its job before it signals it, so a stopped job's card
 says `stopped` and the group's own exit writes no second one.
 
@@ -71,5 +74,10 @@ looked at:
 - Closing the harness (a core swap, a shutdown): a job survives it. `onClose` stops no job; it only drops the in-memory
   listeners, because an ordinary bash call's group dies with its environment's own `cleanup()` and a job's does not.
 - An extension reload: a job survives it, and its output keeps going into `output.log` (that pipe is process state, not
-  facet state). Only the completion notification is lost with the facet's listeners; the next restart adopts the job as
-  completion unknown and records its end then.
+  facet state). The reload's own `onOpen` drops nothing of a job whose group is still there; what it loses is the finish
+  listener, so a job that ends after the reload is recorded on the _next_ open, as an unwatched end.
+
+## Limits
+
+The drain and this tool cover POSIX. On Windows the conversation environment keeps Pi's own `exec`, so a call there
+stops nothing at its end and the leftover diagnostic never appears (a job still runs, as its own group's leader).

@@ -19,7 +19,8 @@ import { madeCommits, prepareBash } from '../../lib/commit-log.ts'
 import { groupAlive, readPidFile, spawnGroup, stopGroup } from '../../lib/process-group.ts'
 import type { Group } from '../../lib/process-group.ts'
 import { Committed } from '../coding-tools/api.ts'
-import type { Job, JobCard, JobCardKind, Ledger } from './refs.ts'
+import { JOB_CARD } from './types.ts'
+import type { Job, JobCard, Ledger } from './types.ts'
 
 const Jobs = defineDoc<Ledger>({
   kind: 'ultimate.jobs',
@@ -28,9 +29,6 @@ const Jobs = defineDoc<Ledger>({
   checkpointWhen: () => false,
   initial: () => ({ next: 1, jobs: {}, calls: {} }),
 })
-
-/** The kind of the one passive entry a finished job writes, as `refs.ts` names it for the transcript card. */
-const FINISHED: JobCardKind = 'jobs.finished'
 
 const operations = ['start', 'list', 'log', 'stop'] as const
 
@@ -71,7 +69,12 @@ function required(value: unknown, field: string): string {
 }
 
 /** What a process keeps of a job it started: its group, and the queue its output is written through. */
-type Watched = { group: Group; dir: string; queue: Promise<void> }
+type Watched = {
+  group: Group
+  dir: string
+  queue: Promise<void>
+  /** Bytes appended since the log was trimmed. */ grown: number
+}
 
 export default function jobs(host: ExtensionHost) {
   // Process state only, and reload-stable: the groups this process started and the queue their output runs through, so
@@ -96,7 +99,11 @@ export default function jobs(host: ExtensionHost) {
     return run
   }
 
-  const card = (job: Job, endedAt: number, unknown?: true): JobCard => ({
+  /**
+   * The card of a job that ended. A job recorded as exited without an exit code is one whose leader went while nobody
+   * watched (the normal way out always has a code, `stop` is its own state), so the card says its end was unwatched.
+   */
+  const card = (job: Job): JobCard => ({
     id: job.id,
     ...(job.label ? { label: job.label } : {}),
     command: job.command,
@@ -104,16 +111,18 @@ export default function jobs(host: ExtensionHost) {
     conversation: job.conversation,
     ...(job.pid ? { pid: job.pid } : {}),
     startedAt: job.startedAt,
-    endedAt,
+    endedAt: job.endedAt ?? Date.now(),
     ...(job.exitCode === undefined ? {} : { exitCode: job.exitCode }),
     state: job.state,
     log: join(folder(job.id), 'output.log'),
-    ...(unknown ? { unknown: true as const } : {}),
+    ...(job.state === 'exited' && job.exitCode === undefined ? { unknown: true as const } : {}),
   })
 
   /**
-   * Report a job's end, once: its card as a passive entry in the conversation that started it, then the commits the job
-   * made as lineage events. `madeCommits` takes its log with them, so this runs after nothing of the job is left.
+   * Report a job's end: its card as a passive entry in the conversation that started it, then the commits the job made
+   * as lineage events. The entry's request id is derived from the job and its end, so a retry after a crash (or a second
+   * pass over a job whose end nobody reported) writes it once; `reported` is only set after it went out, so a failed
+   * write is retried by the next open instead of losing the card.
    */
   async function announce(finished: JobCard) {
     const conversation = await host
@@ -125,7 +134,7 @@ export default function jobs(host: ExtensionHost) {
         {
           type: 'write',
           requestId: `jobs:finished:${finished.id}:${finished.endedAt}`,
-          entry: { kind: FINISHED, data: finished },
+          entry: { kind: JOB_CARD, data: finished },
         },
         context,
       )
@@ -133,35 +142,49 @@ export default function jobs(host: ExtensionHost) {
       join(folder(finished.id), 'commits.log'),
       finished.conversation,
     )
-    if (!commits.length) return
+    if (commits.length)
+      await host.harness().commit(async (tx) => {
+        for (const commit of commits) await host.emit(tx, Committed, commit)
+      }, context)
+  }
+
+  /** Report `job`'s end and mark it reported, in that order: a card lost to a crash is written by the next open. */
+  async function report(job: Job) {
+    await announce(card(job))
     await host.harness().commit(async (tx) => {
-      for (const commit of commits) await host.emit(tx, Committed, commit)
+      const saved = (await tx.doc(Jobs)).jobs[job.id]
+      if (saved) saved.reported = true
     }, context)
   }
 
   /**
-   * A watched job's process group leader exited. In one commit: the exit, and unless it was reported already, the one
-   * card. A job `stop` claimed, or one the ledger no longer holds, changes nothing.
+   * A watched job's process group leader exited: one commit records the exit, and unless it was reported already the
+   * card follows it. A job `stop` claimed, or one the ledger no longer holds, changes nothing.
    */
   async function finish(id: string, code: number | null) {
     const exited = await host.harness().commit(async (tx) => {
       const ledger = await tx.doc(Jobs)
       const job = ledger.jobs[id]
       if (!job || job.state !== 'running') return undefined
-      const endedAt = (job.endedAt = Date.now())
+      job.endedAt = Date.now()
       job.state = 'exited'
       if (code !== null) job.exitCode = code
-      if (job.reported) return undefined
-      job.reported = true
-      return card(job, endedAt)
+      return job.reported ? undefined : { ...job }
     }, context)
-    if (exited) await announce(exited)
+    if (exited) await report(exited)
   }
 
-  /** Append what a job printed and keep its log's tail; the job's own output listeners outlive a facet reload. */
-  async function append(dir: string, chunk: string) {
-    const path = join(dir, 'output.log')
+  /**
+   * Append what a job printed and keep its log's tail; the job's own output listeners outlive a facet reload. The file is
+   * read back and trimmed only once the appends since the last trim could have taken it past the cap, so a chatty job
+   * costs its own output in writes and not a whole-file read per chunk.
+   */
+  async function append(watched: Watched, chunk: string) {
+    const path = join(watched.dir, 'output.log')
     await appendFile(path, chunk)
+    watched.grown += Buffer.byteLength(chunk)
+    if (watched.grown < 256 * 1024) return
+    watched.grown = 0
     const output = await readFile(path, 'utf8')
     const trimmed = trimLog(output)
     if (trimmed !== output) await writeFile(path, trimmed)
@@ -238,12 +261,12 @@ export default function jobs(host: ExtensionHost) {
         )
         throw error
       }
-      const watched: Watched = { group, dir, queue: Promise.resolve() }
+      const watched: Watched = { group, dir, queue: Promise.resolve(), grown: 0 }
       for (const stream of [group.child.stdout, group.child.stderr]) {
         stream.setEncoding('utf8')
         stream.on('data', (chunk: string) => {
           watched.queue = watched.queue
-            .then(() => append(dir, chunk))
+            .then(() => append(watched, chunk))
             // Nothing left to tell it to: the log write has no reader, and the job itself keeps running.
             .catch((error: unknown) => console.error(`jobs: writing ${id}'s log:`, error))
         })
@@ -270,11 +293,9 @@ export default function jobs(host: ExtensionHost) {
       const ledger = await tx.doc(Jobs)
       const running = ledger.jobs[job.id]
       if (!running || running.state !== 'running') return undefined
-      const endedAt = (running.endedAt = Date.now())
+      running.endedAt = Date.now()
       running.state = 'stopped'
-      if (running.reported) return undefined
-      running.reported = true
-      return card(running, endedAt)
+      return running.reported ? undefined : { ...running }
     }, caller)
     if (!claimed) {
       const state = await tool.snapshot(Jobs, caller)
@@ -292,7 +313,7 @@ export default function jobs(host: ExtensionHost) {
     } finally {
       shared.watched.delete(job.id)
       // The card goes out even when a group would not die: the job is no longer watched either way.
-      await announce(claimed)
+      await report(claimed)
     }
     return line({ ...job, state: 'stopped', endedAt: claimed.endedAt })
   }
@@ -306,10 +327,13 @@ export default function jobs(host: ExtensionHost) {
 
   host.onOpen(async () => {
     const ledger = await host.harness().snapshot(Jobs, context)
-    const running = Object.values(ledger?.jobs ?? {}).filter((job) => job.state === 'running')
-    if (!running.length) return
-    // Nothing of this process watches them: a restart, or a facet reload that dropped the finish listeners. The pid file
-    // and the group tell a job that still runs from one whose leader went while nobody watched.
+    const all = Object.values(ledger?.jobs ?? {})
+    const running = all.filter((job) => job.state === 'running')
+    // Cards an earlier end never delivered: a crash between the exit and its card, or a write that failed. Their request
+    // id is derived from the job and its end, so writing them again cannot double a card that did go out.
+    const unreported = all.filter((job) => job.state !== 'running' && !job.reported)
+    // Nothing of this process watches a running job: a restart, or a facet reload that dropped the finish listeners. The
+    // pid file and the group tell one that still runs from one whose leader went while nobody watched.
     const found: { id: string; alive: boolean }[] = []
     for (const job of running)
       found.push({
@@ -330,15 +354,14 @@ export default function jobs(host: ExtensionHost) {
           job.adopted = true
           continue
         }
-        const endedAt = (job.endedAt = Date.now())
+        job.endedAt = Date.now()
         job.state = 'exited'
-        if (job.reported) continue
-        job.reported = true
-        cards.push(card(job, endedAt, true))
+        if (!job.reported) cards.push(card(job))
       }
       return cards
     }, context)
-    for (const finished of ended) await announce(finished)
+    for (const finished of ended) await report(finished)
+    for (const job of unreported) await report(job)
   })
 
   // A job is not this facet's to stop: an ordinary bash call's group dies with its call, a job's does not. Only the

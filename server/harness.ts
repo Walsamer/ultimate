@@ -202,7 +202,7 @@ export async function prepareHarness(options: HostOptions) {
     builds,
     build: builds.current,
     home,
-    /** How many processes the shell call `id` (`ULTIMATE_SHELL_CALL`) left running and the drain stopped. */
+    /** How many processes the shell call `id` (its `SHELL_CALL` id) left running and the drain stopped. */
     shellLeftovers,
     /** The active chapter's `state.sqlite`. */
     get database() {

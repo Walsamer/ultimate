@@ -22,13 +22,14 @@ import { err, ExecutionError, ok } from '@earendil-works/pi-durable/env'
 import type { Result, ShellExecOptions, ShellExecResult } from '@earendil-works/pi-durable/env'
 import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node'
 import { closeOutput, spawnGroup, stopGroup } from '../lib/process-group.ts'
+import { SHELL_CALL } from '../shared/shell-call.ts'
 import type { Group } from '../lib/process-group.ts'
 
 const MAX_TIMEOUT_MS = 2_147_483_647
 
 /**
- * What shell calls left running, by the call id their execution carried in `ULTIMATE_SHELL_CALL`: how many processes
- * the group still had when its leader exited and the drain stopped them. The bash tool reads its own id's count once.
+ * What shell calls left running, by the call id their execution carried in `SHELL_CALL` (shared/shell-call.ts): how many
+ * processes the group still had when its leader exited and the drain stopped them. The bash tool reads its own count once.
  */
 const stopped = new Map<string, number>()
 
@@ -203,8 +204,8 @@ export class OwnedExecutionEnv extends NodeExecutionEnv {
         ? { ...options.env }
         : { ...process.env, ...this.inheritedEnv, ...options?.env }
     // The bash tool names the call it is running here; the command itself never sees it.
-    const call = env.ULTIMATE_SHELL_CALL
-    delete env.ULTIMATE_SHELL_CALL
+    const call = env[SHELL_CALL]
+    delete env[SHELL_CALL]
     this.created ??= mkdir(this.shellDir, { recursive: true })
     try {
       await this.created

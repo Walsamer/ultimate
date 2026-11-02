@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import {
+  Card,
   cn,
   defineWebExtension,
   formatDuration,
@@ -21,7 +22,8 @@ import {
   useStore,
 } from '@/sdk'
 import type { EntryRecord } from '@/sdk'
-import type { JobCard } from './refs.ts'
+import { JOB_CARD } from './types.ts'
+import type { JobCard } from './types.ts'
 
 /** A path as this conversation reads it: relative to its directory, else with `~` for home. */
 function usePath(path: string) {
@@ -93,11 +95,8 @@ function JobEntry({ entry }: { entry: EntryRecord }) {
   const [open, setOpen] = useState(false)
   const failed = card.exitCode !== undefined && card.exitCode !== 0
   return (
-    <section
-      className={cn(
-        'min-w-0 rounded-md border border-border border-l-2 bg-muted/20',
-        failed ? 'border-l-destructive/60' : 'border-l-brand/50',
-      )}
+    <Card
+      className={cn(failed ? 'border-l-destructive/60' : 'border-l-brand/50')}
       data-job={card.id}
       data-job-state={card.unknown ? 'unknown' : card.state}
     >
@@ -125,10 +124,10 @@ function JobEntry({ entry }: { entry: EntryRecord }) {
         </span>
       </button>
       {open && <Details card={card} />}
-    </section>
+    </Card>
   )
 }
 
 export default defineWebExtension({
-  entries: { 'jobs.finished': JobEntry },
+  entries: { [JOB_CARD]: JobEntry },
 })
