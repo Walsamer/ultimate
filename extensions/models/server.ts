@@ -26,6 +26,7 @@ import {
 import type { SaveFamilies } from './refs.ts'
 import { familiesView, saveFamilies } from './families.ts'
 import { fallback } from './fallback.ts'
+import { markRefusals } from './quota.ts'
 
 /** A Pi type as a document holds it: plain JSON, arrays mutable. */
 type Json<T> = T extends readonly (infer U)[]
@@ -228,6 +229,8 @@ export const actions = {
 
 export default function models(host: ExtensionHost) {
   const live = liveFlows(host)
+  // A provider that refuses a run for a spent account is marked, so the fallback takes the next run off it.
+  markRefusals(host)
   // Each facet registers its own, so it reads Logins with this load's token: flows no live login drives (those of a
   // previous process) are marked cancelled.
   host.onOpen(async () => {

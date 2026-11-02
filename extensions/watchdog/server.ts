@@ -20,7 +20,7 @@ import type {
   Tx,
 } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
-import { rateLimited } from '../../lib/rate-limit.ts'
+import { outOfQuota } from '../../lib/rate-limit.ts'
 import { Messages } from '../messages/api.ts'
 import { Standing, Subagents } from '../subagents/api.ts'
 import { idleNote } from './idle.ts'
@@ -103,16 +103,16 @@ async function boundary(tx: Tx, task: Generation, next?: Generation) {
 }
 
 /**
- * What a failed run's error asks for: a broken login needs the user, so it reports at once with a hint to log in again;
- * a rate limit that outlasted Pi's retries reports once and never re-prompts into the limit; an
+ * What a failed run's error asks for: a broken login needs the user, so it reports at once with a hint to log in again; a
+ * spent account (quota, usage or rate limit) gets one continuation, which the model layer puts on another model; an
  * incomplete Claude Code relay response (status 200 or unknown) is a dropped stream, so it retries like Pi's own
  * retryable errors.
  */
 export function diagnose(error: string, assistant?: AssistantMessage) {
-  if (rateLimited(error))
+  if (outOfQuota(error))
     return {
-      hint: 'Still rate limited after Pi’s retries; once the limit resets (or the agent has another model), resume this conversation with a message',
-      temporary: false,
+      hint: 'The provider is out of quota; once it resets, resume this conversation with a message',
+      temporary: true,
     }
   if (/not logged in/i.test(error))
     return { hint: 'Run `claude auth login` in a terminal', temporary: false }

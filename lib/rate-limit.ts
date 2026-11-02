@@ -10,3 +10,13 @@ import { isRetryableAssistantError } from '@earendil-works/pi-ai/utils/retry'
 export const rateLimited = (error: string) =>
   /(?<![a-z0-9])429(?![a-z0-9])|rate.?limit|too many requests/i.test(error) &&
   isRetryableAssistantError({ stopReason: 'error', errorMessage: error } as AssistantMessage)
+
+/**
+ * Whether the login's account is spent rather than the provider busy or the login broken: OpenAI's `insufficient_quota`,
+ * a provider's "quota"/"usage limit" refusal (Codex says "You've hit your usage limit"), an empty prepaid balance
+ * (DeepSeek's "Insufficient Balance"), or a rate limit Pi already spent its retries on (`rateLimited`). A model layer
+ * moves such a conversation to another model. Capacity (529, overloaded), billing notices and network errors are not:
+ * another model would not help, or the login itself decides the bill.
+ */
+export const outOfQuota = (error: string) =>
+  /quota|usage[_\s-]?limit|insufficient[_\s-]?balance/i.test(error) || rateLimited(error)

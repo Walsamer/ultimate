@@ -47,8 +47,8 @@ afterEach(async () => {
 const error = (text = 'invalid model configuration') =>
   fauxAssistantMessage('', { stopReason: 'error', errorMessage: text })
 const overloaded = 'Our servers are currently overloaded. Please try again later.'
-const rateHint =
-  'Still rate limited after Pi’s retries; once the limit resets (or the agent has another model), resume this conversation with a message'
+const quotaHint =
+  'The provider is out of quota; once it resets, resume this conversation with a message'
 const model = { provider: 'faux', modelId: 'faux-1' }
 const Anchor = defineTask<null, { phase: 'done' }, null>({
   name: 'watchdog-test.anchor',
@@ -802,18 +802,19 @@ it.each([
     undefined,
   ],
   [overloaded, true, undefined],
+  // A spent account gets one continuation, which the model layer puts on another model; a billing notice does not.
   [
     "Incomplete Claude Code upstream response (status 429, capture incomplete, upstream said: This request would exceed your account's rate limit. Please try again later.)",
-    false,
-    rateHint,
+    true,
+    quotaHint,
   ],
-  ['429 Too Many Requests', false, rateHint],
-  // Quota and billing errors are not rate limits Pi retries: they fail as usual, without the pause's hint.
+  ['429 Too Many Requests', true, quotaHint],
   [
     'You exceeded your current quota, please check your plan and billing details. (insufficient_quota)',
-    false,
-    undefined,
+    true,
+    quotaHint,
   ],
+  ["You've hit your usage limit. Upgrade to Plus or try again in 3 days.", true, quotaHint],
   [
     'Claude Code billing: this request was charged to Claude usage credits instead of your plan limits (rate limit status allowed_warning, five_hour).',
     false,

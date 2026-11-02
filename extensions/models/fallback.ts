@@ -1,15 +1,17 @@
 /**
- * A conversation whose model's provider definitely has no login here switches, as its next run's input is placed, to
- * the same model on another provider, its definition's pin or the configured default, and says so with one
- * `models.fallback` entry. A subscription never switches to a pay-per-token login: then nothing replaces it, the
- * conversation keeps its model and the entry asks the user. An availability Pi has not settled switches nothing.
+ * A conversation whose model provider either has no login here or refused its last request for a spent account (a
+ * quota, a usage limit, a rate limit Pi already retried) switches, as its next run's input is placed, to the same
+ * model on another provider, its definition's pin or the configured default, and says so with one `models.fallback`
+ * entry. A subscription never switches to a pay-per-token login: then nothing replaces it, the conversation keeps its
+ * model and the entry asks the user. An availability Pi has not settled switches nothing.
  */
 import { clampThinkingLevel } from '@earendil-works/pi-ai'
-import { AgentDoc } from '@earendil-works/pi-durable'
+import { AgentDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryDraft, Tx } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { configuredModel, familyDefault, hasLogin } from '../../lib/agents.ts'
 import { Pin } from './api.ts'
+import { Quota, spent } from './quota.ts'
 import type { Fallback } from './refs.ts'
 
 type Ref = { provider: string; modelId: string }
@@ -34,32 +36,42 @@ export async function fallback(
   const agent = await tx.doc(AgentDoc, conversationId)
   const runtime = host.modelRuntime
   const available = runtime.getAvailableSnapshot()
-  // Nothing has a login yet (an empty snapshot says nothing about this model), or this one still has one.
-  if (!agent.model || !available.length || hasLogin(available, agent.model)) return undefined
+  // Nothing has a login yet (an empty snapshot says nothing about this model).
+  if (!agent.model || !available.length) return undefined
   const from = agent.model
+  const now = Date.now()
+  const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
+  // It refused its last request for a spent account; a login is not the problem and needs no check.
+  const refused = spent(marks, from.provider, now)
+  // This one still has a login and has not run out of quota.
+  if (!refused && hasLogin(available, from)) return undefined
   // Certain evidence only: the snapshot has no login for it and a fresh check agrees. A provider still registering,
   // or a check that fails or times out, leaves the model as it is; its request fails with its own error.
-  if (runtime.getProvider(from.provider) && (await mayHaveLogin(host, from.provider)))
+  if (!refused && runtime.getProvider(from.provider) && (await mayHaveLogin(host, from.provider)))
     return undefined
   const fresh = runtime.getAvailableSnapshot()
-  const paid = wasSubscription(host, from.provider)
-  // Same model elsewhere first, then the definition's pin, then the configured default; a subscription takes only
+  const paid = wasSubscription(host, from.provider) || subscription(host, from.provider)
+  // Another provider that has a login and has not just refused for a spent account; a subscription takes only
   // another subscription.
-  const allowed = (provider: string) => !paid || subscription(host, provider)
+  const allowed = (provider: string) =>
+    !spent(marks, provider, now) && (!paid || subscription(host, provider))
+  const usable = (ref: Ref | undefined) => !!ref && hasLogin(fresh, ref) && allowed(ref.provider)
   const same = fresh.find(
     (model) =>
       model.id === from.modelId && model.provider !== from.provider && allowed(model.provider),
   )
+  // Same model elsewhere first, then the definition's pin, then the configured default.
   const candidates: [Ref | undefined, Fallback['reason']][] = [
     [same && { provider: same.provider, modelId: same.id }, 'same'],
     [await host.want(Pin)?.pin(tx, conversationId), 'pin'],
     [configuredModel(fresh, host.settings, await familyDefault(host)), 'default'],
   ]
-  const found = candidates.find(([ref]) => hasLogin(fresh, ref) && allowed(ref!.provider))
+  const found = candidates.find(([ref]) => usable(ref))
+  const reason: Fallback['reason'] = refused ? 'quota' : found ? found[1] : 'none'
   const data: Fallback = found
-    ? { from: name(from), to: name(found[0]!), reason: found[1] }
-    : { from: name(from), reason: 'none' }
-  if (!found && (await alreadyAsked(tx, conversationId, data.from))) return undefined
+    ? { from: name(from), to: name(found[0]!), reason }
+    : { from: name(from), reason }
+  if (!found && (await alreadyAsked(tx, conversationId, data))) return undefined
   if (found) {
     const to = found[0]!
     agent.model = { provider: to.provider, modelId: to.modelId }
@@ -68,8 +80,12 @@ export async function fallback(
       agent.thinkingLevel = clampThinkingLevel(model, agent.thinkingLevel)
   }
   const content = found
-    ? `Model ${data.from} has no login here; this conversation now runs on ${data.to}.`
-    : `Model ${data.from} has no login here and no subscription login can replace it, so this conversation keeps it until the user logs in to ${from.provider} or picks another model.`
+    ? refused
+      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}.`
+      : `Model ${data.from} has no login here; this conversation now runs on ${data.to}.`
+    : refused
+      ? `${data.from} is out of quota here and nothing else has a login to take over, so this conversation keeps it until the quota resets or the user picks another model.`
+      : `Model ${data.from} has no login here and no subscription login can replace it, so this conversation keeps it until the user logs in to ${from.provider} or picks another model.`
   return {
     entries: [
       { kind: 'models.fallback', data, model: [{ role: 'user', content, timestamp: Date.now() }] },
@@ -106,13 +122,15 @@ function wasSubscription(host: ExtensionHost, provider: string) {
   )
 }
 
-/** Whether this conversation's newest fallback entry already asks about `from`, so each next input says it once. */
-async function alreadyAsked(tx: Tx, conversationId: ConversationId, from: string) {
+/** Whether this conversation's newest fallback entry already says what this one would, so each next input says it once. */
+async function alreadyAsked(tx: Tx, conversationId: ConversationId, data: Fallback) {
   for (let page = await tx.scanEntries({ conversationId }, 200); ;) {
     const entry = page.items.find((item) => item.kind === 'models.fallback')
     if (entry) {
-      const data = entry.data as Fallback
-      return data.reason === 'none' && data.from === from
+      const previous = entry.data as Fallback
+      return (
+        previous.to === undefined && previous.from === data.from && previous.reason === data.reason
+      )
     }
     if (!page.next) return false
     page = await tx.scanEntries({ conversationId }, 200, page.next)
