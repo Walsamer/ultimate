@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import type { ConversationSummary } from '../../../shared/protocol.ts'
+import type { ConversationSummary, ExtensionInfo, SystemInfo } from '../../../shared/protocol.ts'
 import { events } from './events.ts'
 import { errorMessage } from './format.ts'
 import { needsAttention } from './types.ts'
@@ -380,14 +380,38 @@ export function shownPanels(panels: readonly PanelItem[], selected: string | nul
 /** The home surface: shown by default, and whenever the chosen surface cannot be. */
 export const HOME = 'agent'
 
-/** Surfaces as the switcher lists them: Agent first, then by `order` and title. A later facet wins an id. */
-export function surfaceItems(records: readonly ExtensionRecord[]): SurfaceItem[] {
+/** Which folder each extension came from, by name, as the server's `SystemInfo` lists them. */
+export type ExtensionSources = Readonly<Record<string, ExtensionInfo['source']>>
+
+/**
+ * The folder of origin of each extension the server knows; an extension it does not list (the stream's system info
+ * has not arrived, or a server with no extension there) counts as Ultimate's own.
+ */
+export function extensionSources(system: SystemInfo | undefined): ExtensionSources {
+  return Object.fromEntries((system?.extensions ?? []).map(({ name, source }) => [name, source]))
+}
+
+/** Whether Ultimate itself ships the extension a surface comes from, rather than a user's or a project's folder. */
+export function ownSurface(surface: SurfaceItem, sources: ExtensionSources): boolean {
+  return (sources[surface.extension] ?? 'builtin') === 'builtin'
+}
+
+/**
+ * Surfaces as the title bar and the switcher list them: the ones Ultimate ships first, then those a user's or a project's
+ * extension adds, Agent first in each group and then by `order` and title. A later facet wins an id.
+ */
+export function surfaceItems(
+  records: readonly ExtensionRecord[],
+  sources: ExtensionSources = {},
+): SurfaceItem[] {
   const byId = new Map<string, SurfaceItem>()
   for (const { name, extension, version } of records)
     for (const surface of extension?.surfaces ?? [])
       byId.set(surface.id, { ...surface, extension: name, version })
+  const group = (surface: SurfaceItem) => Number(!ownSurface(surface, sources))
   return [...byId.values()].toSorted(
     (a, b) =>
+      group(a) - group(b) ||
       Number(b.id === HOME) - Number(a.id === HOME) ||
       (a.order ?? 0) - (b.order ?? 0) ||
       a.title.localeCompare(b.title),

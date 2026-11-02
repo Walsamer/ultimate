@@ -716,11 +716,13 @@ The window shows one surface at a time. **Agent** is the built-in home surface (
 with the sidebar and the right panel. An app surface puts its own UI first and keeps the agent one keystroke away,
 usually docked beside it. The `documents` extension provides the Documents tab.
 
-- **Switching**: the title bar lists the surfaces as tabs (Agent first, then by `order`, then title); on phones the brand
-  opens them as a menu. ⌘K has "Switch to …"; `mod+1…9` select the first nine (Ctrl+1…9 off macOS, which Chrome lets
-  the page take before its tab switching). In code: `useUltimate().showSurface(id)` or
-  `context.showSurface(id)` in a command. Switching never interrupts the agent: the run goes on, and the transcript and
-  the composer's draft are where they were.
+- **Switching**: the title bar lists the surfaces as tabs: the ones Ultimate ships first, then those a user's or a
+  project's extension adds, with a rule between the two groups (none while every surface is Ultimate's own). Agent
+  comes first in its group, then by `order`, then title. On phones the brand opens them as a menu. ⌘K has
+  "Switch to …"; `mod+1…9` select the first nine in that order, so a project's surface takes the number after
+  Ultimate's own instead of moving them (Ctrl+1…9 off macOS, which Chrome lets the page take before its tab
+  switching). In code: `useUltimate().showSurface(id)` or `context.showSurface(id)` in a command. Switching never
+  interrupts the agent: the run goes on, and the transcript and the composer's draft are where they were.
 - **Durable**: the choice is UI state `shell.surface`; it survives reloads and restarts and follows every tab. Until the
   user picks one, a project's `.ultimate/settings.json` (`{ "defaultSurface": "commits" }`) chooses, if that surface
   is installed.
@@ -731,14 +733,14 @@ usually docked beside it. The `documents` extension provides the Documents tab.
 
 The contribution:
 
-| Field         | Meaning                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------- |
-| `id`          | Global and stored in `shell.surface`: use the extension name (`commits`) or prefix it (`commits.graph`) |
-| `title`       | Shown in the switcher, the title bar, ⌘K, and the window title                                          |
-| `icon`        | A `lucide-react` icon                                                                                   |
-| `description` | One line under the title in the switcher                                                                |
-| `order`       | Position after Agent; lower first (default 0), then by title. It decides which `mod+<n>` selects it     |
-| `component`   | The surface itself                                                                                      |
+| Field         | Meaning                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `id`          | Global and stored in `shell.surface`: use the extension name (`commits`) or prefix it (`commits.graph`)          |
+| `title`       | Shown in the switcher, the title bar, ⌘K, and the window title                                                   |
+| `icon`        | A `lucide-react` icon                                                                                            |
+| `description` | One line under the title in the switcher                                                                         |
+| `order`       | Position after Agent in its group; lower first (default 0), then by title. It decides which `mod+<n>` selects it |
+| `component`   | The surface itself                                                                                               |
 
 ### Layout
 

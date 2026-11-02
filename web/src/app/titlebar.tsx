@@ -1,6 +1,6 @@
 import { cn } from 'cn'
 import { ChevronDownIcon, CommandIcon } from 'lucide-react'
-import { forwardRef } from 'react'
+import { Fragment, forwardRef } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,8 +14,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { SystemInfo } from '../../../shared/protocol.ts'
 import { actions } from '../sdk/actions.ts'
 import { shortenPath } from '../sdk/format.ts'
-import { useExtensions, useStore, useSystem } from '../sdk/hooks.ts'
-import { HOME, slotItems, surfaceItems } from '../sdk/registry.ts'
+import {
+  useExtensionSources,
+  useExtensions,
+  useStore,
+  useSurfaces,
+  useSystem,
+} from '../sdk/hooks.ts'
+import { HOME, ownSurface, slotItems } from '../sdk/registry.ts'
+import type { SurfaceItem } from '../sdk/registry.ts'
 import { Slot } from './boundary.tsx'
 import { Shortcut } from './palette.tsx'
 import { sidebarWidthBeyondPhone } from './primitives.tsx'
@@ -145,7 +152,7 @@ export function Wordmark({ onClick, label }: { onClick?: () => void; label?: str
  * beside it list the surfaces; on phones it opens the list of surfaces and names the shown one.
  */
 function Brand() {
-  const surfaces = surfaceItems(useExtensions())
+  const surfaces = useSurfaces()
   const shown = useStore((state) => state.ui.surface?.id)
   const current = surfaces.find((surface) => surface.id === shown)
   const Icon = current?.icon
@@ -214,44 +221,67 @@ function Brand() {
   )
 }
 
-/** One lowercase word per surface beyond a phone, the shown one underlined in brand at the bar's bottom edge. */
+/** One surface tab: a lowercase word, the one on screen underlined in brand at the bar's bottom edge. */
+function SurfaceTab({
+  surface,
+  index,
+  active,
+}: {
+  surface: SurfaceItem
+  index: number
+  active: boolean
+}) {
+  const button = (
+    <button
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex cursor-pointer items-center border-y-2 border-transparent px-0.5 lowercase transition-colors outline-none hover:text-foreground focus-visible:text-foreground',
+        active && 'border-b-brand text-foreground',
+      )}
+      data-selected={active || undefined}
+      data-surface={surface.id}
+      onClick={() => actions.showSurface(surface.id)}
+      type="button"
+    >
+      {surface.title}
+    </button>
+  )
+  if (index >= 9) return button
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent className="flex items-center gap-2">
+        {surface.description ?? surface.title}
+        <Shortcut keys={`mod+${index + 1}`} />
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+/**
+ * One lowercase word per surface beyond a phone, the shown one underlined in brand at the bar's bottom edge, and a rule
+ * between the surfaces Ultimate itself ships and those a user's or a project's extension adds.
+ */
 function SurfaceItems() {
-  const surfaces = surfaceItems(useExtensions())
+  const surfaces = useSurfaces()
+  const sources = useExtensionSources()
   const shown = useStore((state) => state.ui.surface?.id)
+  // Ultimate's own come first, so its group ends where the first one of another folder starts; while every surface is its
+  // own (`-1`) there is no rule at all, as on a project with nothing added.
+  const split = surfaces.findIndex((surface) => !ownSurface(surface, sources))
   return (
     <nav
       className="flex h-[35px] shrink-0 items-stretch gap-4 max-md:hidden"
       data-ui="surface-tabs"
     >
-      {surfaces.map((surface, index) => {
-        const active = surface.id === shown
-        const button = (
-          <button
-            aria-current={active ? 'page' : undefined}
-            className={cn(
-              'flex cursor-pointer items-center border-y-2 border-transparent px-0.5 lowercase transition-colors outline-none hover:text-foreground focus-visible:text-foreground',
-              active && 'border-b-brand text-foreground',
-            )}
-            data-selected={active || undefined}
-            data-surface={surface.id}
-            key={surface.id}
-            onClick={() => actions.showSurface(surface.id)}
-            type="button"
-          >
-            {surface.title}
-          </button>
-        )
-        if (index >= 9) return button
-        return (
-          <Tooltip key={surface.id}>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2">
-              {surface.description ?? surface.title}
-              <Shortcut keys={`mod+${index + 1}`} />
-            </TooltipContent>
-          </Tooltip>
-        )
-      })}
+      {surfaces.map((surface, index) => (
+        <Fragment key={surface.id}>
+          {index === split && (
+            <span aria-hidden className="w-px self-stretch bg-border" data-ui="surface-divider" />
+          )}
+          <SurfaceTab active={surface.id === shown} index={index} surface={surface} />
+        </Fragment>
+      ))}
     </nav>
   )
 }

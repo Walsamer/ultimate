@@ -4,6 +4,7 @@ import {
   HOME,
   commandApplies,
   commandItems,
+  extensionSources,
   panelItems,
   resolveSurface,
   slotItems,
@@ -34,7 +35,7 @@ export function shownSurface(
   chosen = uiState.get(shellKeys.surface),
   preferred = store.getState().system?.project.settings.defaultSurface,
 ) {
-  return resolveSurface(surfaceItems(records), {
+  return resolveSurface(surfaceItems(records, extensionSources(store.getState().system)), {
     chosen: typeof chosen === 'string' ? chosen : undefined,
     preferred: typeof preferred === 'string' ? preferred : undefined,
     loading: records.some((record) => record.loading),
@@ -203,11 +204,17 @@ const coreCommands: CommandItem[] = core.map((command) => ({
   extension: 'core',
 }))
 
-/** Core commands, a switch per surface (`mod+1…9` for the first nine), then extension commands; later wins an id. */
-export function allCommands(records = registry.getSnapshot()): CommandItem[] {
+/**
+ * Core commands, a switch per surface in the order the title bar shows them (`mod+1…9` for the first nine, so a
+ * project's surface takes the next number after Ultimate's own), then extension commands; later wins an id.
+ */
+export function allCommands(
+  records = registry.getSnapshot(),
+  sources = extensionSources(store.getState().system),
+): CommandItem[] {
   return commandItems(records, [
     ...coreCommands,
-    ...surfaceItems(records).map((surface, index) => ({
+    ...surfaceItems(records, sources).map((surface, index) => ({
       id: `ultimate.surface.${surface.id}`,
       title: `Switch to ${surface.title}`,
       keys: index < 9 ? `mod+${index + 1}` : undefined,

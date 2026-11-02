@@ -6,6 +6,7 @@ import {
   createRegistry,
   documentItems,
   extensionName,
+  ownSurface,
   panelItems,
   entryRenderers,
   resolveSurface,
@@ -550,6 +551,49 @@ describe('web extension registry', () => {
       'apps:apps.zebra',
     ])
     expect(items.find((item) => item.id === 'shared')?.title).toBe('Shared by later')
+  })
+
+  it('lists the surfaces Ultimate ships before a user’s or a project’s, Agent and then order in each', async () => {
+    const icon = component('icon')
+    const surface = (id: string, title: string, order?: number) => ({
+      id,
+      title,
+      icon,
+      order,
+      component: component(id),
+    })
+    const registry = createRegistry()
+    await registry.setLoaders({
+      [path('agent')]: async () => module({ surfaces: [surface('agent', 'Agent', 50)] }),
+      [path('review')]: async () => module({ surfaces: [surface('review', 'Review')] }),
+      [path('memory')]: async () => module({ surfaces: [surface('memory', 'Memory')] }),
+      [path('calendar')]: async () => module({ surfaces: [surface('calendar', 'Calendar', -10)] }),
+      [path('hardware')]: async () => module({ surfaces: [surface('hardware', 'Hardware')] }),
+    })
+    const sources = {
+      agent: 'builtin',
+      review: 'builtin',
+      memory: 'builtin',
+      calendar: 'user',
+      hardware: 'project',
+    } as const
+    const items = surfaceItems(registry.getSnapshot(), sources)
+    // Calendar's order sorts it before Memory, and still it follows both: only a group's own folder decides the group.
+    expect(items.map((item) => item.id)).toEqual([
+      'agent',
+      'memory',
+      'review',
+      'calendar',
+      'hardware',
+    ])
+    // An extension the system does not list yet (the stream has not arrived) counts as Ultimate's own, so nothing moves.
+    expect(
+      surfaceItems(registry.getSnapshot(), { calendar: 'user' }).map((item) => item.id),
+    ).toEqual(['agent', 'hardware', 'memory', 'review', 'calendar'])
+    expect(items.filter((item) => !ownSurface(item, sources)).map((item) => item.id)).toEqual([
+      'calendar',
+      'hardware',
+    ])
   })
 
   it('shows the chosen surface, the project default, or Agent, and names a missing choice', () => {

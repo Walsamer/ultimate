@@ -53,7 +53,10 @@ export interface SurfaceContribution {
   icon: ComponentType<{ className?: string }>
   /** One line for the switcher. */
   description?: string
-  /** Position after Agent in the switcher, ⌘K, and `mod+1…9`; lower first (default 0), then by title. */
+  /**
+   * Position after Agent in the switcher, ⌘K, and `mod+1…9`, within its group: Ultimate's own surfaces come first,
+   * then those a user's or a project's extension adds. Lower first (default 0), then by title.
+   */
   order?: number
   component: ComponentType
 }

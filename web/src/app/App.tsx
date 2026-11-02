@@ -9,13 +9,13 @@ import {
   ExtensionNameContext,
   useConversation,
   useConversations,
-  useExtensions,
   useReady,
   useShownSurface,
   useStore,
+  useSurfaces,
   useSystem,
 } from '../sdk/hooks.ts'
-import { HOME, surfaceItems } from '../sdk/registry.ts'
+import { HOME } from '../sdk/registry.ts'
 import type { SurfaceItem } from '../sdk/registry.ts'
 import { rendered } from '../sdk/resume.ts'
 import { ExtensionErrors, Slot } from './boundary.tsx'
@@ -142,11 +142,10 @@ function Shortcuts() {
  */
 export function App() {
   const loaded = useReady().ready
-  const records = useExtensions()
   const { surface, pending, missing } = useShownSurface()
   // Until the stream delivered the UI state and system info, the choice and the project default are unknown.
   const ready = useStore((state) => state.shared !== undefined && state.system !== undefined)
-  const home = surfaceItems(records).find((item) => item.id === HOME)
+  const home = useSurfaces().find((item) => item.id === HOME)
   const shown = useStore((state) => state.ui.surface)
   const viewed = useStore((state) => state.view !== undefined)
   useDocumentTitle(shown)

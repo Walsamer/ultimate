@@ -33,8 +33,10 @@ import {
   compactDocs,
   compactTools,
   documentItems,
+  extensionSources,
   panelItems,
   shownPanels,
+  surfaceItems,
 } from './registry.ts'
 import type { State } from './store.ts'
 import { errorMessage, formatDuration } from './format.ts'
@@ -310,6 +312,19 @@ export function useDialog(id: string): [boolean, (open: boolean) => void] {
 export function useExtensions() {
   return useSyncExternalStore(registry.subscribe, registry.getSnapshot)
 }
+
+/** The surfaces as the title bar and the switcher list them: Ultimate's own first, then a user's or a project's. */
+export function useSurfaces() {
+  const records = useExtensions()
+  const sources = useExtensionSources()
+  return useMemo(() => surfaceItems(records, sources), [records, sources])
+}
+
+/** Each extension's folder of origin, which tells Ultimate's own surfaces from a user's or a project's. */
+export function useExtensionSources() {
+  const system = useSystem()
+  return useMemo(() => extensionSources(system), [system])
+}
 const compactFailures = new Set<string>()
 /** Reports a `compact.when` that threw once per message, as a notice naming its extension. */
 function reportCompact(extension: string, error: unknown) {
@@ -363,7 +378,8 @@ export function useDocumentRenderers() {
 /** Core and extension commands. */
 export function useCommands() {
   const records = useExtensions()
-  return useMemo(() => allCommands(records), [records])
+  const sources = useExtensionSources()
+  return useMemo(() => allCommands(records, sources), [records, sources])
 }
 
 export interface Restart {
