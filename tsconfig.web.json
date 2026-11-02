@@ -28,6 +28,7 @@
     "extensions/cloud/types.ts",
     "extensions/conversations/types.ts",
     "extensions/dream/types.ts",
+    "extensions/jobs/types.ts",
     "extensions/lineage/types.ts",
     "extensions/phase/types.ts",
     "extensions/recall/types.ts",

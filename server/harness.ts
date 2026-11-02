@@ -36,6 +36,8 @@ import type {
   SubmissionRecord,
 } from '@earendil-works/pi-durable'
 import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node'
+import { OwnedExecutionEnv, shellLeftovers } from './owned-env.ts'
+import { sweepPidFiles } from '../lib/process-group.ts'
 import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite/node'
 import { createBuild } from './build.ts'
 import { applyHttpProxySettings, configureHttpDispatcher } from './http.ts'
@@ -145,7 +147,7 @@ export async function prepareHarness(options: HostOptions) {
   const env = ({ cwd = projectRoot }: EnvTarget) => {
     let found = envs.get(cwd)
     if (!found) {
-      found = new NodeExecutionEnv({ cwd })
+      found = new OwnedExecutionEnv({ cwd, shellDir: join(home, 'shell') })
       envs.set(cwd, found)
     }
     return found
@@ -200,6 +202,8 @@ export async function prepareHarness(options: HostOptions) {
     builds,
     build: builds.current,
     home,
+    /** How many processes the shell call `id` (its `SHELL_CALL` id) left running and the drain stopped. */
+    shellLeftovers,
     /** The active chapter's `state.sqlite`. */
     get database() {
       return chapter.database
@@ -233,6 +237,11 @@ export async function prepareHarness(options: HostOptions) {
           throw new Error(
             `A reset or restore of ${home} was interrupted; rerun pnpm reset or pnpm restore`,
           )
+        // Shells a crashed host left running would run beside this one's work and nobody remembers them. A background
+        // job's pid file lives under `<home>/jobs` and is adopted there, never swept.
+        await sweepPidFiles(join(home, 'shell')).catch((error: unknown) =>
+          options.report?.({ level: 'error', message: `Shell sweep failed: ${String(error)}` }),
+        )
         await finishChapterSwitch(home, async (file) => {
           const created = await openNodeSqliteStorage(file)
           await created.close(context)

@@ -6,20 +6,31 @@ import { createBashTool } from '@earendil-works/pi-durable/tools'
 import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node'
 import type { ToolExecutionApi } from '@earendil-works/pi-durable'
 import { afterEach, expect, it, vi } from 'vitest'
-import codingTools from '../extensions/coding-tools/server.ts'
+import codingTools, { leftRunning } from '../extensions/coding-tools/server.ts'
 import { context } from '../server/harness.ts'
 import type { ExtensionHost } from '../server/extensions.ts'
 
 afterEach(() => vi.unstubAllEnvs())
+
+/** The host parts these tools use: recording commit events, and what a shell call left running. */
+const host = (stopped = 0) => ({
+  emit: vi.fn<ExtensionHost['emit']>() as ExtensionHost['emit'],
+  shellLeftovers: vi.fn<(_id: string) => number>(() => stopped),
+})
+
+it('names what it stopped and what to use instead, for one process and for several', () => {
+  expect(leftRunning(1)).toBe(
+    'Stopped 1 process the command left running. Use the background tool for work that should outlive the call.',
+  )
+  expect(leftRunning(3)).toContain('Stopped 3 processes the command left running.')
+})
 
 it('uses a 600-second default tripwire and leaves explicit timeouts unchanged', async () => {
   vi.stubEnv('ULTIMATE_BASH_TIMEOUT', undefined)
   const execute = vi
     .fn<ReturnType<typeof createBashTool>['execute']>()
     .mockRejectedValue(new Error('Command timed out after 600 seconds'))
-  const wrapper = codingTools({
-    emit: vi.fn<ExtensionHost['emit']>() as ExtensionHost['emit'],
-  }).wraps!.find((wrap) => 'tool' in wrap && wrap.tool === 'bash')!
+  const wrapper = codingTools(host()).wraps!.find((wrap) => 'tool' in wrap && wrap.tool === 'bash')!
   if (!('tool' in wrapper)) throw new Error('Missing bash wrapper')
   const bash = wrapper.wrap({ ...createBashTool(), execute })
   const api = {} as ToolExecutionApi
@@ -66,9 +77,7 @@ it('reads an image past the 2000 px limit shrunk to fit, keeping its aspect rati
   const dir = await mkdtemp(join(tmpdir(), 'ultimate-read-'))
   try {
     await writeFile(join(dir, 'wide.png'), png(3000, 30))
-    const read = codingTools({
-      emit: vi.fn<ExtensionHost['emit']>() as ExtensionHost['emit'],
-    }).tools!.find((tool) => tool.name === 'read')!
+    const read = codingTools(host()).tools!.find((tool) => tool.name === 'read')!
     const api = {
       env: new NodeExecutionEnv({ cwd: dir }),
       agent: async () => ({}),

@@ -49,7 +49,7 @@ the system stream: `ultimate.started` (storage opened: generation, build), `suba
 automation run, new standing agent or branch configured: agent, model, thinking, parent), `board.sent` (a message
 posted: ids, `reply`, `steer`, never the text), `workspaces.check` (each lander check run: command, result, ms),
 `conversations.compacted`, `health.changed` (a provider's state flipped), `cloud.backup` (started, done or failed),
-`coding-tools.committed` (a commit made through bash: full sha, repo, worktree, branch). The last four follow state
+`coding-tools.committed` (a commit made through bash or by a `background` job: full sha, repo, worktree, branch). The last four follow state
 outside the caller's commit (Pi's compaction, the machine's health file, an upload, a git repository), so each commits on
 its own right after it. For debugging what the user did: `user.input` (a typed prompt, steer or follow-up, an
 answer or dismissal, a review: its conversation, entry or message and length, never the text) and
