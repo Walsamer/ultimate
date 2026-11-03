@@ -164,9 +164,10 @@ function Switched({ entry, core }: { entry: EntryRecord; core: ReactNode }) {
   )
 }
 
-const switchedTo: Record<'same' | 'pin' | 'default', string> = {
+const switchedTo: Record<'same' | 'pin' | 'family' | 'default', string> = {
   same: 'the same model through another login',
   pin: 'the model its agent definition pins',
+  family: 'the fallback its model family names',
   default: 'the default model',
 }
 

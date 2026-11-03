@@ -79,6 +79,7 @@ export async function familiesView(host: ExtensionHost): Promise<FamiliesView> {
       color: spec.color,
       ...(spec.model ? { model: spec.model } : {}),
       ...(spec.thinking ? { thinking: spec.thinking } : {}),
+      ...(spec.fallback ? { fallback: spec.fallback } : {}),
       ...(follows ? { follows: refName(pi.model!), followsThinking: pi.thinking } : {}),
       builtin: Object.hasOwn(BUILTIN_FAMILIES, name),
       ...(Object.hasOwn(layers.project.families, name) ? { project: true as const } : {}),
@@ -137,7 +138,12 @@ function userFamilies(families: SaveFamilies['families']) {
   const saved: Record<string, FamilySpec> = {}
   for (const [name, spec] of Object.entries(families)) {
     const builtin = Object.hasOwn(BUILTIN_FAMILIES, name) ? BUILTIN_FAMILIES[name] : undefined
-    const own: FamilySpec = { model: spec.model, thinking: spec.thinking, color: spec.color }
+    const own: FamilySpec = {
+      model: spec.model,
+      thinking: spec.thinking,
+      color: spec.color,
+      fallback: spec.fallback,
+    }
     const changed = Object.fromEntries(
       Object.entries(own).filter(
         ([key, value]) =>

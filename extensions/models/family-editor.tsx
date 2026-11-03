@@ -1,5 +1,5 @@
 /**
- * Editing model families in place: a family's popover (model, thinking, color, removal), a new
+ * Editing model families in place: a family's popover (model, thinking, fallback, color, removal), a new
  * family, and moving a feature to a family. Each saves this project's families at once through `SaveFamiliesAction`;
  * the Agents panel lists the families with who runs on each. An agent's family is its definition's, not saved here.
  */
@@ -39,6 +39,7 @@ const specOf = (family: FamilyView): Spec => ({
   ...(family.model ? { model: family.model } : {}),
   ...(family.thinking ? { thinking: family.thinking } : {}),
   color: family.color,
+  ...(family.fallback ? { fallback: family.fallback } : {}),
 })
 
 /** Save the families as `view` has them with `change` applied; feature assignments only, agents keep theirs in files. */
@@ -206,6 +207,18 @@ function FamilyForm({
             </option>
           ))}
         </select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className={label}>Fallback</div>
+        <ModelSelect
+          onChange={(next) => set({ fallback: next })}
+          onClear={draft.fallback ? () => set({ fallback: undefined }) : undefined}
+          placeholder="the default model"
+          value={draft.fallback}
+        />
+        <p className="text-[11px] text-muted-foreground">
+          Where what runs on it moves when this model's provider has no login or runs out of quota.
+        </p>
       </div>
       {error && <p className="font-mono text-[11px] break-words text-error">{error}</p>}
       <div className="flex items-center gap-1 border-t border-border/70 pt-2.5">

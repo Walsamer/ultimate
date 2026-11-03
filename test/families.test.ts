@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
-import { definitionRuns, mergeFamilies, parseFamilies } from '../lib/families.ts'
+import { definitionRuns, familyFallback, mergeFamilies, parseFamilies } from '../lib/families.ts'
 import { readFamilies, readFamilyLayers, writeFamilies } from '../lib/families-settings.ts'
 import { temp } from './helpers.ts'
 
@@ -44,6 +44,35 @@ it('merges the project over the user over the built-ins, field by field', () => 
   expect(config.families.local.model).toBe('vllm/current')
   expect(config.families.local.color).toBeTruthy()
   expect(() => parseFamilies({ families: { Bad: {} } })).toThrow('lowercase')
+})
+
+it("keeps a family's fallback per family, and refuses one that names the family's own model", () => {
+  const config = families(
+    { families: { fast: { model: 'acme/quick', fallback: 'acme/cheap' } } },
+    { families: { fast: { thinking: 'high' } } },
+  )
+  // A later layer adds a field without restating the fallback.
+  expect(config.families.fast).toEqual({
+    model: 'acme/quick',
+    thinking: 'high',
+    fallback: 'acme/cheap',
+    color: 'amber',
+  })
+  expect(familyFallback(config, 'fast')).toEqual({ provider: 'acme', modelId: 'cheap' })
+  expect(familyFallback(config, 'default')).toBeUndefined()
+  // A fallback changes nothing about what a conversation runs on: the default family still resolves no model of its
+  // own, so its conversations keep the parent's model and only move when that one is gone.
+  const withDefault = families({ families: { default: { fallback: 'acme/cheap' } } })
+  expect(definitionRuns({ family: 'default' }, withDefault)).toEqual({
+    family: 'default',
+    via: 'family',
+  })
+  expect(familyFallback(withDefault, 'default')).toEqual({ provider: 'acme', modelId: 'cheap' })
+  // A family's fallback is a model, never another family: no chain can point back at itself.
+  expect(() => parseFamilies({ families: { fast: { fallback: 'tiny' } } })).toThrow('"provider/id"')
+  expect(() =>
+    parseFamilies({ families: { fast: { model: 'acme/quick', fallback: 'acme/quick' } } }),
+  ).toThrow("must differ from the family's model")
 })
 
 it("keeps each project's families and starts a project without its own from the ones saved last", async () => {

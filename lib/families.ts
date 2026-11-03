@@ -8,8 +8,17 @@ import type { ModelThinkingLevel } from '@earendil-works/pi-ai'
 
 export type ModelRef = { provider: string; modelId: string }
 
-/** One family as settings hold it: `model` is `provider/id`; the default family's model is Pi's default model. */
-export type FamilySpec = { model?: string; thinking?: ModelThinkingLevel; color?: string }
+/**
+ * One family as settings hold it: `model` is `provider/id`; the default family's model is Pi's default model.
+ * `fallback` is the `provider/id` a conversation on it moves to when its model's provider has no login here or runs
+ * out of quota; it must not be the family's own model, and a family cannot name another family.
+ */
+export type FamilySpec = {
+  model?: string
+  thinking?: ModelThinkingLevel
+  color?: string
+  fallback?: string
+}
 
 /** The `modelFamilies` setting, merged over the built-in defaults. */
 export type Families = {
@@ -85,9 +94,14 @@ export function parseFamilies(value: unknown): {
     if (!isFamilyName(name))
       throw new Error(`modelFamilies.families.${name}: lowercase letters, digits and - only`)
     if (!isObject(spec)) throw new Error(`modelFamilies.families.${name} must be an object`)
-    const { model, thinking, color } = spec
+    const { model, thinking, color, fallback } = spec
     if (model !== undefined && (typeof model !== 'string' || !isRef(model)))
       throw new Error(`modelFamilies.families.${name}.model must be "provider/id"`)
+    if (fallback !== undefined && (typeof fallback !== 'string' || !isRef(fallback)))
+      throw new Error(`modelFamilies.families.${name}.fallback must be "provider/id"`)
+    // A fallback that is the family's own model could never fire: the provider it names is the one that just refused.
+    if (fallback !== undefined && fallback === model)
+      throw new Error(`modelFamilies.families.${name}.fallback must differ from the family's model`)
     if (thinking !== undefined && (typeof thinking !== 'string' || !levels.has(thinking)))
       throw new Error(
         `modelFamilies.families.${name}.thinking must be one of ${[...levels].join(', ')}`,
@@ -100,6 +114,7 @@ export function parseFamilies(value: unknown): {
       ...(model ? { model } : {}),
       ...(thinking ? { thinking: thinking as ModelThinkingLevel } : {}),
       ...(color ? { color } : {}),
+      ...(fallback ? { fallback } : {}),
     }
   }
   if (value.assign !== undefined && !isObject(value.assign))
@@ -134,6 +149,15 @@ export const refOf = (value: string | undefined): ModelRef | undefined => {
     : undefined
 }
 export const refName = (ref: ModelRef) => `${ref.provider}/${ref.modelId}`
+
+/**
+ * The model the conversation's family moves to when its own provider has no login here or runs out of quota: the
+ * fallback `family` names, or, without a family (no definition, or one that pins its own model), the default family's.
+ */
+export function familyFallback(config: Families, family: string | undefined): ModelRef | undefined {
+  const name = family && Object.hasOwn(config.families, family) ? family : DEFAULT_FAMILY
+  return refOf(config.families[name]?.fallback)
+}
 
 /** "fast" → "Fast", "my-local" → "My local"; the default family is shown as "Ultimate". */
 export const familyTitle = (name: string) =>

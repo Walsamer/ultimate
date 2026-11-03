@@ -64,20 +64,34 @@ const error = (text: string) =>
 
 /**
  * A harness running the real models and watchdog backends: the first provider refuses for a spent account, and the
- * conversation should finish on the second one. The clock is the harness's, so a watchdog continuation costs nothing.
+ * conversation should finish on the next one the chain picks. The clock is the harness's, so a watchdog continuation
+ * costs nothing. The third provider is only ever reached through the configured default, so a test can tell a family's
+ * fallback from the default the chain ends at.
  */
 async function fixture(
-  answers: { primary: Answer; fallback?: Answer },
-  options: { subscriptions?: string[] } = {},
+  answers: { primary: Answer; fallback?: Answer; third?: Answer },
+  options: {
+    subscriptions?: string[]
+    /** The providers with a login here, every one by default (the availability snapshot and `checkAuth` agree). */
+    signedIn?: string[]
+    /** The model the chain's last step resolves to: `faux2/faux-2` unless a test says otherwise. */
+    configured?: { provider: string; modelId: string }
+    /** What a conversation's agent definition runs on, as the subagents extension reports it. */
+    definition?: { family?: string; model?: { provider: string; modelId: string } }
+    /** The project settings' `modelFamilies`. */
+    families?: unknown
+  } = {},
 ) {
   let now = 1_000_000
   const registry = createRegistry()
   const runtime = createModels()
   const faux = fauxProvider({ models: [{ id: 'faux-1' }] })
   const alt = fauxProvider({ provider: 'faux2', models: [{ id: 'faux-2' }] })
+  const third = fauxProvider({ provider: 'faux3', models: [{ id: 'faux-3' }] })
   runtime.setProvider(faux.provider)
   runtime.setProvider(alt.provider)
-  const asked: Record<string, string[]> = { faux: [], faux2: [] }
+  runtime.setProvider(third.provider)
+  const asked: Record<string, string[]> = { faux: [], faux2: [], faux3: [] }
   const arm = (provider: typeof faux, name: string, answer: Answer) => {
     const route: FauxResponseFactory = (transcript, ...rest) => {
       provider.appendResponses([route])
@@ -90,6 +104,7 @@ async function fixture(
   }
   arm(faux, 'faux', answers.primary)
   arm(alt, 'faux2', answers.fallback ?? (() => fauxAssistantMessage('the fallback answer')))
+  arm(third, 'faux3', answers.third ?? (() => fauxAssistantMessage('the third answer')))
   const storage = new MemoryStorage()
   storage.close = async () => {}
   const settings = { retry: { maxRetries: 0 } }
@@ -98,11 +113,14 @@ async function fixture(
     { models: runtime, registry, now: () => now, settings },
     context,
   )
-  // Both providers have a login here; a marked provider is the only reason to move.
+  // The providers with a login here, as the snapshot reports them; a marked provider is the only other reason to move.
+  const signedIn = new Set(options.signedIn ?? ['faux', 'faux2', 'faux3'])
   const available = [
     { provider: 'faux', id: 'faux-1' },
     { provider: 'faux2', id: 'faux-2' },
-  ]
+    { provider: 'faux3', id: 'faux-3' },
+  ].filter((entry) => signedIn.has(entry.provider))
+  const configured = options.configured ?? other
   const subscriptions = new Set(options.subscriptions ?? [])
   const home = await temp('ultimate-quota-')
   const notices: string[] = []
@@ -116,12 +134,22 @@ async function fixture(
       getAvailableSnapshot: () => available,
       getProvider: (provider: string) => runtime.getProvider(provider),
       isUsingSubscription: (provider: string) => subscriptions.has(provider),
-      checkAuth: async () => ({ type: 'api_key' }),
+      checkAuth: async (provider: string) =>
+        available.some((entry) => entry.provider === provider) ? { type: 'api_key' } : undefined,
       getModel: (provider: string, id: string) => runtime.getModel(provider, id),
     },
-    settings: { getDefaultProvider: () => 'faux2', getDefaultModel: () => 'faux-2' },
-    // No definition pins a model here: the configured default is the model that takes over.
-    want: () => undefined,
+    settings: {
+      getDefaultProvider: () => configured.provider,
+      getDefaultModel: () => configured.modelId,
+    },
+    // The definition a conversation runs as, when a test gives it one: the model it runs on, else its family's
+    // fallback, is what takes over.
+    want: (api: { name: string }) =>
+      api.name === 'models.definition' && options.definition
+        ? { runs: async () => options.definition }
+        : undefined,
+    projectSettings: async () =>
+      options.families === undefined ? {} : { modelFamilies: options.families },
     notice: (text: string) => notices.push(text),
     resource: <T>(key: string, create: () => T) => {
       if (!resources.has(key)) resources.set(key, create())
@@ -350,6 +378,111 @@ it('moves a subscription conversation only to another subscription login', async
     { from: 'faux/faux-1', reason: 'quota' },
   ])
   expect(f.asked.faux2).toEqual([])
+})
+
+it('moves a conversation to the fallback its family names, before the configured default', async () => {
+  // A `fast` agent: its family's model refused for a spent account, and the family names the model to move to. The
+  // configured default is a third provider, so this cannot pass on the chain's last step.
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      definition: { family: 'fast', model },
+      families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  // A quota move says so in the reason; the model it moved to shows which step chose it. The configured default
+  // (faux3) never runs: the chain stopped at the family's fallback.
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  expect(f.asked.faux3).toEqual([])
+  // Without a definition (@ultimate, a branch) the conversation runs on the default family, whose fallback applies.
+  const plain = await fixture(
+    { primary: () => error(quota) },
+    {
+      families: { families: { default: { fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const plainBranch = await plain.conversation('Write the review')
+  await (await plain.submit(plainBranch, 'review it')).wait(context)
+  await until(async () => (await plain.marks()).faux !== undefined)
+  await plain.deadline()
+  await until(async () => plain.asked.faux2.length === 1)
+  expect(fallbacks(await plain.entries(plainBranch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  expect(plain.asked.faux3).toEqual([])
+})
+
+it("takes a family's fallback when its model's login is gone, and says which step it was", async () => {
+  const f = await fixture(
+    { primary: () => fauxAssistantMessage('the answer') },
+    {
+      signedIn: ['faux2'],
+      definition: { family: 'fast' },
+      families: { families: { fast: { fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.entries(branch, 'models.fallback')).length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'family' },
+  ])
+})
+
+it("keeps today's chain when the family names no fallback", async () => {
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      definition: { family: 'fast', model },
+      families: { families: { fast: { model: 'faux/faux-1' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux3.length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux3/faux-3', reason: 'quota' },
+  ])
+  expect(f.asked.faux2).toEqual([])
+})
+
+it("never moves a subscription conversation to its family's pay-per-token fallback", async () => {
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      subscriptions: ['faux', 'faux3'],
+      definition: { family: 'fast', model },
+      families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux3.length === 1)
+  // faux2 is pay-per-token: the family's fallback is skipped, and the chain's subscription-safe step takes over.
+  expect(f.asked.faux2).toEqual([])
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux3/faux-3', reason: 'quota' },
+  ])
 })
 
 it('leaves a provider alone until its cooldown runs out, then lets it be chosen again', () => {
