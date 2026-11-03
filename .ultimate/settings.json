@@ -1,28 +1,39 @@
 {
   "extensions": {
-    "disable": ["voice"]
+    "disable": [
+      "voice"
+    ]
   },
   "modelFamilies": {
     "families": {
       "lead": {
-        "model": "deepseek/deepseek-flash",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "high",
-        "color": "orange"
+        "color": "orange",
+        "fallback": "deepseek/deepseek-flash"
       },
       "review": {
         "model": "openai-codex/gpt-6.1-sol",
-        "thinking": "high"
+        "thinking": "high",
+        "fallback": "deepseek/deepseek-flash"
       },
       "fast": {
-        "model": "deepseek/deepseek-flash"
+        "model": "openai-codex/gpt-6-luna",
+        "fallback": "deepseek/deepseek-flash"
       },
       "tiny": {
-        "model": "deepseek/deepseek-flash",
-        "thinking": "low"
+        "model": "openai-codex/gpt-6-luna",
+        "thinking": "low",
+        "fallback": "deepseek/deepseek-flash"
       },
       "design": {
-        "model": "deepseek/deepseek-flash",
-        "thinking": "high"
+        "model": "openai-codex/gpt-6-luna",
+        "thinking": "high",
+        "fallback": "deepseek/deepseek-flash"
+      },
+      "default": {
+        "model": "openai-codex/gpt-6-luna",
+        "fallback": "deepseek/deepseek-flash"
       }
     },
     "assign": {
@@ -31,7 +42,9 @@
   },
   "isolates": {
     "worktree": {
-      "setup": ["pnpm install --frozen-lockfile --prefer-offline"]
+      "setup": [
+        "pnpm install --frozen-lockfile --prefer-offline"
+      ]
     }
   },
   "lander": {
