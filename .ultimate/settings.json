@@ -10,30 +10,30 @@
         "model": "openai-codex/gpt-6-luna",
         "thinking": "high",
         "color": "orange",
-        "fallback": "deepseek/deepseek-flash"
+        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       },
       "review": {
         "model": "openai-codex/gpt-6.1-sol",
         "thinking": "high",
-        "fallback": "deepseek/deepseek-flash"
+        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       },
       "fast": {
-        "model": "openai-codex/gpt-6-luna",
-        "fallback": "deepseek/deepseek-flash"
+        "model": "llmhub/GLM-5.3",
+        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       },
       "tiny": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "llmhub/DeepSeek-V4.1-Flash-Preview",
         "thinking": "low",
         "fallback": "deepseek/deepseek-flash"
       },
       "design": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "llmhub/GLM-5.3",
         "thinking": "high",
-        "fallback": "deepseek/deepseek-flash"
+        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       },
       "default": {
         "model": "openai-codex/gpt-6-luna",
-        "fallback": "deepseek/deepseek-flash"
+        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       }
     },
     "assign": {
