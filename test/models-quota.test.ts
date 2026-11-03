@@ -80,13 +80,18 @@ async function fixture(
     definition?: { family?: string; model?: { provider: string; modelId: string } }
     /** The project settings' `modelFamilies`. */
     families?: unknown
+    /** `faux2` also serves the conversation's own model id, so the chain's `same` step resolves there. */
+    sameId?: boolean
   } = {},
 ) {
   let now = 1_000_000
   const registry = createRegistry()
   const runtime = createModels()
   const faux = fauxProvider({ models: [{ id: 'faux-1' }] })
-  const alt = fauxProvider({ provider: 'faux2', models: [{ id: 'faux-2' }] })
+  const alt = fauxProvider({
+    provider: 'faux2',
+    models: options.sameId ? [{ id: 'faux-2' }, { id: 'faux-1' }] : [{ id: 'faux-2' }],
+  })
   const third = fauxProvider({ provider: 'faux3', models: [{ id: 'faux-3' }] })
   runtime.setProvider(faux.provider)
   runtime.setProvider(alt.provider)
@@ -118,6 +123,7 @@ async function fixture(
   const available = [
     { provider: 'faux', id: 'faux-1' },
     { provider: 'faux2', id: 'faux-2' },
+    ...(options.sameId ? [{ provider: 'faux2', id: 'faux-1' }] : []),
     { provider: 'faux3', id: 'faux-3' },
   ].filter((entry) => signedIn.has(entry.provider))
   const configured = options.configured ?? other
@@ -462,11 +468,13 @@ it("keeps today's chain when the family names no fallback", async () => {
   expect(f.asked.faux2).toEqual([])
 })
 
-it("never moves a subscription conversation to its family's pay-per-token fallback", async () => {
+it("moves a subscription conversation to the family's billed fallback, and says the provider is billed", async () => {
+  // The user's own case: an everyday model on a subscription login, and the family's fallback on a pay-per-token one
+  // for when it runs out. The fallback is written down, so the move is no silent switch, and the entry says so.
   const f = await fixture(
     { primary: () => error(quota) },
     {
-      subscriptions: ['faux', 'faux3'],
+      subscriptions: ['faux'],
       definition: { family: 'fast', model },
       families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
       configured: { provider: 'faux3', modelId: 'faux-3' },
@@ -476,13 +484,117 @@ it("never moves a subscription conversation to its family's pay-per-token fallba
   await (await f.submit(branch, 'do it')).wait(context)
   await until(async () => (await f.marks()).faux !== undefined)
   await f.deadline()
-  await until(async () => f.asked.faux3.length === 1)
-  // faux2 is pay-per-token: the family's fallback is skipped, and the chain's subscription-safe step takes over.
-  expect(f.asked.faux2).toEqual([])
-  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  await until(async () => f.asked.faux2.length === 1)
+  // The watchdog's continuation runs on the fallback, and the work finishes there.
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  expect(f.asked.faux3).toEqual([])
+  const answer = (await f.entries(branch)).findLast((entry) => entry.kind === 'pi.assistant')
+  expect(answer?.model?.[0]).toMatchObject({ provider: 'faux2', model: 'faux-2' })
+  // The entry names the model it moved to and that the login it crossed into is billed per token.
   expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
-    { from: 'faux/faux-1', to: 'faux3/faux-3', reason: 'quota' },
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota', billed: true },
   ])
+  expect(fallbacks(await f.entries(branch))[0].model?.[0]?.content).toBe(
+    'faux/faux-1 is out of quota here; this conversation now runs on faux2/faux-2, billed per token.',
+  )
+
+  // The other trigger, same rule and same sentence: the subscription's login is gone, not its quota.
+  const gone = await fixture(
+    { primary: () => fauxAssistantMessage('the answer') },
+    {
+      signedIn: ['faux2'],
+      subscriptions: ['faux'],
+      definition: { family: 'fast', model },
+      families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const loginless = await gone.conversation('Implement the task')
+  await (await gone.submit(loginless, 'do it')).wait(context)
+  await until(async () => (await gone.entries(loginless, 'models.fallback')).length === 1)
+  expect(await gone.agent(loginless)).toMatchObject({ model: other })
+  expect(fallbacks(await gone.entries(loginless)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'family', billed: true },
+  ])
+  expect(fallbacks(await gone.entries(loginless))[0].model?.[0]?.content).toBe(
+    'Model faux/faux-1 has no login here; this conversation now runs on faux2/faux-2, billed per token.',
+  )
+})
+
+it('lets only the family step cross from a subscription to a billed login', async () => {
+  // Every other step of the chain would reach a pay-per-token login that has one: `same` (faux2 also serves faux-1),
+  // the definition's pin and the configured default. Only the family's written-down fallback may cross, so it is the
+  // one that moves.
+  const setup = {
+    subscriptions: ['faux'],
+    sameId: true,
+    definition: { family: 'fast', model: { provider: 'faux2', modelId: 'faux-2' } },
+    configured: { provider: 'faux2', modelId: 'faux-2' },
+  }
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      ...setup,
+      families: {
+        families: {
+          fast: { fallback: 'faux3/faux-3' },
+          default: { model: 'faux2/faux-2' },
+        },
+      },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux3.length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(f.asked.faux2).toEqual([])
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux3/faux-3', reason: 'quota', billed: true },
+  ])
+
+  // Without a family fallback nobody asked for the spend, so nothing crosses and the entry asks the user.
+  const guard = await fixture(
+    { primary: () => error(quota) },
+    { ...setup, families: { families: { default: { model: 'faux2/faux-2' } } } },
+  )
+  const kept = await guard.conversation('Implement the task')
+  await (await guard.submit(kept, 'do it')).wait(context)
+  await until(async () => (await guard.marks()).faux !== undefined)
+  await guard.deadline()
+  await until(async () => (await guard.entries(kept, 'models.fallback')).length === 1)
+  expect(await guard.agent(kept)).toMatchObject({ model })
+  expect(guard.asked.faux2).toEqual([])
+  expect(guard.asked.faux3).toEqual([])
+  expect(fallbacks(await guard.entries(kept)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', reason: 'quota' },
+  ])
+})
+
+it('moves a subscription to a subscription family fallback without mentioning billing', async () => {
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      subscriptions: ['faux', 'faux2'],
+      definition: { family: 'fast' },
+      families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  // No crossing at all, so the entry carries no `billed` and the wording stays the one it always had.
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  expect(fallbacks(await f.entries(branch))[0].model?.[0]?.content).toBe(
+    'faux/faux-1 is out of quota here; this conversation now runs on faux2/faux-2.',
+  )
 })
 
 it('leaves a provider alone until its cooldown runs out, then lets it be chosen again', () => {

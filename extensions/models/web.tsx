@@ -173,10 +173,11 @@ const switchedTo: Record<'same' | 'pin' | 'family' | 'default', string> = {
 
 /**
  * A conversation whose model had no login here or ran out of quota switched to another as its next run started, or,
- * with nothing to replace it, kept its model and waits for the user.
+ * with nothing to replace it, kept its model and waits for the user. A move that left a subscription for a login
+ * billed per token says so, beside the model it moved to.
  */
 function FellBack({ entry }: { entry: EntryRecord }) {
-  const { from, to, reason } = entry.data as Fallback
+  const { from, to, reason, billed } = entry.data as Fallback
   const actions = useUltimate()
   const provider = from.split('/')[0]
   const quota = reason === 'quota'
@@ -189,6 +190,7 @@ function FellBack({ entry }: { entry: EntryRecord }) {
         <CpuIcon className="size-3.5 text-warning" />
         <span>
           {to ? 'model switched' : quota ? 'needs you · out of quota' : 'needs you · login missing'}
+          {to && billed ? ' · billed per token' : ''}
         </span>
       </header>
       <div className="space-y-2 px-3 py-3 text-[13px] leading-relaxed">
@@ -206,11 +208,11 @@ function FellBack({ entry }: { entry: EntryRecord }) {
         <p className="text-muted-foreground">
           {quota
             ? to
-              ? `${provider} is out of quota here, so this conversation now runs on ${to}.`
+              ? `${provider} is out of quota here, so this conversation now runs on ${to}${billed ? ', billed per token' : ''}.`
               : `${provider} is out of quota here, and nothing else has a login to take over, so its requests fail until the quota resets.`
             : reason !== 'none'
-              ? `${provider} has no login here, so this conversation now runs on ${switchedTo[reason]}.`
-              : `${provider} has no login here, and no subscription login can take over, so this conversation keeps its model and its requests fail until you log in to ${provider}.`}{' '}
+              ? `${provider} has no login here, so this conversation now runs on ${switchedTo[reason]}${billed ? ', billed per token' : ''}.`
+              : `${provider} has no login here, and no other login it may move to can take over, so this conversation keeps its model and its requests fail until you log in to ${provider}.`}{' '}
           <button
             className="cursor-pointer text-foreground hover:underline"
             onClick={() => openPicker(actions)}

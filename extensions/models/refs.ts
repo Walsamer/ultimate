@@ -36,13 +36,17 @@ export const LogoutAction = actionRef<{ provider: string }, null>('models', 'log
  * A `models.fallback` entry: the conversation's model (`provider/id`) either had no login here or refused its last
  * request for a spent account, so its next run switched to `to`: the same model on another provider, the model its
  * definition runs on (`pin`), the fallback its family names (`family`) or the configured default (`default`). With
- * `reason: 'quota'` it was the provider's quota, usage or rate limit; without `to` nothing could replace it (only a
- * pay-per-token login can replace a subscription) and it kept its model and needs the user.
+ * `reason: 'quota'` it was the provider's quota, usage or rate limit; without `to` nothing could replace it (a
+ * subscription only moves to another subscription, unless its family's own fallback names a billed login) and it kept
+ * its model and needs the user. `billed` marks a move that left a subscription login for one billed per token, which
+ * only a family's configured fallback may do.
  */
 export type Fallback = {
   from: string
   to?: string
   reason: 'same' | 'pin' | 'family' | 'default' | 'quota' | 'none'
+  /** The move crossed from a subscription to a login billed per token; the card says so. */
+  billed?: true
 }
 
 /**
