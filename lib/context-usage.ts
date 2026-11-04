@@ -1,10 +1,32 @@
 import type { AssistantMessage, Message, Tool, Usage } from '@earendil-works/pi-ai'
-import { estimateMessageTokens } from '@earendil-works/pi-ai/utils/estimate'
-import type { EntryRecord } from '@earendil-works/pi-durable'
+import { calculateContextTokens, estimateMessageTokens } from '@earendil-works/pi-ai/utils/estimate'
+import type { ContextView, EntryRecord } from '@earendil-works/pi-durable'
 
 /** What a response's prompt took: the context it was sent with. */
 export const promptTokens = (usage: Pick<Usage, 'input' | 'cacheRead' | 'cacheWrite'>) =>
   usage.input + usage.cacheRead + usage.cacheWrite
+
+/**
+ * The tokens Pi compares against a model's context window and decides compaction on: what the newest answer in the
+ * current context was sent with, plus an estimate of the messages after it — a summary or handoff, the kept entries,
+ * and the system prompt in effect. It is Pi Durable's own measure (`estimateContext` in its compaction module, which it
+ * does not export), so a threshold computed from it is the threshold its next request is condensed at.
+ */
+export function contextTokens(view: ContextView) {
+  const after = view.head?.id ?? Number.NEGATIVE_INFINITY
+  let measured: AssistantMessage | undefined
+  for (let index = view.entries.length - 1; index >= 0 && measured === undefined; index--) {
+    if (view.entries[index].id <= after) continue
+    const message = view.contributions[index]?.findLast(
+      (candidate) => candidate.role === 'assistant' && calculateContextTokens(candidate.usage) > 0,
+    )
+    measured = message?.role === 'assistant' ? message : undefined
+  }
+  const from = measured === undefined ? 0 : view.messages.lastIndexOf(measured) + 1
+  let tokens = measured === undefined ? 0 : calculateContextTokens(measured.usage)
+  for (const message of view.messages.slice(from)) tokens += estimateMessageTokens(message)
+  return tokens
+}
 
 /** Context fill; absent tokens or window leave the percentage unknown. */
 export function contextUsage(

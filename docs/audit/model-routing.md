@@ -147,6 +147,16 @@ of it is text rather than truncated tool output; that is checkable per conversat
 
 ### 2.5 Where the map stands, and why it is fragile
 
+> **After this audit, same day.** The map changed twice more within the hour, which is the finding below restating
+> itself: `0f870eb` put every family on the paid DeepSeek API with no fallbacks at all, and `7d088f5` put `review`
+> back on Codex Sol with paid DeepSeek as its declared step. So the table below is the state measured at `d784e882`;
+> the fallback edge it describes is closed, and the only remaining route into a smaller window is the manual picker —
+> guarded now, in `extensions/models/condense.tsx`: a pick the conversation's window cannot hold asks first, offering
+> "condense on the current model, then switch" or "switch anyway". Everything on the hub being free is worth nothing
+> while every role is billed; the thing that must exist **before** `scout`, `watcher`, `dream-pass`, `sketch` and
+> previews go back to it is P1 below — mark the model, do not pause the host — because a free token is worth $0 and a
+> host pause is worth an hour of paid work.
+
 Today (`.ultimate/settings.json`, mirrored in `~/.ultimate/model-families.json` under `recent`, and again per project
 for another project on this machine):
 
@@ -347,20 +357,24 @@ The smallest enforceable rule set (no forecasting):
 
 **P0 — a model switch may never silently condense a conversation.** _(the destructive-transition question)_
 Prevents: findings 1, 3, 4 and 6 — the actual incident, and the wedge.
-Size: ~100–150 lines. Where: `server/api.ts:674-712` (the `configure` route) and
-`extensions/models/fallback.ts:81-90` (candidate selection), one new card beside `FellBack`
-(`extensions/models/web.tsx:179-242`), one or two tests.
-Reuses: `ContextUsageDoc` (`extensions/conversations/api.ts:99-107` — already the one measure of how full a
-conversation is), the model list's `contextWindow` (`shared/protocol.ts:181`), the existing card vocabulary.
-Behaviour: (a) the fallback chain **skips** any candidate whose window cannot hold the conversation's tokens; (b) a
-manual switch to a smaller window asks first, on one card — "This conversation holds 389,570 tokens; GLM-5.3 is declared
-at 128,000. Switching condenses it into a summary on the next turn." — with **Condense on the current model, then
-switch**, **Switch anyway**, **Cancel**; (c) a manual `compact` command keeps its current meaning but says which model
-writes the summary.
-Risk: the context document is a cache and can be stale or estimated. Treat it conservatively — if `estimated`, say "at
-least" and compare against the same figure; a stale figure only moves the warning, it cannot create the failure mode
-this prevents. Second risk: a pin carried by a definition is applied at spawn (`lib/agents.ts:151`) and never confronts
-a conversation's contents, so P0 must not try to guard spawn; only changes to an _existing_ conversation need it.
+**Built after this audit**, and smaller than planned: `condenseThresholds` in `server/harness.ts` (the policy Pi
+resolves, per model), `contextTokens` in `lib/context-usage.ts` (Pi's own estimate, so the number in the question is the
+one its next request is condensed at), a `409` in the `configure` route (`server/api.ts`) and the dialog in
+`extensions/models/condense.tsx` — about 150 lines with three API-level tests in `test/model-window-switch.test.ts`.
+Behaviour: a manual switch to a smaller window **asks first**, on one card naming both numbers, with **Condense first,
+then switch** (condensing on the model that holds the conversation, then switching), **Switch anyway**, and **Cancel**.
+Two halves of the original plan are deliberately not built: **(a)** the chain skipping an unholdable candidate has no
+trigger while no family declares a fallback that narrows a window (`0f870eb` removed them all) and belongs with
+whichever landing brings free models back; **(c)** the `compact` command keeps its current meaning, since the dialog
+already offers the safe order.
+Reuses: Pi's own estimator and compaction policy instead of a second guess at either, so the question names the number
+its next request is condensed at; the model list's `contextWindow` (`shared/protocol.ts:181`); the dialog vocabulary of
+the picker and the login before it.
+Risk: the measure is a live estimate, not the stored `ContextUsageDoc`, so it costs one context read per switch — cheap
+next to the request it stands in front of. A conversation that is working cannot be condensed now, so that answer is
+refused with its own sentence and the pick waits, rather than condensing under a running turn. And a definition's pin is
+applied at spawn (`lib/agents.ts:151`) on an empty conversation, so it never needs this guard: only a change to an
+_existing_ conversation does.
 
 **P1 — a free model that refuses stays off until the user turns it back on.**
 Prevents: the pause storms (finding 7) and retrying into a wall.
@@ -406,7 +420,8 @@ Real keys only; nothing invented. Ordered by what I would change first.
 
 1. **Take the 128k fallback off every long-lived family** (`.ultimate/settings.json`, and the same lines in
    `~/.ultimate/model-families.json` — `recent` and any per-project entry, which currently carry the same
-   values). Today:
+   values). **Done after this audit** — `0f870eb` removed every fallback, so this and the next line are moot; what it
+   leaves is the compaction profile two lines down, which no commit has set. Today:
 
    ```json
    "default": { "model": "deepseek/deepseek-flash", "fallback": "llmhub/GLM-5.3" },

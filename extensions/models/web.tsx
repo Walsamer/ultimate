@@ -15,6 +15,7 @@ import {
   useUltimate,
 } from '@/sdk'
 import type { EntryRecord } from '@/sdk'
+import { CondenseDialog } from './condense.tsx'
 import { LoginDialog } from './login.tsx'
 import { familyTitle } from '../../lib/families.ts'
 import { agentsPanel, FamilyDot, familyOf, useFamilies } from './families.tsx'
@@ -244,7 +245,10 @@ function FellBack({ entry }: { entry: EntryRecord }) {
 
 export default defineWebExtension({
   entries: { 'pi.assistant': Switched, 'models.fallback': FellBack },
-  slots: { 'composer.toolbar': [ModelButton, ThinkingButton], overlay: [ModelPicker, LoginDialog] },
+  slots: {
+    'composer.toolbar': [ModelButton, ThinkingButton],
+    overlay: [ModelPicker, LoginDialog, CondenseDialog],
+  },
   commands: [
     {
       id: 'model.families',

@@ -77,7 +77,7 @@ export { ConversationScope } from './conversation-scope.tsx'
 export { Composer, ComposerRedirect, fillComposer, insertIntoComposer } from '../app/composer.tsx'
 export type { ComposerTarget } from '../app/composer.tsx'
 export { api, notify } from './client.ts'
-export { ActionError } from './api.ts'
+export { ActionError, HttpError } from './api.ts'
 export type { ActionOptions, Api } from './api.ts'
 export type { UseActionOptions } from './hooks.ts'
 /** Typed refs for a project extension's own documents and actions; built-ins keep theirs in `refs.ts`. */

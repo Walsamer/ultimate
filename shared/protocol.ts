@@ -25,6 +25,12 @@ export interface SubmitResponse {
 export interface ConfigureRequest {
   model?: ModelRef
   thinkingLevel?: ModelThinkingLevel
+  /**
+   * What to do when the model picked cannot hold this conversation, so its next request would condense it: `before`
+   * condenses it on the model it runs on now and then switches, `anyway` switches as asked. Without either the switch
+   * is refused and nothing changes, so a model is never switched into a silent condensation.
+   */
+  condense?: 'before' | 'anyway'
 }
 /**
  * A conversation's view as `/api/events` streams it. A long active context arrives windowed: its head marker and newest

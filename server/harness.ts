@@ -10,7 +10,12 @@ import { join } from 'node:path'
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context'
 import type { FauxProviderHandle } from '@earendil-works/pi-ai/providers/faux'
 import { ModelRuntime, SettingsManager } from '@earendil-works/pi-coding-agent'
-import { AgentDoc, createRegistry, Harness } from '@earendil-works/pi-durable'
+import {
+  AgentDoc,
+  createRegistry,
+  DEFAULT_COMPACTION_POLICY,
+  Harness,
+} from '@earendil-works/pi-durable'
 import type { Context } from '@earendil-works/chord'
 import { UiState } from './ui-state.ts'
 import { listModels } from './models.ts'
@@ -83,6 +88,36 @@ export const compactionOverrides: Record<string, Partial<CompactionPolicy>> = {
   // claude-code/claude-haiku-4-5-20251001 has a 200k window: Pi's defaults fit.
 }
 
+/** The compaction policy in force: Pi's settings with this repository's overrides under the user's own, per model. */
+function compactionSettings(settings: SettingsManager) {
+  const configured = settings.getSettings().compaction?.modelOverrides ?? {}
+  const modelOverrides = { ...compactionOverrides }
+  for (const [model, entry] of Object.entries(configured))
+    modelOverrides[model] = { ...modelOverrides[model], ...entry }
+  return { ...settings.getCompactionSettings(), modelOverrides }
+}
+
+/**
+ * Where a conversation on `model` starts to be condensed, as Pi decides it for its next request (`thresholdCompaction`
+ * in Pi Durable's generation): blocking above `contextWindow - reserveTokens`, a background compaction from that less
+ * `backgroundTokens`. Undefined when compaction is off for the model. Pi keeps its own `compactionPolicy` to itself, so
+ * the per-model merge is repeated here, beside the overrides it reads.
+ */
+export function condenseThresholds(
+  settings: SettingsManager,
+  model: { provider: string; modelId: string },
+  contextWindow: number,
+) {
+  // Pi resolves its defaults under the configured ones before a model's override (DEFAULT_COMPACTION_POLICY, then
+  // `resolveSettings`, then `compactionPolicy`), so the same three layers decide the thresholds here.
+  const base = { ...DEFAULT_COMPACTION_POLICY, ...compactionSettings(settings) }
+  const override = base.modelOverrides?.[`${model.provider}/${model.modelId}`]
+  const policy = { ...base, ...override }
+  if (!policy.enabled) return undefined
+  const blocking = contextWindow - policy.reserveTokens
+  return { blocking, background: blocking - policy.backgroundTokens }
+}
+
 export function createHarnessSettings(
   settings: SettingsManager,
   extensions: () => Extension[],
@@ -101,11 +136,7 @@ export function createHarnessSettings(
       }
     },
     get compaction() {
-      const configured = settings.getSettings().compaction?.modelOverrides ?? {}
-      const modelOverrides = { ...compactionOverrides }
-      for (const [model, entry] of Object.entries(configured))
-        modelOverrides[model] = { ...modelOverrides[model], ...entry }
-      return { ...settings.getCompactionSettings(), modelOverrides }
+      return compactionSettings(settings)
     },
     get retry() {
       return settings.getRetrySettings()

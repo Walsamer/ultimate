@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { api, getConversation, useConversation, useModels, useStore } from '@/sdk'
+import { api, getConversation, HttpError, useConversation, useModels, useStore } from '@/sdk'
 import type { ModelsResponse, UltimateActions } from '@/sdk'
 
 export type ModelInfo = ModelsResponse['models'][number]
@@ -10,6 +10,7 @@ export type ThinkingLevel = ModelInfo['thinkingLevels'][number]
 export const dialogs = {
   picker: 'models.picker',
   login: 'models.login',
+  condense: 'models.condense',
 } as const
 /** The thinking popover of conversation `id`'s toolbar: a side chat's has its own, apart from main's. */
 export const thinkingDialog = (id: number | undefined) => `models.thinking.${id}`
@@ -34,8 +35,70 @@ export function useCurrentModel(target?: number) {
   }
 }
 
-export function selectModel(model: ModelInfo, id: number | undefined) {
-  return api.configure({ model: { provider: model.provider, modelId: model.id } }, id)
+/** What a switch is waiting on: the route's sentence when the model cannot hold this conversation. */
+export type SwitchOutcome = { question?: string }
+
+/**
+ * Switch `id` to `model`. A model whose window cannot hold the conversation is refused by the route with a conflict
+ * naming what it would condense, so the choice becomes a question rather than a silent condensation: `condense` is the
+ * answer, `before` (condense here first) or `anyway`. Every other failure is thrown as it came.
+ */
+export async function switchModel(
+  model: ModelInfo,
+  id: number | undefined,
+  options: { thinkingLevel?: ThinkingLevel; condense?: 'before' | 'anyway' } = {},
+): Promise<SwitchOutcome> {
+  try {
+    await api.configure(
+      {
+        model: { provider: model.provider, modelId: model.id },
+        ...(options.thinkingLevel ? { thinkingLevel: options.thinkingLevel } : {}),
+        ...(options.condense ? { condense: options.condense } : {}),
+      },
+      id,
+    )
+    return {}
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 409 && !options.condense)
+      return { question: error.message }
+    throw error
+  }
+}
+
+/** The switch waiting for an answer, kept here so the dialog can outlive the picker that asked. */
+export type AskedSwitch = {
+  /** The conversation the picker configures; undefined is the shown one. */
+  id?: number
+  model: ModelInfo
+  thinkingLevel?: ThinkingLevel
+  /** The route's sentence: what switching now would condense. */
+  question: string
+}
+
+let asked: AskedSwitch | undefined
+const askedListeners = new Set<() => void>()
+function setAsked(next: AskedSwitch | undefined) {
+  asked = next
+  for (const listener of askedListeners) listener()
+}
+export function useAskedSwitch() {
+  return useSyncExternalStore(
+    (listener) => {
+      askedListeners.add(listener)
+      return () => {
+        askedListeners.delete(listener)
+      }
+    },
+    () => asked,
+  )
+}
+/** Ask what to do about a switch the route refused, in the picker's place. */
+export function openCondense(actions: Pick<UltimateActions, 'open'>, next: AskedSwitch) {
+  setAsked(next)
+  actions.open(dialogs.condense)
+}
+export function closeCondense() {
+  setAsked(undefined)
 }
 
 /**

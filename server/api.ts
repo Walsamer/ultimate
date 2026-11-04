@@ -1,18 +1,21 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type {
+  Conversation,
   ConversationId,
   Cursor,
   DocumentWatch,
   EntryId,
+  Harness,
   JsonObject,
   SubmissionId,
 } from '@earendil-works/pi-durable'
+import { LiveDoc } from '@earendil-works/pi-durable'
 import type { ServerEvents, ConversationSummary, ConfigureRequest } from '../shared/protocol.ts'
 import { UI_REVISION, imageMimeTypes, maxImageBytes, maxImages } from '../shared/protocol.ts'
 import { listModels } from './models.ts'
 import { expandSkillCommand } from './skills.ts'
 import type { Extensions } from './extensions.ts'
-import { context } from './harness.ts'
+import { condenseThresholds, context } from './harness.ts'
 import type { OpenHost, PreparedHost } from './harness.ts'
 import type { createSystem } from './system.ts'
 import { requestSwap } from './supervisor-protocol.ts'
@@ -27,6 +30,7 @@ import type { Access } from './request-security.ts'
 import { conversationIndex } from './project.ts'
 import { windowOps, windowView } from './view-window.ts'
 import { shortTitle } from '../lib/title.ts'
+import { contextTokens } from '../lib/context-usage.ts'
 
 class HttpError extends Error {
   status: number
@@ -87,6 +91,57 @@ function failed(response: ServerResponse, error: unknown) {
       error: error instanceof HttpError ? error.message : 'Request failed',
     })
   else response.destroy()
+}
+
+/** A token count as a card or an error reads it. */
+const count = (tokens: number) => tokens.toLocaleString('en-US')
+
+/**
+ * A model picked for a conversation it cannot hold would condense it on its next turn: everything above that model's
+ * threshold into one summary, written by the smaller model, with nothing asked. So a switch that would condense is
+ * refused as a conflict, and the caller answers either `before` — condense here, on the model that holds it now, then
+ * switch — or `anyway`. Nothing is condensed without one of those, which is the invariant this route carries: a model
+ * switch never silently replaces a conversation's working state.
+ */
+async function condenseBefore(
+  host: PreparedHost,
+  harness: Harness,
+  conversation: Conversation,
+  to: ConfigureRequest['model'],
+  condense: 'before' | 'anyway' | undefined,
+) {
+  const model = to && host.model(to)
+  if (!to || !model) return
+  const from = (await conversation.agent(context)).model
+  if (from?.provider === to.provider && from.modelId === to.modelId) return
+  const thresholds = condenseThresholds(host.settings, to, model.contextWindow)
+  if (!thresholds) return
+  const name = `${to.provider}/${to.modelId}`
+  const holds = async () => contextTokens(await conversation.context(context))
+  let tokens = await holds()
+  if (tokens <= thresholds.background || condense === 'anyway') return
+  if (condense !== 'before')
+    throw new HttpError(
+      409,
+      `${name} is declared at ${count(model.contextWindow)} tokens and this conversation holds ${count(tokens)}, so switching would condense it into one summary on its next turn.`,
+    )
+  // A busy conversation places a summary at the next boundary, which may be far off: ask for it to be condensed once it
+  // has stopped rather than holding this request open until then.
+  if ((await harness.snapshot(LiveDoc, conversation.id, context))?.run)
+    throw new HttpError(
+      409,
+      `This conversation is working, so it cannot be condensed now; pick ${name} again once it stops.`,
+    )
+  // Condensed here, on the model the conversation runs on now: that is the one whose window holds it, and the one
+  // whose reading of the work is worth keeping.
+  const compaction = await conversation.compact(undefined, context)
+  await harness.waitForTask(compaction, context)
+  tokens = await holds()
+  if (tokens > thresholds.background)
+    throw new HttpError(
+      409,
+      `Condensing this conversation left ${count(tokens)} tokens, above ${name}'s ${count(model.contextWindow)}, so it stays on ${from ? `${from.provider}/${from.modelId}` : 'its model'}.`,
+    )
 }
 /**
  * Start a server-sent event stream; `end` stops its heartbeat and closes it. An event of a subscription carries its id
@@ -673,6 +728,13 @@ export async function createApi(
             }
             case 'configure': {
               const configure: ConfigureRequest = {}
+              if (
+                data.condense !== undefined &&
+                data.condense !== 'before' &&
+                data.condense !== 'anyway'
+              )
+                throw new HttpError(400, 'Invalid condense')
+              const condense = data.condense
               if (data.model !== undefined) {
                 if (!data.model || typeof data.model !== 'object')
                   throw new HttpError(400, 'Invalid model')
@@ -709,6 +771,7 @@ export async function createApi(
                     )
                 }
               }
+              await condenseBefore(host, harness, conversation, configure.model, condense)
               await conversation.configure(configure, context)
               json(200, { ok: true })
               break

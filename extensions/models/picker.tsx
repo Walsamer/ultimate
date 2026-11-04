@@ -33,13 +33,14 @@ import {
   authLabel,
   dialogs,
   formatWindow,
+  openCondense,
   openLogin,
   price,
-  selectModel,
+  switchModel,
   useCurrentModel,
   usePickerTarget,
 } from './state.tsx'
-import type { ModelInfo, ProviderInfo } from './state.tsx'
+import type { ModelInfo, ProviderInfo, ThinkingLevel } from './state.tsx'
 
 const LIMIT = 150
 
@@ -153,8 +154,16 @@ export function ModelPicker() {
       return
     }
     setError(undefined)
-    selectModel(model, id).then(
-      () => setOpen(false),
+    switchTo(model)
+  }
+
+  /** Pick `model` for the conversation that opened the picker, asking first when it cannot hold it. */
+  function switchTo(model: ModelInfo, thinkingLevel?: ThinkingLevel) {
+    switchModel(model, id, { thinkingLevel }).then(
+      ({ question }) => {
+        setOpen(false)
+        if (question) openCondense(actions, { id, model, thinkingLevel, question })
+      },
       (failure: unknown) => setError(errorMessage(failure)),
     )
   }
@@ -167,9 +176,16 @@ export function ModelPicker() {
     if (loading) return
     if (model && !model.available) return choose(model)
     setError(undefined)
-    const level = thinkingOf(family)
+    if (model) return switchTo(model, thinkingOf(family))
+    // A family's model is not in the list this window last fetched: let the route decide, as it always has.
     api
-      .configure({ model: { provider, modelId }, ...(level ? { thinkingLevel: level } : {}) }, id)
+      .configure(
+        {
+          model: { provider, modelId },
+          ...(thinkingOf(family) ? { thinkingLevel: thinkingOf(family) } : {}),
+        },
+        id,
+      )
       .then(
         () => setOpen(false),
         (failure: unknown) => setError(errorMessage(failure)),
