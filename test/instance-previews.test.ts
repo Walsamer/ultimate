@@ -6,6 +6,7 @@ import { afterEach, expect, it } from 'vitest'
 import type { ConversationId } from '@earendil-works/pi-durable'
 import { BACKGROUND_CONTEXT } from '@earendil-works/chord/context'
 import {
+  instanceUrl,
   previewEnv,
   previewWorkspace,
   remember,
@@ -36,6 +37,24 @@ const preview = (port: number, conversationId = 1) => ({
   id: `p${port}-${conversationId}`,
   url: `http://127.0.0.1:${port}`,
   conversationId,
+})
+
+it('reads the URL an instance announced, whatever host it bound', () => {
+  // Regression: only a 127.0.0.1 URL was read, so a start that printed localhost, a LAN or Tailscale address left
+  // the probe without a URL and the caller was told "Instance did not become ready" about a running instance.
+  expect(instanceUrl('Ultimate: http://127.0.0.1:4748')).toBe('http://127.0.0.1:4748')
+  expect(instanceUrl('Ultimate: http://localhost:4748')).toBe('http://localhost:4748')
+  expect(instanceUrl('Ultimate: http://100.101.102.103:4748')).toBe('http://100.101.102.103:4748')
+  expect(instanceUrl('Ultimate: http://[::1]:4748')).toBe('http://[::1]:4748')
+  expect(instanceUrl('Ultimate: https://host.example.ts.net:4748')).toBe(
+    'https://host.example.ts.net:4748',
+  )
+  // Anything that is not that one line stays unread: a malformed line never becomes a URL to fetch.
+  expect(instanceUrl('Ultimate: starting…')).toBeUndefined()
+  expect(instanceUrl('Ultimate: http://')).toBeUndefined()
+  expect(instanceUrl('Ultimate: not a url')).toBeUndefined()
+  expect(instanceUrl('  Ultimate: http://127.0.0.1:4748')).toBeUndefined()
+  expect(instanceUrl('Ultimate: http://127.0.0.1:4748 (remote)')).toBeUndefined()
 })
 
 it('previews the nearest owner worktree of a subagent, else the host checkout', async () => {

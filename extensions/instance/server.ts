@@ -37,6 +37,22 @@ import { readSettings, userSettingsPath } from '../../lib/settings.ts'
 import { readFamilies } from '../../lib/families-settings.ts'
 import { BUILTIN_FAMILIES, DEFAULT_FAMILY, FEATURES } from '../../lib/families.ts'
 
+/**
+ * The URL an instance announces on its `Ultimate: …` line, or undefined for any other line. The probe must read any
+ * absolute http(s) URL the child prints — `localhost`, a LAN address, a Tailscale name, `[::1]` — because the
+ * readiness loop fetches it, and a host it refuses to read is an instance that never becomes ready.
+ */
+export function instanceUrl(line: string): string | undefined {
+  const match = /^Ultimate: (https?:\/\/\S+?)\r?$/.exec(line)
+  if (!match) return undefined
+  try {
+    const url = new URL(match[1])
+    return url.hostname ? match[1] : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Previews run every agent on the previews family's model unless `instance.model` names another or is `null`. */
 export const DEFAULT_PREVIEW_MODEL = BUILTIN_FAMILIES[FEATURES.preview.family].model!
 
@@ -429,8 +445,8 @@ export default function instanceExtension(
         const lines = stdout.split('\n')
         stdout = lines.pop()!.slice(-10000)
         for (const line of lines) {
-          const match = /^Ultimate: (http:\/\/127\.0\.0\.1:([1-9]\d*))\r?$/.exec(line)
-          if (match) item.url = match[1]
+          const url = instanceUrl(line)
+          if (url) item.url = url
         }
       })
       child.stderr?.on('data', append)
