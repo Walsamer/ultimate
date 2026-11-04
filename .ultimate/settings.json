@@ -7,33 +7,27 @@
   "modelFamilies": {
     "families": {
       "default": {
-        "model": "deepseek/deepseek-flash",
-        "fallback": "llmhub/GLM-5.3"
+        "model": "deepseek/deepseek-flash"
       },
       "lead": {
         "model": "deepseek/deepseek-flash",
         "thinking": "high",
-        "color": "orange",
-        "fallback": "llmhub/GLM-5.3"
+        "color": "orange"
       },
       "fast": {
-        "model": "deepseek/deepseek-flash",
-        "fallback": "llmhub/GLM-5.3"
+        "model": "deepseek/deepseek-flash"
       },
       "design": {
         "model": "deepseek/deepseek-flash",
-        "thinking": "high",
-        "fallback": "llmhub/GLM-5.3"
+        "thinking": "high"
       },
       "tiny": {
-        "model": "llmhub/GLM-5.3",
-        "thinking": "low",
-        "fallback": "deepseek/deepseek-flash"
+        "model": "deepseek/deepseek-flash",
+        "thinking": "low"
       },
       "review": {
-        "model": "openai-codex/gpt-6.1-sol",
-        "thinking": "high",
-        "fallback": "deepseek/deepseek-flash"
+        "model": "deepseek/deepseek-flash",
+        "thinking": "high"
       }
     },
     "assign": {
