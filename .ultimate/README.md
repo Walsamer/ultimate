@@ -7,6 +7,13 @@ Every built-in is already on; this setup adds how the repository is landed and r
 
 - `settings.json`: each worktree isolate installs its dependencies, and the lander runs `pnpm check`, then
   `pnpm test` and `pnpm test:e2e` in parallel, and pushes to `origin`.
+- `settings.json`: the `tiny` family (titles and summaries, `scout`, `watcher`, `sketch` and the dream's passes) runs
+  the four free models of this machine's Telekom LLM hub first, then the paid DeepSeek API: `llmhub/Qwen3.6-35B-A3B-FP8`,
+  then `NVIDIA-Nemotron-3-Super-120B-A12B-FP8`, `Mistral-Small-4-119B-2603` and `gemma-4-31B-it-FP8` as its fallback,
+  ending on `deepseek/deepseek-flash`. Those hub models are machine scope, not repository scope: they are registered in
+  `~/.pi/agent/models.json` (provider `llmhub`, `openai-completions`, key from `~/.config/llmhub/key`) with a working
+  200k window and a 32k answer budget each, so a machine without that registration runs the chain's last step only —
+  a model without a login is not a candidate, so every step before it is skipped rather than retried.
 - `agents/reviewer-*.md`: the review team (correctness, simplicity, architecture), each on its own model; the shipped
   `reviewer` starts them in parallel and returns one merged verdict.
 - `extensions/drop/`: files dropped into the composer. A plain drop inserts the file's absolute path, looked up on this

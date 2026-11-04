@@ -47,8 +47,8 @@ afterEach(async () => {
 const error = (text = 'invalid model configuration') =>
   fauxAssistantMessage('', { stopReason: 'error', errorMessage: text })
 const overloaded = 'Our servers are currently overloaded. Please try again later.'
-const quotaHint =
-  'The provider is out of quota; once it resets, resume this conversation with a message'
+const blockedHint =
+  'The model refused the request; once that clears, resume this conversation with a message'
 const model = { provider: 'faux', modelId: 'faux-1' }
 const Anchor = defineTask<null, { phase: 'done' }, null>({
   name: 'watchdog-test.anchor',
@@ -801,26 +801,38 @@ it.each([
     false,
     undefined,
   ],
-  [overloaded, true, undefined],
+  [overloaded, true, blockedHint],
   // A spent account gets one continuation, which the model layer puts on another model; a billing notice does not.
   [
     "Incomplete Claude Code upstream response (status 429, capture incomplete, upstream said: This request would exceed your account's rate limit. Please try again later.)",
     true,
-    quotaHint,
+    blockedHint,
   ],
-  ['429 Too Many Requests', true, quotaHint],
+  ['429 Too Many Requests', true, blockedHint],
   [
     'You exceeded your current quota, please check your plan and billing details. (insufficient_quota)',
     true,
-    quotaHint,
+    blockedHint,
   ],
-  ["You've hit your usage limit. Upgrade to Plus or try again in 3 days.", true, quotaHint],
+  ["You've hit your usage limit. Upgrade to Plus or try again in 3 days.", true, blockedHint],
+  [
+    "429 You've reached your maximum token allocation. To increase your limit, please get in touch with the administrator.",
+    true,
+    blockedHint,
+  ],
+  // The provider does not serve this model here: another model would.
+  ['404 Model not found: Qwen3.6-35B-A3B-FP8', true, blockedHint],
+  ['400 Unsupported model for this endpoint', true, blockedHint],
+  // A transport error on this machine reaches the same network on every model, and another model with the same window
+  // refuses an overflow too: those stop and report as they did.
+  ['fetch failed: ECONNREFUSED 127.0.0.1:443', true, undefined],
+  ['400 prompt is too long: 250000 tokens > 200000 maximum', false, undefined],
   [
     'Claude Code billing: this request was charged to Claude usage credits instead of your plan limits (rate limit status allowed_warning, five_hour).',
     false,
     undefined,
   ],
-  ['Overloaded (529)', true, undefined],
+  ['Overloaded (529)', true, blockedHint],
   // A conversation pinned to a provider whose login was removed (rog, 2026-10-25).
   [
     'Provider is not configured: openrouter',

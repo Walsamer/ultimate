@@ -1,9 +1,12 @@
 /**
- * A conversation whose model provider either has no login here or refused its last request for a spent account (a
- * quota, a usage limit, a rate limit Pi already retried) switches, as its next run's input is placed, to the same
- * model on another provider, the model its definition runs on, the first fallback its family names that is usable or
- * the configured default, and says so with one `models.fallback` entry. A family names one fallback or an ordered list
- * of them, each failure walking one step further. A subscription switches only to another subscription login,
+ * A conversation whose model either has no login here or refused its last request for a reason another model would not
+ * share (`modelBlocked` in `lib/rate-limit.ts`: a spent account, a model the provider does not serve or allows here, or
+ * a provider that kept failing on its own side) switches, as its next run's input is placed, to the same model on
+ * another provider, the model its definition runs on, the first fallback its family names that is usable or the
+ * configured default, and says so with one `models.fallback` entry. A family names one fallback or an ordered list of
+ * them, each refusal walking one step further; a refused model is marked (`quota.ts`) for a cooldown, and the mark
+ * names the model rather than the provider, so a gateway that serves a whole chain on one login gives up only the model
+ * that refused. A subscription switches only to another subscription login,
  * except for the fallback its own family names: that is the owner saying where to spend instead, so that one step may
  * move it to a login billed per token, and the entry and its card say the provider is billed. Without such a
  * fallback nothing replaces it, the conversation keeps its model and the entry asks the user. An availability Pi has
@@ -17,7 +20,8 @@ import { configuredModel, hasLogin } from '../../lib/agents.ts'
 import { DEFAULT_FAMILY, familyFallbacks, refOf } from '../../lib/families.ts'
 import { readFamilies } from '../../lib/families-settings.ts'
 import { Definition } from './api.ts'
-import { Quota, spent } from './quota.ts'
+import { Quota, refusal } from './quota.ts'
+import type { Refusal } from './quota.ts'
 import type { Fallback } from './refs.ts'
 
 type Ref = { provider: string; modelId: string }
@@ -49,28 +53,28 @@ export async function fallback(
   const from = agent.model
   const now = Date.now()
   const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
-  // It refused its last request for a spent account; a login is not the problem and needs no check.
-  const refused = spent(marks, from.provider, now)
-  // This one still has a login and has not run out of quota.
-  if (!refused && hasLogin(available, from)) return undefined
+  // This model refused its last request here; a login is not the problem and needs no check.
+  const mark: Refusal | undefined = refusal(marks, from, now)
+  // This one still has a login and has not refused its last request.
+  if (!mark && hasLogin(available, from)) return undefined
   // Certain evidence only: the snapshot has no login for it and a fresh check agrees. A provider still registering,
   // or a check that fails or times out, leaves the model as it is; its request fails with its own error.
-  if (!refused && runtime.getProvider(from.provider) && (await mayHaveLogin(host, from.provider)))
+  if (!mark && runtime.getProvider(from.provider) && (await mayHaveLogin(host, from.provider)))
     return undefined
   const fresh = runtime.getAvailableSnapshot()
   const paid = wasSubscription(host, from.provider) || subscription(host, from.provider)
-  // Another provider that has a login and has not just refused for a spent account. A subscription takes only another
+  // Another model that has a login and did not refuse its last request here. A subscription takes only another
   // subscription, except for the fallback its family names: the owner wrote that step down, so it is no silent switch
   // to a billed login, and the entry says what it crossed into. Nothing else may cross.
-  const allowed = (provider: string, step: Step) =>
-    !spent(marks, provider, now) && (!paid || step === 'family' || subscription(host, provider))
+  const allowed = (ref: Ref, step: Step) =>
+    !refusal(marks, ref, now) && (!paid || step === 'family' || subscription(host, ref.provider))
   const usable = (ref: Ref | undefined, step: Step) =>
-    !!ref && hasLogin(fresh, ref) && allowed(ref.provider, step)
+    !!ref && hasLogin(fresh, ref) && allowed(ref, step)
   const same = fresh.find(
     (model) =>
       model.id === from.modelId &&
       model.provider !== from.provider &&
-      allowed(model.provider, 'same'),
+      allowed({ provider: model.provider, modelId: model.id }, 'same'),
   )
   // What the conversation's agent definition runs on, and the families as settings have them now: the definition's
   // own model, then its family's declared fallbacks, then the configured default. The family's fallback is what lets a
@@ -88,7 +92,7 @@ export async function fallback(
     ],
   ]
   const found = candidates.find(([ref, step]) => usable(ref, step))
-  const reason: Fallback['reason'] = refused ? 'quota' : found ? found[1] : 'none'
+  const reason: Fallback['reason'] = mark ? mark.reason : found ? found[1] : 'none'
   // The move left the subscription for a login billed per token; the entry and its card say so plainly.
   const billed = !!found && paid && !subscription(host, found[0]!.provider)
   const data: Fallback = found
@@ -103,12 +107,19 @@ export async function fallback(
       agent.thinkingLevel = clampThinkingLevel(model, agent.thinkingLevel)
   }
   const spending = billed ? ', billed per token' : ''
+  // A spent account says so plainly; any other refusal names the model, since the login is fine there.
+  const why =
+    mark?.reason === 'quota'
+      ? `${data.from} is out of quota here`
+      : mark
+        ? `${data.from} refused its last request here`
+        : undefined
   const content = found
-    ? refused
-      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}${spending}.`
+    ? why
+      ? `${why}; this conversation now runs on ${data.to}${spending}.`
       : `Model ${data.from} has no login here; this conversation now runs on ${data.to}${spending}.`
-    : refused
-      ? `${data.from} is out of quota here and nothing else has a login to take over, so this conversation keeps it until the quota resets or the user picks another model.`
+    : why
+      ? `${why} and nothing else this conversation may move to has a login, so this conversation keeps it until it is usable again or the user picks another model.`
       : `Model ${data.from} has no login here and no other model this conversation may move to has a login, so this conversation keeps it until the user logs in to ${from.provider} or picks another model.`
   return {
     entries: [

@@ -22,8 +22,14 @@
         "thinking": "high"
       },
       "tiny": {
-        "model": "deepseek/deepseek-flash",
-        "thinking": "low"
+        "model": "llmhub/Qwen3.6-35B-A3B-FP8",
+        "thinking": "low",
+        "fallback": [
+          "llmhub/NVIDIA-Nemotron-3-Super-120B-A12B-FP8",
+          "llmhub/Mistral-Small-4-119B-2603",
+          "llmhub/gemma-4-31B-it-FP8",
+          "deepseek/deepseek-flash"
+        ]
       },
       "review": {
         "model": "openai-codex/gpt-6.1-sol",

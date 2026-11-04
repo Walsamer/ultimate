@@ -34,17 +34,19 @@ export const LogoutAction = actionRef<{ provider: string }, null>('models', 'log
 
 /**
  * A `models.fallback` entry: the conversation's model (`provider/id`) either had no login here or refused its last
- * request for a spent account, so its next run switched to `to`: the same model on another provider, the model its
- * definition runs on (`pin`), a fallback its family names (`family`, the first entry of an ordered list that is
- * usable) or the configured default (`default`). With `reason: 'quota'` it was the provider's quota, usage or rate
- * limit; without `to` nothing could replace it (a subscription only moves to another subscription, unless its family's
- * own fallback names a billed login) and it kept its model and needs the user. `billed` marks a move that left a
- * subscription login for one billed per token, which only a family's configured fallback may do.
+ * request in a way another model would not share, so its next run switched to `to`: the same model on another provider,
+ * the model its definition runs on (`pin`), a fallback its family names (`family`, the first entry of an ordered list
+ * that is usable) or the configured default (`default`). With `reason: 'quota'` the account behind the login was spent
+ * and with `reason: 'refused'` the provider would not serve that model (unknown or retired there, no permission or
+ * allocation, or its own side failing after Pi's retries); without `to` nothing could replace it (a subscription only
+ * moves to another subscription, unless its family's own fallback names a billed login) and it kept its model and needs
+ * the user. `billed` marks a move that left a subscription login for one billed per token, which only a family's
+ * configured fallback may do.
  */
 export type Fallback = {
   from: string
   to?: string
-  reason: 'same' | 'pin' | 'family' | 'default' | 'quota' | 'none'
+  reason: 'same' | 'pin' | 'family' | 'default' | 'quota' | 'refused' | 'none'
   /** The move crossed from a subscription to a login billed per token; the card says so. */
   billed?: true
 }
