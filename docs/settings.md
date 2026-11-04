@@ -1,6 +1,8 @@
 ## Discovery and settings
 
-Discovery is clone built-ins, then `~/.ultimate/`, then `<project>/.ultimate/`; later names replace earlier ones.
+Discovery is clone built-ins, then `~/.ultimate/`, then `<project>/.ultimate/`; later names replace earlier ones, both
+facets. A user or project folder that takes a built-in's name therefore hides that built-in, so the extension
+diagnostics say so, naming both folders and which scope won.
 Enabled extensions may ship `agents/` definitions, loaded as built-ins before user and project definitions or overlays.
 Disabling the extension removes its definitions too.
 Skills ([Agent Skills](https://agentskills.io) folders with a `SKILL.md`, as Pi loads them) come from clone `skills/`, the
