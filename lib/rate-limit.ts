@@ -26,13 +26,13 @@ export const outOfQuota = (error: string) =>
 
 /**
  * Whether the provider has no such model, no permission for it or nothing left to serve it with, so the same request on
- * this model keeps being refused however often it is sent: an unknown, retired, disabled or unsupported model id, a
- * model the login may not use, or a gateway that names the model's own limit. Two faults on this side are not one of
- * these, and another model does not fix them: an invalid model configuration, and Pi's "Model missing/missing is not
- * available" for a model this home does not know at all.
+ * this model keeps being refused however often it is sent: an unknown, retired, discontinued, disabled or unsupported
+ * model id, a model the login may not use, or a gateway that names the model's own limit. Two faults on this side are
+ * not one of these, and another model does not fix them: an invalid model configuration, and Pi's "Model missing/missing
+ * is not available" for a model this home does not know at all.
  */
 const unsupported = (error: string) =>
-  /model.{0,24}(?:not found|not supported|unsupported|unknown|does not exist|doesn't exist|decommissioned|deprecated|retired|disabled|blocked|not permitted)|unsupported model|no such model|model_not_found|no allocation|not authorized.{0,40}model/i.test(
+  /model.{0,24}(?:not found|not supported|unsupported|unknown|does not exist|doesn't exist|decommissioned|deprecated|retired|disabled|discontinued|blocked|not permitted)|unsupported model|no such model|model_not_found|no allocation|not authorized.{0,40}model/i.test(
     error,
   )
 
