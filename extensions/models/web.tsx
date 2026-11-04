@@ -8,6 +8,7 @@ import {
   cn,
   defineWebExtension,
   errorMessage,
+  formatTime,
   getConversation,
   getState,
   useDialog,
@@ -172,16 +173,37 @@ const switchedTo: Record<'same' | 'pin' | 'family' | 'default', string> = {
   default: 'the default model',
 }
 
+/** When the refused provider may work again: a time today, or the date and time further out. */
+function resetTime(until: number) {
+  const at = new Date(until)
+  const time = formatTime(until)
+  return at.toDateString() === new Date().toDateString()
+    ? time
+    : `${at.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${time}`
+}
+
 /**
  * A conversation whose model had no login here or ran out of quota switched to another as its next run started, or,
  * with nothing to replace it, kept its model and waits for the user. A move that left a subscription for a login
- * billed per token says so, beside the model it moved to.
+ * billed per token says so, beside the model it moved to. The review family's move carries the moment to try again and
+ * says when it goes back; its return to that model is the same card the other way round.
  */
 function FellBack({ entry }: { entry: EntryRecord }) {
-  const { from, to, reason, billed } = entry.data as Fallback
+  const { from, to, reason, billed, until } = entry.data as Fallback
   const actions = useUltimate()
   const provider = from.split('/')[0]
   const quota = reason === 'quota'
+  const sentence = (() => {
+    if (reason === 'reset')
+      return `${to?.split('/')[0]} has quota again, so this conversation runs back on ${to}.`
+    if (reason === 'quota')
+      return to
+        ? `${provider} is out of quota here, so this conversation now runs on ${to}${billed ? ', billed per token' : ''}${until ? `, until ${resetTime(until)}` : ''}.`
+        : `${provider} is out of quota here, and nothing else has a login to take over, so its requests fail until the quota resets.`
+    if (reason !== 'none')
+      return `${provider} has no login here, so this conversation now runs on ${switchedTo[reason]}${billed ? ', billed per token' : ''}.`
+    return `${provider} has no login here, and no other login it may move to can take over, so this conversation keeps its model and its requests fail until you log in to ${provider}.`
+  })()
   return (
     <section
       className="min-w-0 rounded-md border border-border border-l-2 border-l-warning/60 bg-muted/20"
@@ -190,7 +212,13 @@ function FellBack({ entry }: { entry: EntryRecord }) {
       <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-3 py-2 font-mono text-[11px] text-muted-foreground">
         <CpuIcon className="size-3.5 text-warning" />
         <span>
-          {to ? 'model switched' : quota ? 'needs you · out of quota' : 'needs you · login missing'}
+          {to
+            ? reason === 'reset'
+              ? 'model switched · quota reset'
+              : 'model switched'
+            : quota
+              ? 'needs you · out of quota'
+              : 'needs you · login missing'}
           {to && billed ? ' · billed per token' : ''}
         </span>
       </header>
@@ -207,13 +235,7 @@ function FellBack({ entry }: { entry: EntryRecord }) {
           )}
         </p>
         <p className="text-muted-foreground">
-          {quota
-            ? to
-              ? `${provider} is out of quota here, so this conversation now runs on ${to}${billed ? ', billed per token' : ''}.`
-              : `${provider} is out of quota here, and nothing else has a login to take over, so its requests fail until the quota resets.`
-            : reason !== 'none'
-              ? `${provider} has no login here, so this conversation now runs on ${switchedTo[reason]}${billed ? ', billed per token' : ''}.`
-              : `${provider} has no login here, and no other login it may move to can take over, so this conversation keeps its model and its requests fail until you log in to ${provider}.`}{' '}
+          {sentence}{' '}
           <button
             className="cursor-pointer text-foreground hover:underline"
             onClick={() => openPicker(actions)}
@@ -221,7 +243,7 @@ function FellBack({ entry }: { entry: EntryRecord }) {
           >
             Pick another
           </button>
-          {quota ? (
+          {quota || reason === 'reset' ? (
             '.'
           ) : (
             <>

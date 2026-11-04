@@ -485,3 +485,39 @@ it.concurrent('turns the updater on by default, and keeps it off for a user who 
   )
   expect(await enabled()).toBe(false)
 })
+
+it.concurrent('reports a user or project folder that takes a built-in name, naming both folders', async () => {
+  const home = await temp()
+  homes.push(home)
+  const projectRoot = join(home, 'project')
+  const shadowing = join(projectRoot, '.ultimate/extensions/review')
+  const own = join(projectRoot, '.ultimate/extensions/notes-panel')
+  const userShadowing = join(home, '.ultimate/extensions/sounds')
+  for (const folder of [shadowing, own, userShadowing]) {
+    await mkdir(folder, { recursive: true })
+    await writeFile(join(folder, 'README.md'), `# ${folder}\n`)
+  }
+  const server = await fauxServer({
+    ultimateRoot: resolve('.'),
+    projectRoot,
+    userHome: home,
+    home: join(home, 'state'),
+  })
+  servers.push(server)
+  const builtin = (name: string) => join(server.host.ultimateRoot, 'extensions', name)
+  const expected = [
+    `user extension sounds at ${userShadowing} replaces the built-in at ${builtin('sounds')}; the user one wins`,
+    `project extension review at ${shadowing} replaces the built-in at ${builtin('review')}; the project one wins`,
+  ]
+  await until(() => server.system.current().extensionDiagnostics.includes(expected[1]))
+  // The folder with a name of its own is no shadow, so it adds no diagnostic.
+  expect(server.system.current().extensionDiagnostics).toEqual(expected)
+  expect(server.extensions.info().find((entry) => entry.name === 'review')).toMatchObject({
+    source: 'project',
+    path: shadowing,
+  })
+  expect(server.extensions.info().find((entry) => entry.name === 'notes-panel')).toMatchObject({
+    source: 'project',
+    enabled: true,
+  })
+})

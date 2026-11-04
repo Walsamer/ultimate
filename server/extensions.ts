@@ -474,7 +474,10 @@ export async function loadExtensions(
         .filter((entry) => !active.some((current) => current.name === entry.name))
         .map((entry) => ({ ...entry, enabled: false })),
     ].toSorted(compareExtensions)
-    return Object.assign(winners, { settings: active.settings })
+    // Only folders the project scope loads can shadow a built-in: one the panel lists while a project is
+    // undecided cannot.
+    const shadows = active.filter((entry) => entry.replaced)
+    return Object.assign(winners, { settings: active.settings, shadows })
   }
   async function reload(
     selected?: Set<string>,
@@ -487,6 +490,10 @@ export async function loadExtensions(
     diagnostics = [
       ...settings.notices,
       ...projectDiagnostics(host.projectRoot, host.userHome),
+      ...winners.shadows.map(
+        (entry) =>
+          `${entry.source} extension ${entry.name} at ${entry.path} replaces the built-in at ${entry.replaced}; the ${entry.source} one wins`,
+      ),
       ...[...settings.overrides.keys()]
         .filter((name) => !folders.includes(name))
         .map((name) => `Unknown extension: ${name}`),

@@ -1,6 +1,8 @@
 ## Discovery and settings
 
-Discovery is clone built-ins, then `~/.ultimate/`, then `<project>/.ultimate/`; later names replace earlier ones.
+Discovery is clone built-ins, then `~/.ultimate/`, then `<project>/.ultimate/`; later names replace earlier ones, both
+facets. A user or project folder that takes a built-in's name therefore hides that built-in, so the extension
+diagnostics say so, naming both folders and which scope won.
 Enabled extensions may ship `agents/` definitions, loaded as built-ins before user and project definitions or overlays.
 Disabling the extension removes its definitions too.
 Skills ([Agent Skills](https://agentskills.io) folders with a `SKILL.md`, as Pi loads them) come from clone `skills/`, the
@@ -22,7 +24,7 @@ produce a notice. To skip onboarding on a machine whose user knows Ultimate, set
 reminder, while the Extensions panel and ⌘K Get ready… stay available and an undecided project setup keeps its
 status-line reminder. Model families (⌘K Model families…, `extensions/models/README.md`) are kept per project in
 `~/.ultimate/model-families.json`, with the most recently saved ones as the start for projects without their own; a
-project's `.ultimate/settings.json` `modelFamilies` applies over them; a conversation whose provider loses its login or runs out of quota moves to the model its definition runs on, else the first fallback its family names that is usable (`modelFamilies.families.<name>.fallback`, one `"provider/id"` or an ordered list of them, walked one entry per failure), else the default family's model (`extensions/models/README.md`). A fallback list is refused at parse time with an error naming the field when it is empty, holds something other than a `"provider/id"` string (a family name included), repeats an entry, or names the family's own `model`. `summaryModel` (`"provider/id[:thinking]"`; project over user; without it the
+project's `.ultimate/settings.json` `modelFamilies` applies over them; a conversation whose provider loses its login or runs out of quota moves to the model its definition runs on, else the first fallback its family names that is usable (`modelFamilies.families.<name>.fallback`, one `"provider/id"` or an ordered list of them, walked one entry per failure), else the default family's model (`extensions/models/README.md`). The `review` family comes back on its own: a quota refusal marks the provider until the reset the refusal names, or until `quotaRetryMinutes` (project settings, ten minutes by default) when it names none, and the review conversation returns to the model its family names at its first input after that moment. `quotaRetryMinutes` takes a whole number of minutes from 1 to 1440. A fallback list is refused at parse time with an error naming the field when it is empty, holds something other than a `"provider/id"` string (a family name included), repeats an entry, or names the family's own `model`. `summaryModel` (`"provider/id[:thinking]"`; project over user; without it the
 summaries family's model, by default the tiny family's `openai-codex/gpt-6-luna:low`)
 pins the model for automatic titles, summaries, reply summaries and tree abstracts. Set it in either file or with
 the "Summary model…" command, and it applies to the next request. `fastModels` (`["openai-codex/<id>", …]`, or `openai/`; project over
