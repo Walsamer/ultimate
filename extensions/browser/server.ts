@@ -64,19 +64,45 @@ const untilTimeoutMs = 300_000
 /** How long closing a context, or the browser after it, may take before it counts as wedged. */
 const closeTimeoutMs = 5_000
 
-function timeout(ms: number) {
-  return Object.assign(new Error(`timed out after ${ms / 1000}s`), { name: 'TimeoutError' })
+export function timeout(ms: number, limit: keyof typeof limits) {
+  return Object.assign(new Error(`${limits[limit]} timed out after ${ms} ms (${ms / 1000}s)`), {
+    name: 'TimeoutError',
+  })
 }
+/** What a message says ran out: which budget of the call it was, never a number the caller never passed. */
+const limits = {
+  step: 'step',
+  until: 'until',
+  call: 'whole call',
+  close: 'closing the context or browser',
+} as const
 
 /** `work`, unless `ms` pass first; a promise Playwright never settles (evaluate has no timeout) cannot hang the call. */
-function within<T>(ms: number, work: Promise<T>, error = timeout(ms)) {
+function within<T>(ms: number, work: Promise<T>, limit: keyof typeof limits) {
   let timer: NodeJS.Timeout | undefined
   return Promise.race([
     work,
     new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => reject(error), Math.max(0, ms))
+      timer = setTimeout(() => reject(timeout(ms, limit)), Math.max(0, ms))
     }),
   ]).finally(() => clearTimeout(timer))
+}
+
+/**
+ * One call's budgets: each step's own limit (plus a wait the step asked for), and the call's, which is four steps plus
+ * its explicit waits. A step that outlives what the call has left is the call's limit that ran out, and reports that.
+ */
+export function guardWithin(stepMs: number, waits: number, now = Date.now) {
+  const totalMs = 4 * stepMs + waits
+  const deadline = now() + totalMs
+  return {
+    guard: <T>(work: Promise<T>, extraMs = 0, limit: keyof typeof limits = 'step') => {
+      const left = deadline - now()
+      return left < stepMs + extraMs
+        ? within(left, work, 'call')
+        : within(stepMs + extraMs, work, limit)
+    },
+  }
 }
 
 async function capture(page: Page, file: string, selector?: string, fullPage = false) {
@@ -268,6 +294,7 @@ export default function browserExtension(host: ExtensionHost) {
                           ] as const,
                         ),
                         ms,
+                        'until',
                       )
                     let outcome: Awaited<ReturnType<typeof wait>>
                     for (;;) {
@@ -317,7 +344,7 @@ export default function browserExtension(host: ExtensionHost) {
       page: Page,
       outcomes: string[],
       png: string,
-      guard: <T>(work: Promise<T>, extraMs?: number) => Promise<T>,
+      guard: <T>(work: Promise<T>, extraMs?: number, limit?: keyof typeof limits) => Promise<T>,
     ) => Promise<
       | {
           image?: { type: 'image'; mimeType: string; data: string }
@@ -330,15 +357,7 @@ export default function browserExtension(host: ExtensionHost) {
     const outcomes: string[] = []
     let isolated: BrowserContext | undefined
     const stepMs = args.timeoutMs ?? stepTimeoutMs
-    const totalMs = 4 * stepMs + waits
-    const deadline = Date.now() + totalMs
-    /** `work` within one step's limit (plus a wait it asks for) and what is left of the call's. */
-    const guard = <T>(work: Promise<T>, extraMs = 0) => {
-      const left = deadline - Date.now()
-      return left < stepMs + extraMs
-        ? within(left, work, timeout(totalMs))
-        : within(stepMs + extraMs, work)
-    }
+    const { guard } = guardWithin(stepMs, waits)
     const abort = () => void close(isolated)
     try {
       const png = screenshotFile(host.home, api.env?.cwd ?? host.projectRoot, args.path)
@@ -438,7 +457,7 @@ export default function browserExtension(host: ExtensionHost) {
   async function close(isolated: BrowserContext | undefined) {
     if (!isolated) return
     try {
-      await within(closeTimeoutMs, isolated.close())
+      await within(closeTimeoutMs, isolated.close(), 'close')
     } catch (error) {
       host.notice(`Closing a browser context failed (${String(error)}); relaunching the browser.`)
       const browser = isolated.browser()
@@ -448,7 +467,7 @@ export default function browserExtension(host: ExtensionHost) {
         state.browser = undefined
       }
       // Closing kills the process too; a browser that won't even do that is left to the host's shutdown.
-      await within(closeTimeoutMs, browser.close()).catch((reason: unknown) =>
+      await within(closeTimeoutMs, browser.close(), 'close').catch((reason: unknown) =>
         host.notice(`Closing the wedged browser failed: ${String(reason)}`),
       )
     }
