@@ -39,7 +39,7 @@ export const SwitchbackDoc = defineDoc<{ pending?: Switchback }>({
 
 const name = (ref: { provider: string; modelId: string }) => `${ref.provider}/${ref.modelId}`
 
-/** Record that this conversation left `from` for `to` and goes back when the provider that refused is due. */
+/** Record that this conversation left `from` for `to` and goes back when the model that refused is due. */
 export async function movedOut(tx: Tx, conversationId: ConversationId, pending: Switchback) {
   const state = await tx.doc(SwitchbackDoc, conversationId)
   state.pending = pending
@@ -75,8 +75,9 @@ export async function switchBack(
   // again on the next input instead of thrown away.
   if (!hasLogin(runtime.getAvailableSnapshot(), target)) return undefined
   const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
-  const mark = marks.providers[target.provider]
-  // The mark is the only clock there is: without it nothing says the provider was refused or when to try again.
+  // The mark is the only clock there is: without it nothing says the model was refused or when to try again. It names
+  // the model, so a refusal of another model on the same login leaves this one's moment untouched.
+  const mark = marks.models[name(target)]
   if (!mark) return drop()
   if (mark.until > Date.now()) return undefined
   agent.model = target

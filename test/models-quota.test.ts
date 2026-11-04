@@ -14,9 +14,9 @@ import {
 } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryRecord } from '@earendil-works/pi-durable'
 import { afterEach, expect, it, vi } from 'vitest'
-import { outOfQuota, resetAt } from '../lib/rate-limit.ts'
+import { modelBlocked, outOfQuota, resetAt, transient } from '../lib/rate-limit.ts'
 import models from '../extensions/models/server.ts'
-import { Quota, RETRY_MINUTES, spent } from '../extensions/models/quota.ts'
+import { BLIP_MS, Quota, RETRY_MINUTES, refusal } from '../extensions/models/quota.ts'
 import { SwitchbackDoc } from '../extensions/models/switchback.ts'
 import { Standing } from '../extensions/subagents/api.ts'
 import { Workspaces } from '../extensions/workspaces/workspaces.ts'
@@ -89,6 +89,11 @@ async function fixture(
     project?: Record<string, unknown>
     /** `faux2` also serves the conversation's own model id, so the chain's `same` step resolves there. */
     sameId?: boolean
+    /**
+     * One more provider carrying several models, as a gateway serves a whole family chain on one login. `answer` is
+     * asked with the model id, so one provider can refuse on some models and answer on others.
+     */
+    chain?: { provider: string; models: string[]; answer: (modelId: string) => FauxResponseStep }
   } = {},
 ) {
   let now = 1_000_000
@@ -119,20 +124,48 @@ async function fixture(
   arm(faux, 'faux', answers.primary)
   arm(alt, 'faux2', answers.fallback ?? (() => fauxAssistantMessage('the fallback answer')))
   arm(third, 'faux3', answers.third ?? (() => fauxAssistantMessage('the third answer')))
+  // A gateway provider: every model on it answers through one route that sees which model was asked.
+  const gateway = options.chain
+    ? fauxProvider({
+        provider: options.chain.provider,
+        models: options.chain.models.map((id) => ({ id })),
+      })
+    : undefined
+  if (gateway && options.chain) {
+    const chain = options.chain
+    runtime.setProvider(gateway.provider)
+    asked[chain.provider] = []
+    const route: FauxResponseFactory = (transcript, _stream, _state, served) => {
+      gateway.appendResponses([route])
+      const text = textOf(transcript)
+      asked[chain.provider].push(`${served.id}: ${text.slice(0, 60)}`)
+      const step = chain.answer(served.id)
+      return typeof step === 'function' ? step(transcript, _stream, _state, served) : step
+    }
+    gateway.setResponses([route])
+  }
   const storage = new MemoryStorage()
   storage.close = async () => {}
   const settings = { retry: { maxRetries: 0 } }
   const openSettings = { models: runtime, registry, now: () => now, settings }
   let harness = await Harness.open(storage, openSettings, context)
-  // The providers with a login here, as the snapshot reports them; a marked provider is the only other reason to move.
-  // A test can log one in or out while it runs, as a login flow or a refresh does on a live server.
-  const signedIn = new Set(options.signedIn ?? ['faux', 'faux2', 'faux3'])
+  // The models with a login here, as the snapshot reports them; a marked model is the only other reason to move. A test
+  // can log a provider in or out while it runs, as a login flow or a refresh does on a live server.
+  const signedIn = new Set(
+    options.signedIn ?? [
+      'faux',
+      'faux2',
+      'faux3',
+      ...(options.chain === undefined ? [] : [options.chain.provider]),
+    ],
+  )
   const available = () =>
     [
       { provider: 'faux', id: 'faux-1' },
       { provider: 'faux2', id: 'faux-2' },
       ...(options.sameId ? [{ provider: 'faux2', id: 'faux-1' }] : []),
       { provider: 'faux3', id: 'faux-3' },
+      ...(options.chain?.models.map((id) => ({ provider: options.chain!.provider, id })) ?? []),
     ].filter((entry) => signedIn.has(entry.provider))
   const configured = options.configured ?? other
   const subscriptions = new Set(options.subscriptions ?? [])
@@ -234,7 +267,7 @@ async function fixture(
       )
     ).items.filter((entry) => kind === undefined || entry.kind === kind)
   const marks = async () =>
-    (await harness.snapshot(Quota, ROOT_CONVERSATION_ID, context))?.providers ?? {}
+    (await harness.snapshot(Quota, ROOT_CONVERSATION_ID, context))?.models ?? {}
   const agent = async (id: ConversationId) =>
     (await harness.conversation(id, context))!.agent(context)
   const tasks = async (kind: string) =>
@@ -289,6 +322,7 @@ it('reads a spent account out of provider errors, and nothing else', () => {
     "You've hit your usage limit. Upgrade to Plus or try again in 3 days.",
     'Insufficient Balance',
     '429 Too Many Requests',
+    "429 You've reached your maximum token allocation. To increase your limit, please get in touch with the administrator.",
     "Incomplete Claude Code upstream response (status 429, capture incomplete, upstream said: This request would exceed your account's rate limit. Please try again later.)",
   ]
   const not = [
@@ -309,8 +343,8 @@ it('marks a provider that runs out of quota, and the next run finishes on the fa
   const run = await f.submit(branch, 'review it')
   // The run itself fails: a model cannot switch under one request.
   expect(await run.wait(context)).toMatchObject({ status: 'unanswered', reason: 'model_error' })
-  await until(async () => (await f.marks()).faux !== undefined)
-  expect(Object.keys(await f.marks())).toEqual(['faux'])
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  expect(Object.keys(await f.marks())).toEqual(['faux/faux-1'])
   expect(await f.agent(branch)).toMatchObject({ model })
   // One continuation, on the provider that still has quota: the work finishes there and says why.
   await f.deadline()
@@ -341,7 +375,7 @@ it("finishes a subagent's review on the fallback and tells its parent nothing fa
   const parent = await f.conversation('Coordinate the review')
   const reviewer = await f.conversation('Review the range', parent)
   await (await f.submit(reviewer, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // The reviewer's own conversation finished on the fallback: a reviewer is no different from any other reader.
@@ -361,43 +395,193 @@ it('reports a second failure on the fallback instead of trying a third model', a
   })
   const branch = await f.conversation('Write the review')
   await (await f.submit(branch, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
   const [failure] = await f.entries(f.ultimate, 'watchdog.failure')
   expect(failure.data).toMatchObject({ conversation: branch, error: quota, retried: true })
   expect(failure.data).toHaveProperty(
     'hint',
-    'The provider is out of quota; once it resets, resume this conversation with a message',
+    'The model refused the request; once that clears, resume this conversation with a message',
   )
   // At most one attempt: no third model, no second continuation, and the entry says only the first switch.
   expect(f.asked.faux).toHaveLength(1)
   expect(f.asked.faux2).toHaveLength(1)
-  expect(Object.keys(await f.marks()).toSorted()).toEqual(['faux', 'faux2'])
+  expect(Object.keys(await f.marks()).toSorted()).toEqual(['faux/faux-1', 'faux2/faux-2'])
   expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
     { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
   ])
 })
 
-it.each([
-  ['a refused server', 'Internal server error (500)'],
-  ['a network error', 'fetch failed: ECONNREFUSED 127.0.0.1:443'],
-])('%s switches no model and marks nothing', async (_kind, text) => {
-  const f = await fixture({ primary: () => error(text) })
+it('advances on a refusal another model would not share, and stops on the rest', () => {
+  const advance = [
+    quota,
+    "429 You've reached your maximum token allocation. To increase your limit, please get in touch with the administrator.",
+    '404 Model not found: Qwen3.6-35B-A3B-FP8',
+    '400 Unsupported model for this endpoint',
+    // The hub's own words for a model it no longer serves, and the replacement it names that it does not serve either.
+    '410 This model has been discontinued. Please use Qwen3.8-27B-FP8 instead. Available models are: [].',
+    '404 The model Qwen3.8-27B-FP8 does not exist or discontinued or you might using wrong api.',
+    'The model has been decommissioned',
+    'Internal server error (500)',
+    'Overloaded (529)',
+    'The service is temporarily unavailable',
+  ]
+  const stop = [
+    'fetch failed: ECONNREFUSED 127.0.0.1:443',
+    'socket hang up',
+    '400 prompt is too long: 250000 tokens > 200000 maximum',
+    '401 Unauthorized: Invalid API key',
+    'Claude Code billing: this request was charged to Claude usage credits instead of your plan limits.',
+    // Pi's own faults on this side: another model does not fix either.
+    'Model missing/missing is not available',
+    'invalid model configuration',
+  ]
+  expect(advance.filter(modelBlocked)).toEqual(advance)
+  expect(stop.filter(modelBlocked)).toEqual([])
+  // The provider's own side may pass on its own: it is marked briefly, not for the whole cooldown.
+  expect(advance.filter(transient)).toEqual([
+    'Internal server error (500)',
+    'Overloaded (529)',
+    'The service is temporarily unavailable',
+  ])
+})
+
+it('moves off a model whose provider keeps failing, then tries it again after a short while', async () => {
+  // Pi already spent its retries on the 500; another model may serve the same request, so the chain takes one step, and
+  // the mark keeps the preferred model out for two minutes rather than the quota cooldown.
+  const f = await fixture({ primary: () => error('Internal server error (500)') })
   const branch = await f.conversation('Write the review')
   await (await f.submit(branch, 'review it')).wait(context)
-  // Whatever the watchdog does with such an error, the model layer never moves the conversation.
-  for (let turn = 0; turn < 20; turn++) await new Promise((resolve) => setImmediate(resolve))
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  const mark = (await f.marks())['faux/faux-1']
+  expect(mark.reason).toBe('refused')
+  expect(mark.until - mark.at).toBe(BLIP_MS)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'refused' },
+  ])
+  expect(fallbacks(await f.entries(branch))[0].model?.[0]?.content).toBe(
+    'faux/faux-1 refused its last request here; this conversation now runs on faux2/faux-2.',
+  )
+})
+
+it('stops and reports on an error another model would not share, instead of walking the chain', async () => {
+  // An overflow, a transport error or a broken login reaches the next model unchanged, so nothing moves and the failure
+  // reaches @ultimate as a card rather than walking a chain into the same wall.
+  const overflow = '400 prompt is too long: 250000 tokens > 200000 maximum'
+  const f = await fixture(
+    { primary: () => error(overflow) },
+    {
+      definition: { family: 'tiny', model },
+      families: { families: { tiny: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux9', modelId: 'gone' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
+  const [failure] = await f.entries(f.ultimate, 'watchdog.failure')
+  expect(failure.data).toMatchObject({ conversation: branch, error: overflow, retried: false })
+  expect(failure.data).not.toHaveProperty('hint')
+  // No mark, no move, and the model the chain would have taken over never ran.
   expect(Object.keys(await f.marks())).toEqual([])
   expect(fallbacks(await f.entries(branch))).toEqual([])
   expect(await f.agent(branch)).toMatchObject({ model })
+  expect(f.asked.faux2).toEqual([])
+})
+
+it('walks a chain of models on one login, one step per refused model', async () => {
+  // A gateway serves a whole family chain on a single login: each model must be marked on its own, or the first refusal
+  // would take all of them down and the conversation would jump to the end of the chain.
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      chain: { provider: 'hub', models: ['hub-1', 'hub-2', 'hub-3'], answer: () => error(quota) },
+      definition: { family: 'tiny', model },
+      families: {
+        families: {
+          tiny: {
+            model: 'faux/faux-1',
+            fallback: ['hub/hub-1', 'hub/hub-2', 'hub/hub-3', 'faux3/faux-3'],
+          },
+        },
+      },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  // The first model refuses; the watchdog's one continuation takes the chain's first step, which refuses in turn.
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  await f.deadline()
+  await until(async () => (await f.entries(branch, 'models.fallback')).length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'hub', modelId: 'hub-1' } })
+  await until(async () => (await f.marks())['hub/hub-1'] !== undefined)
+  // One model marked, not its provider: the sibling models of the same login are still taken.
+  expect(Object.keys(await f.marks()).toSorted()).toEqual(['faux/faux-1', 'hub/hub-1'])
+  await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
+  await (await f.submit(branch, 'and again')).wait(context)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'hub', modelId: 'hub-2' } })
+  await until(async () => (await f.marks())['hub/hub-2'] !== undefined)
+  await (await f.submit(branch, 'and again')).wait(context)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'hub', modelId: 'hub-3' } })
+  await until(async () => (await f.marks())['hub/hub-3'] !== undefined)
+  // Every free model is marked, and only then does the chain reach the provider billed per token.
+  expect(f.asked.faux3).toEqual([])
+  await (await f.submit(branch, 'and again')).wait(context)
+  const answer = (await f.entries(branch)).findLast((entry) => entry.kind === 'pi.assistant')
+  expect(answer?.model?.[0]).toMatchObject({ provider: 'faux3', model: 'faux-3' })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'hub/hub-1', reason: 'quota' },
+    { from: 'hub/hub-1', to: 'hub/hub-2', reason: 'quota' },
+    { from: 'hub/hub-2', to: 'hub/hub-3', reason: 'quota' },
+    { from: 'hub/hub-3', to: 'faux3/faux-3', reason: 'quota' },
+  ])
+})
+
+it('walks off a model the provider does not serve, and says a step billed per token is billed', async () => {
+  // The refusal is not a quota at all: the provider has no such model. A subscription still walks, since the family's
+  // fallback is where its owner said to spend, and the entry says that step is billed per token.
+  const missing = '404 Model not found: gone-1'
+  const f = await fixture(
+    { primary: () => error(missing) },
+    {
+      chain: { provider: 'hub', models: ['hub-1'], answer: () => error(missing) },
+      subscriptions: ['faux'],
+      definition: { family: 'tiny', model },
+      families: {
+        families: { tiny: { model: 'faux/faux-1', fallback: ['hub/hub-1', 'faux3/faux-3'] } },
+      },
+      configured: { provider: 'faux9', modelId: 'gone' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  expect((await f.marks())['faux/faux-1'].reason).toBe('refused')
+  await f.deadline()
+  await until(async () => (await f.marks())['hub/hub-1'] !== undefined)
+  expect((await f.marks())['hub/hub-1'].reason).toBe('refused')
+  await (await f.submit(branch, 'and again')).wait(context)
+  const answer = (await f.entries(branch)).findLast((entry) => entry.kind === 'pi.assistant')
+  expect(answer?.model?.[0]).toMatchObject({ provider: 'faux3', model: 'faux-3' })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'hub/hub-1', reason: 'refused', billed: true },
+    { from: 'hub/hub-1', to: 'faux3/faux-3', reason: 'refused' },
+  ])
+  expect(fallbacks(await f.entries(branch))[0].model?.[0]?.content).toBe(
+    'faux/faux-1 refused its last request here; this conversation now runs on hub/hub-1, billed per token.',
+  )
 })
 
 it('moves a subscription conversation only to another subscription login', async () => {
   const one = await fixture({ primary: () => error(quota) }, { subscriptions: ['faux', 'faux2'] })
   const paid = await one.conversation('Write the review')
   await (await one.submit(paid, 'review it')).wait(context)
-  await until(async () => (await one.marks()).faux !== undefined)
+  await until(async () => (await one.marks())['faux/faux-1'] !== undefined)
   await one.deadline()
   await until(async () => (await one.entries(paid, 'models.fallback')).length === 1)
   // Two subscriptions: the run continues on the other one.
@@ -408,7 +592,7 @@ it('moves a subscription conversation only to another subscription login', async
   const f = await fixture({ primary: () => error(quota) }, { subscriptions: ['faux'] })
   const branch = await f.conversation('Write the review')
   await (await f.submit(branch, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => (await f.entries(branch, 'models.fallback')).length === 1)
   // nothing replaces a subscription login with a pay-per-token one: the model stays and the entry asks the user.
@@ -432,7 +616,7 @@ it('moves a conversation to the fallback its family names, before the configured
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   expect(await f.agent(branch)).toMatchObject({ model: other })
@@ -452,7 +636,7 @@ it('moves a conversation to the fallback its family names, before the configured
   )
   const plainBranch = await plain.conversation('Write the review')
   await (await plain.submit(plainBranch, 'review it')).wait(context)
-  await until(async () => (await plain.marks()).faux !== undefined)
+  await until(async () => (await plain.marks())['faux/faux-1'] !== undefined)
   await plain.deadline()
   await until(async () => plain.asked.faux2.length === 1)
   expect(fallbacks(await plain.entries(plainBranch)).map((entry) => entry.data)).toEqual([
@@ -478,7 +662,7 @@ it('walks a family fallback list one step per failure, through the watchdog', as
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   // The first entry, not the second one and not the default: the continuation finishes on faux2.
   await until(async () => f.asked.faux2.length === 1)
@@ -489,7 +673,7 @@ it('walks a family fallback list one step per failure, through the watchdog', as
     { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
   ])
   // The first entry refuses in turn: that run is lost, and the watchdog reports it instead of a third attempt.
-  await until(async () => (await f.marks()).faux2 !== undefined)
+  await until(async () => (await f.marks())['faux2/faux-2'] !== undefined)
   await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
   expect(await f.agent(branch)).toMatchObject({ model: other })
   // The next input walks on to the second entry: the provider it marked spent is skipped, not tried again.
@@ -519,7 +703,7 @@ it('skips a family fallback entry without a login here', async () => {
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux3.length === 1)
   expect(f.asked.faux2).toEqual([])
@@ -545,14 +729,14 @@ it('lets a later family fallback entry cross from a subscription, and says the p
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   // Another subscription login: no crossing, so the entry carries no `billed`.
   await until(async () => f.asked.faux2.length === 1)
   expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
     { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
   ])
-  await until(async () => (await f.marks()).faux2 !== undefined)
+  await until(async () => (await f.marks())['faux2/faux-2'] !== undefined)
   await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
   // The second entry is billed per token: a written-down fallback step may cross, and the entry says so.
   await (await f.submit(branch, 'and again')).wait(context)
@@ -595,7 +779,7 @@ it("keeps today's chain when the family names no fallback", async () => {
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux3.length === 1)
   expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
@@ -619,7 +803,7 @@ it("moves a subscription conversation to the family's billed fallback, and says 
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // The watchdog's continuation runs on the fallback, and the work finishes there.
@@ -682,7 +866,7 @@ it('lets only the family step cross from a subscription to a billed login', asyn
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux3.length === 1)
   expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
@@ -698,7 +882,7 @@ it('lets only the family step cross from a subscription to a billed login', asyn
   )
   const kept = await guard.conversation('Implement the task')
   await (await guard.submit(kept, 'do it')).wait(context)
-  await until(async () => (await guard.marks()).faux !== undefined)
+  await until(async () => (await guard.marks())['faux/faux-1'] !== undefined)
   await guard.deadline()
   await until(async () => (await guard.entries(kept, 'models.fallback')).length === 1)
   expect(await guard.agent(kept)).toMatchObject({ model })
@@ -721,7 +905,7 @@ it('moves a subscription to a subscription family fallback without mentioning bi
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   expect(await f.agent(branch)).toMatchObject({ model: other })
@@ -734,12 +918,17 @@ it('moves a subscription to a subscription family fallback without mentioning bi
   )
 })
 
-it('leaves a provider alone until its cooldown runs out, then lets it be chosen again', () => {
-  const marks = { providers: { faux: { at: 1_000, until: 2_000 } } }
-  expect(spent(marks, 'faux', 1_500)).toBe(true)
-  expect(spent(marks, 'faux', 2_000)).toBe(false)
-  expect(spent(marks, 'faux2', 1_500)).toBe(false)
-  expect(spent({ providers: {} }, 'faux', 1_500)).toBe(false)
+it('leaves a refused model alone until its cooldown runs out, and its siblings with it', () => {
+  const marks = {
+    models: { 'faux/faux-1': { at: 1_000, until: 2_000, reason: 'quota' as const } },
+  }
+  expect(refusal(marks, { provider: 'faux', modelId: 'faux-1' }, 1_500)).toMatchObject({
+    reason: 'quota',
+  })
+  expect(refusal(marks, { provider: 'faux', modelId: 'faux-1' }, 2_000)).toBeUndefined()
+  // The mark names the model, never the login: another model on the same provider is still a candidate.
+  expect(refusal(marks, { provider: 'faux', modelId: 'faux-2' }, 1_500)).toBeUndefined()
+  expect(refusal({ models: {} }, { provider: 'faux', modelId: 'faux-1' }, 1_500)).toBeUndefined()
 })
 
 const day = 86_400_000
@@ -797,9 +986,12 @@ it('records the reset a refusal names and runs the review on its paid fallback u
   const f = await fixture({ primary: () => error(named) }, reviewRun())
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   const moment = f.clock() + 3 * day
-  expect(await f.marks()).toEqual({ faux: { at: f.clock(), until: moment } }) // The watchdog continues the refused run: it starts on the fallback the family names, which is billed per token.
+  // The mark names the model that refused, and it lasts until the reset the refusal named.
+  expect(await f.marks()).toEqual({
+    'faux/faux-1': { at: f.clock(), until: moment, reason: 'quota' },
+  })
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   expect(await f.agent(review)).toMatchObject({ model: other })
@@ -836,7 +1028,7 @@ it('runs the next input on the model its family names once the recorded moment h
   const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // Before the moment nothing changes and nothing is tried: the conversation stays where the fallback put it.
@@ -863,13 +1055,13 @@ it('keeps the pending move back across a restart', async () => {
   const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
-  const mark = (await f.marks()).faux
+  const mark = (await f.marks())['faux/faux-1']
   await f.restart()
   // Both the mark and the move it owes are documents: the new process reads the same moment.
-  expect((await f.marks()).faux).toEqual(mark)
+  expect((await f.marks())['faux/faux-1']).toEqual(mark)
   expect(await f.switchback(review)).toEqual({
     family: 'review',
     from: 'faux/faux-1',
@@ -896,7 +1088,7 @@ it('never moves a family other than review back to its model', async () => {
   )
   const branch = await f.conversation('Implement the task')
   await (await f.submit(branch, 'do it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // The fast family writes no move back, and its entry carries no moment either.
@@ -915,7 +1107,7 @@ it("lets the user's own re-point of review win over the pending move", async () 
   const f = await fixture({ primary: refuseOnce('the review') }, reviewRun(families))
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // The user points review at another model while the move back is pending.
@@ -933,7 +1125,7 @@ it('does not take back a model the user picked for the conversation', async () =
   const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // Another model than the one the fallback moved it to: the user chose it, so the move back is dropped.
@@ -953,10 +1145,11 @@ it('uses the retry interval when a refusal names no reset, and the project may s
   const f = await fixture({ primary: () => error(silent) }, {})
   const branch = await f.conversation('Write the review')
   await (await f.submit(branch, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
-  expect((await f.marks()).faux).toEqual({
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  expect((await f.marks())['faux/faux-1']).toEqual({
     at: f.clock(),
     until: f.clock() + RETRY_MINUTES * 60_000,
+    reason: 'quota',
   })
   const slower = await fixture(
     { primary: () => error(silent) },
@@ -964,8 +1157,8 @@ it('uses the retry interval when a refusal names no reset, and the project may s
   )
   const patient = await slower.conversation('Write the review')
   await (await slower.submit(patient, 'review it')).wait(context)
-  await until(async () => (await slower.marks()).faux !== undefined)
-  expect((await slower.marks()).faux?.until).toBe(slower.clock() + 30 * 60_000)
+  await until(async () => (await slower.marks())['faux/faux-1'] !== undefined)
+  expect((await slower.marks())['faux/faux-1'].until).toBe(slower.clock() + 30 * 60_000)
 })
 
 it('keeps a pending review switch apart from another family refused on another provider', async () => {
@@ -989,10 +1182,10 @@ it('keeps a pending review switch apart from another family refused on another p
   const review = await f.conversation('Review the range')
   runs[review] = { family: 'review', model }
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
-  const reviewMark = (await f.marks()).faux
+  const reviewMark = (await f.marks())['faux/faux-1']
   // Another family, on another provider, refuses for a spent account and walks to its own fallback.
   const small = await f.conversation('Small job')
   runs[small] = { family: 'tiny', model: { provider: 'faux3', modelId: 'faux-3' } }
@@ -1001,7 +1194,7 @@ it('keeps a pending review switch apart from another family refused on another p
     context,
   )
   await (await f.submit(small, 'do the small thing')).wait(context)
-  await until(async () => (await f.marks()).faux3 !== undefined)
+  await until(async () => (await f.marks())['faux3/faux-3'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 2)
   expect(await f.agent(small)).toMatchObject({ model: other })
@@ -1009,7 +1202,7 @@ it('keeps a pending review switch apart from another family refused on another p
     { from: 'faux3/faux-3', to: 'faux2/faux-2', reason: 'quota' },
   ])
   // Nothing of review's changed: not its mark, not the move it owes, and the other family owes none.
-  expect((await f.marks()).faux).toEqual(reviewMark)
+  expect((await f.marks())['faux/faux-1']).toEqual(reviewMark)
   expect(await f.switchback(review)).toEqual({
     family: 'review',
     from: 'faux/faux-1',
@@ -1031,7 +1224,7 @@ it('keeps the move back while the provider looks logged out, and takes it when t
   const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
   const review = await f.conversation('Review the range')
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   await until(async () => f.asked.faux2.length === 1)
   // A snapshot without the login is no evidence that it is gone, so the move waits instead of being thrown away.
@@ -1074,11 +1267,11 @@ it('goes back to the model its family names from a later step of an ordered fall
   const review = await f.conversation('Review the range')
   runs[review] = { family: 'review', model }
   await (await f.submit(review, 'review it')).wait(context)
-  await until(async () => (await f.marks()).faux !== undefined)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
   await f.deadline()
   // The continuation on the first entry refuses too, which marks it and reports the lost run: the watchdog continues a
   // failed run once, so the next input is what walks on to the second entry.
-  await until(async () => (await f.marks()).faux2 !== undefined)
+  await until(async () => (await f.marks())['faux2/faux-2'] !== undefined)
   await (await f.submit(review, 'and again')).wait(context)
   expect(await f.agent(review)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
   // The second step's line promises the family's model, and the move it writes down says the same.

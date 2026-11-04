@@ -31,7 +31,14 @@ export const docs = [State]
 
 type Host = Pick<
   ExtensionHost,
-  'harness' | 'resource' | 'onOpen' | 'onClose' | 'onRelease' | 'implement' | 'conversations'
+  | 'harness'
+  | 'modelRuntime'
+  | 'resource'
+  | 'onOpen'
+  | 'onClose'
+  | 'onRelease'
+  | 'implement'
+  | 'conversations'
 >
 
 /** The flag timers read synchronously; shared across reloads, set from the doc each time the harness opens. */
@@ -50,6 +57,16 @@ function serial<T>(host: Pick<ExtensionHost, 'resource'>, work: () => Promise<T>
   // The caller gets the failure; the chain only waits for the work to settle.
   queue.chain = next.catch(() => undefined)
   return next
+}
+
+/**
+ * Whether the model costs nothing here, as Pi's catalogue records it: a local or free model. Its rate limit saves no
+ * money by waiting, and the family chain walks past it, so it never pauses the host. A model whose price nobody recorded
+ * is not free: its refusal might be the login's own limit, which is worth waiting for.
+ */
+function free(host: Host, provider: string, modelId: string) {
+  const cost = host.modelRuntime.getModel(provider, modelId)?.cost
+  return !!cost && !cost.input && !cost.output && !cost.cacheRead && !cost.cacheWrite
 }
 
 /**
@@ -423,7 +440,9 @@ export default function pauseExtension(host: Host) {
       // A crash between the pause and its card left none; its request ID makes this a no-op otherwise.
       await card(host, doc)
     })
-    // Every model answer Pi records lands in a commit; the first rate-limited one pauses.
+    // Every model answer Pi records lands in a commit; the first rate-limited one pauses. A model that costs nothing is
+    // left to the family chain instead: its refusal saves nothing by waiting, so the run fails once and its next model
+    // takes over (`extensions/models`), while a paid or subscription login waits for the user and spends nothing.
     unsubscribe = host.harness().subscribeCommits((publication) => {
       // Pi commits a retried answer with its generation sleeping until the retry. The answer that spent the last retry
       // ends the run in the same commit instead: holding then continues nothing and only delays the failure's report.
@@ -445,7 +464,8 @@ export default function pauseExtension(host: Host) {
           !retrying.has(change.value.conversationId) ||
           message?.role !== 'assistant' ||
           message.stopReason !== 'error' ||
-          !rateLimited(message.errorMessage ?? '')
+          !rateLimited(message.errorMessage ?? '') ||
+          free(host, message.provider, message.model)
         )
           continue
         const limit: RateLimit = {
