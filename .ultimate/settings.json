@@ -26,8 +26,9 @@
         "thinking": "low"
       },
       "review": {
-        "model": "deepseek/deepseek-flash",
-        "thinking": "high"
+        "model": "openai-codex/gpt-6.1-sol",
+        "thinking": "high",
+        "fallback": "deepseek/deepseek-flash"
       }
     },
     "assign": {
