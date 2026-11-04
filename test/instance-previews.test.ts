@@ -13,6 +13,7 @@ import {
   seedUserHome,
   stopped,
 } from '../extensions/instance/server.ts'
+import { READY_GIVE_UP, waitForReady } from '../extensions/instance/readiness.ts'
 import { saveDefinition } from '../lib/agents.ts'
 import { writeFamilies } from '../lib/families-settings.ts'
 import { writeJson } from '../lib/json-file.ts'
@@ -196,4 +197,84 @@ it('labels a preview chip with the URL it opens when its text is that link', () 
     ),
   ).toBe('https://rog.tail3a3a66.ts.net:46335/?conversation=3')
   expect(label('the preview', 'http://127.0.0.1:46335/', tailnet)).toBe('the preview')
+})
+
+const started = 'http://127.0.0.1:4748'
+/**
+ * A fake child to wait on: a clock the wait advances a probe at a time, when it announces and answers, and when it is
+ * gone. Nothing here waits for real, so a five-minute deadline costs no wall clock.
+ */
+function fakeStart(options: {
+  announcesAt?: number
+  answersAt?: number
+  endedAt?: number
+  ended?: string
+  output?: string
+  signal?: AbortSignal
+}) {
+  const clock = { at: 0 }
+  const reports: string[] = []
+  const wait = waitForReady({
+    signal: options.signal,
+    url: () =>
+      clock.at >= (options.announcesAt ?? Number.POSITIVE_INFINITY) ? started : undefined,
+    output: () => options.output ?? '',
+    ended: () =>
+      options.endedAt !== undefined && clock.at >= options.endedAt ? options.ended : undefined,
+    responds: async () => options.answersAt !== undefined && clock.at >= options.answersAt,
+    elapsed: () => clock.at,
+    report: (text) => reports.push(text),
+    pause: async () => {
+      clock.at += 250
+    },
+  })
+  return { reports, wait }
+}
+
+// Regression: 28 of 31 recorded preview failures read "Instance did not become ready" followed by a wall of Vite
+// output, saying neither that no URL had ever been announced nor how long the wait had been.
+it('names what a start waited for, quoting only the tail of the output', async () => {
+  const output = [
+    '7:15:46 pm [vite] (client) [optimizer] scanning dependencies...',
+    '7:15:50 pm [vite] (client) [optimizer] bundling dependencies...',
+  ].join('\n')
+  const { wait, reports } = fakeStart({ output })
+  const error = (await wait.catch((caught: unknown) => caught)) as Error
+  expect(error.message).toContain('no URL announced (the child printed no `Ultimate: <url>` line)')
+  expect(error.message).toContain(`after ${READY_GIVE_UP / 1000} s`)
+  expect(error.message).toContain('the child was still running')
+  expect(error.message).toContain('Last 2 lines of its output:\n' + output)
+  // The wait became visible when it passed the report mark, instead of staying silent until it gave up.
+  expect(reports[0]).toBe('Still starting after 60 s: no URL announced yet.')
+  expect(reports.at(-1)).toBe('Still starting after 285 s: no URL announced yet.')
+})
+
+// Regression: a start that succeeded took 42 s, and attempts at 60-67 s were still bundling dependencies. The old
+// fixed 60 s deadline threw those away as if the child had died.
+it('keeps waiting past the 60-second report mark for a child that announces late', async () => {
+  const { wait, reports } = fakeStart({ announcesAt: 120_000, answersAt: 150_000 })
+  expect(await wait).toBe(started)
+  expect(reports[0]).toBe('Still starting after 60 s: no URL announced yet.')
+  expect(reports).toContain(`Waiting for ${started} after 120 s; it has not answered yet.`)
+})
+
+// Regression: a child that exited was reported as one that never became ready, hiding the reason it died.
+it('reports a child that exited instead of calling it slow', async () => {
+  const { wait } = fakeStart({
+    endedAt: 5_000,
+    ended: 'the child exited with code 1',
+    output: 'Error: No such file or directory\n',
+  })
+  const error = (await wait.catch((caught: unknown) => caught)) as Error
+  expect(error.message).toContain('after 5 s')
+  expect(error.message).toContain('no URL announced')
+  expect(error.message).toContain('the child exited with code 1')
+  expect(error.message).toContain('No such file or directory')
+})
+
+it('stops waiting when the caller aborts', async () => {
+  const controller = new AbortController()
+  controller.abort()
+  const { wait } = fakeStart({ signal: controller.signal })
+  await expect(wait).rejects.toThrow(/abort/i)
 })

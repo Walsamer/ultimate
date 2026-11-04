@@ -27,6 +27,7 @@ import { TailscaleApi } from '../tailscale/api.ts'
 import { WorkspacesApi } from '../workspaces/api.ts'
 import type { WorkspaceService } from '../workspaces/api.ts'
 import { cleanPreview, sweepPreviews } from './cleanup.ts'
+import { waitForReady } from './readiness.ts'
 import { implementAction } from '../../lib/actions.ts'
 import { spawnGroup, stopGroup } from '../../lib/process-group.ts'
 import type { Group, GroupProcess } from '../../lib/process-group.ts'
@@ -457,30 +458,37 @@ export default function instanceExtension(
       })
       try {
         output(`Starting ${id}\n`)
-        const deadline = Date.now() + 60000
-        let ready = false
-        while (Date.now() < deadline && child.exitCode === null && child.signalCode === null) {
-          context.abortSignal?.throwIfAborted()
-          if (failed) break
-          try {
-            const response = item.url
-              ? await fetch(`${item.url}/api/models`, {
-                  signal: context.abortSignal
-                    ? AbortSignal.any([context.abortSignal, AbortSignal.timeout(1000)])
-                    : AbortSignal.timeout(1000),
-                })
-              : undefined
-            if (response?.ok && !failed && child.exitCode === null && child.signalCode === null) {
-              ready = true
-              break
+        const started = Date.now()
+        await waitForReady({
+          signal: context.abortSignal,
+          url: () => item.url,
+          output: () => item.output,
+          ended: () =>
+            failed
+              ? 'the child failed to spawn'
+              : child.exitCode !== null
+                ? `the child exited with code ${child.exitCode}`
+                : child.signalCode !== null
+                  ? `the child was killed by ${child.signalCode}`
+                  : undefined,
+          responds: async (url) => {
+            try {
+              const response = await fetch(`${url}/api/models`, {
+                signal: context.abortSignal
+                  ? AbortSignal.any([context.abortSignal, AbortSignal.timeout(1000)])
+                  : AbortSignal.timeout(1000),
+              })
+              return response.ok
+            } catch {
+              // The server is still booting, or the probe's own second elapsed first.
+              return false
             }
-          } catch {
-            /* server is still booting */
-          }
-          await sleep(250, undefined, { signal: context.abortSignal })
-        }
+          },
+          elapsed: () => Date.now() - started,
+          report: (text) => output(`${text}\n`),
+          pause: () => sleep(250, undefined, { signal: context.abortSignal }),
+        })
         context.abortSignal?.throwIfAborted()
-        if (!ready) throw new Error(`Instance did not become ready:\n${item.output}`)
         return info(item)
       } catch (error) {
         await stop(instances, id)
