@@ -10,19 +10,21 @@
  * except for the fallback its own family names: that is the owner saying where to spend instead, so that one step may
  * move it to a login billed per token, and the entry and its card say the provider is billed. Without such a
  * fallback nothing replaces it, the conversation keeps its model and the entry asks the user. An availability Pi has
- * not settled switches nothing.
+ * not settled switches nothing. The mark that refused a provider also says when it may work again, and the one family
+ * that switches back on its own — `review` — records the move and returns to its family's model then (`switchback.ts`).
  */
 import { clampThinkingLevel } from '@earendil-works/pi-ai'
 import { AgentDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryDraft, Tx } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { configuredModel, hasLogin } from '../../lib/agents.ts'
-import { DEFAULT_FAMILY, familyFallbacks, refOf } from '../../lib/families.ts'
+import { DEFAULT_FAMILY, familyFallbacks, refName, refOf } from '../../lib/families.ts'
 import { readFamilies } from '../../lib/families-settings.ts'
 import { Definition } from './api.ts'
 import { Quota, refusal } from './quota.ts'
 import type { Refusal } from './quota.ts'
 import type { Fallback } from './refs.ts'
+import { movedOut, REVIEW_FAMILY } from './switchback.ts'
 
 type Ref = { provider: string; modelId: string }
 /** The step of the chain that picked a model: which one it is decides whether it may leave a subscription. */
@@ -53,7 +55,8 @@ export async function fallback(
   const from = agent.model
   const now = Date.now()
   const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
-  // This model refused its last request here; a login is not the problem and needs no check.
+  // This model refused its last request here; a login is not the problem and needs no check. The mark also says when it
+  // may work again: the reset it named, or the retry interval.
   const mark: Refusal | undefined = refusal(marks, from, now)
   // This one still has a login and has not refused its last request.
   if (!mark && hasLogin(available, from)) return undefined
@@ -95,8 +98,23 @@ export async function fallback(
   const reason: Fallback['reason'] = mark ? mark.reason : found ? found[1] : 'none'
   // The move left the subscription for a login billed per token; the entry and its card say so plainly.
   const billed = !!found && paid && !subscription(host, found[0]!.provider)
+  // Only the review family comes back by itself (`switchback.ts`): its conversation goes back to the model its family
+  // names once that model is due again. So only its entry says until when — the mark of the model it goes back to, not
+  // the one it happens to leave now, which with an ordered fallback list is a later step — and only its move is written
+  // down; the other families keep the wording they had.
+  const backTo =
+    runs?.family === REVIEW_FAMILY ? refOf(config.families[runs.family]?.model) : undefined
+  const backMark = backTo ? marks.models[name(backTo)] : undefined
+  const back = !!found && !!mark && backMark !== undefined && backMark.until > now
+  const until = back ? backMark?.until : undefined
   const data: Fallback = found
-    ? { from: name(from), to: name(found[0]!), reason, ...(billed ? { billed: true } : {}) }
+    ? {
+        from: name(from),
+        to: name(found[0]!),
+        reason,
+        ...(billed ? { billed: true } : {}),
+        ...(until !== undefined ? { until } : {}),
+      }
     : { from: name(from), reason }
   if (!found && (await alreadyAsked(tx, conversationId, data))) return undefined
   if (found) {
@@ -105,6 +123,14 @@ export async function fallback(
     const model = runtime.getModel(to.provider, to.modelId)
     if (model && agent.thinkingLevel)
       agent.thinkingLevel = clampThinkingLevel(model, agent.thinkingLevel)
+    // Written down so the conversation's first input after the mark's moment goes back on its own: the model its family
+    // names it returns to, wherever this step left it.
+    if (back && backTo)
+      await movedOut(tx, conversationId, {
+        family: REVIEW_FAMILY,
+        from: refName(backTo),
+        to: name(to),
+      })
   }
   const spending = billed ? ', billed per token' : ''
   // A spent account says so plainly; any other refusal names the model, since the login is fine there.
@@ -116,7 +142,7 @@ export async function fallback(
         : undefined
   const content = found
     ? why
-      ? `${why}; this conversation now runs on ${data.to}${spending}.`
+      ? `${why}; this conversation now runs on ${data.to}${spending}.${back && backTo ? ` It goes back to ${refName(backTo)} once the limit resets.` : ''}`
       : `Model ${data.from} has no login here; this conversation now runs on ${data.to}${spending}.`
     : why
       ? `${why} and nothing else this conversation may move to has a login, so this conversation keeps it until it is usable again or the user picks another model.`

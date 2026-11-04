@@ -15,7 +15,9 @@ these steps and read only the sections named.
   `.ultimate/extensions/`, not `extensions/`).
 - Personal, every project: `~/.ultimate/extensions/<name>/`.
 
-The folder name is the extension name. New UI is a new folder, never a change to `web/`.
+The folder name is the extension name. Never take a built-in's name: a `user` or `project` folder named after one
+replaces it whole, both facets (the extension diagnostics report it), so a surface that reads project data ships under
+its own name. New UI is a new folder, never a change to `web/`.
 
 ## 2. Copy the closest extension
 

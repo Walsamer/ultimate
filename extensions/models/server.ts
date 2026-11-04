@@ -27,6 +27,7 @@ import type { SaveFamilies } from './refs.ts'
 import { familiesView, saveFamilies } from './families.ts'
 import { fallback } from './fallback.ts'
 import { markRefusals } from './quota.ts'
+import { switchBack, SwitchbackDoc } from './switchback.ts'
 
 /** A Pi type as a document holds it: plain JSON, arrays mutable. */
 type Json<T> = T extends readonly (infer U)[]
@@ -55,7 +56,7 @@ export const Logins = defineDoc<{ flows: Record<string, LoginFlow> }>({
   fork: 'initial',
   initial: () => ({ flows: {} }),
 })
-export const docs = [Logins]
+export const docs = [Logins, SwitchbackDoc]
 
 /** A running flow: process-local, so a flow the document shows running without one here died with its process. */
 interface Flow {
@@ -263,7 +264,12 @@ export default function models(host: ExtensionHost) {
       hook(GenerationTask, {
         // Pi upstream: @earendil-works/pi-durable@1.4.0 — patched transactional beforeInput hook. Every run's first
         // input is placed through it (a typed input, a delivery, a queued follow-up), before the run reads its agent.
-        beforeInput: (_input, { tx, conversationId }) => fallback(host, tx, conversationId),
+        beforeInput: async (_input, { tx, conversationId }) => {
+          // A conversation the review family moved off its model goes back first, so this input runs on it; returning
+          // verifies the provider's login and its mark, so the fallback has nothing left to check.
+          const back = await switchBack(host, tx, conversationId)
+          return back ?? fallback(host, tx, conversationId)
+        },
       }),
     ],
   })

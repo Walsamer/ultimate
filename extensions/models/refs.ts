@@ -41,14 +41,18 @@ export const LogoutAction = actionRef<{ provider: string }, null>('models', 'log
  * allocation, or its own side failing after Pi's retries); without `to` nothing could replace it (a subscription only
  * moves to another subscription, unless its family's own fallback names a billed login) and it kept its model and needs
  * the user. `billed` marks a move that left a subscription login for one billed per token, which only a family's
- * configured fallback may do.
+ * configured fallback may do. With `reason: 'reset'` the quota that refused it is back, and the conversation returned to
+ * `to` (the model its family names) by itself.
  */
 export type Fallback = {
   from: string
   to?: string
-  reason: 'same' | 'pin' | 'family' | 'default' | 'quota' | 'refused' | 'none'
+  reason: 'same' | 'pin' | 'family' | 'default' | 'quota' | 'refused' | 'none' | 'reset'
   /** The move crossed from a subscription to a login billed per token; the card says so. */
   billed?: true
+  /** When the refused provider may work again (ms): the reset it named, or the retry interval. Only the review family
+   * records it, since only `review` returns to its family's model by itself (`switchback.ts`). */
+  until?: number
 }
 
 /**
