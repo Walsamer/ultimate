@@ -3,7 +3,7 @@
  * family, and moving a feature to a family. Each saves this project's families at once through `SaveFamiliesAction`;
  * the Agents panel lists the families with who runs on each. An agent's family is its definition's, not saved here.
  */
-import { ChevronsUpDownIcon, PlusIcon } from 'lucide-react'
+import { ChevronsUpDownIcon, PlusIcon, XIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
@@ -121,6 +121,18 @@ function FamilyForm({
     setDraft((previous) => ({ ...previous, ...change }))
     setError(undefined)
   }
+  // A fallback is one `provider/id` or an ordered list of them; the popover edits it as a list and keeps the shape it
+  // was saved in, so opening a family never rewrites a single step into a list.
+  const list = Array.isArray(draft.fallback)
+    ? draft.fallback
+    : draft.fallback
+      ? [draft.fallback]
+      : []
+  const listed = Array.isArray(draft.fallback)
+  const setFallback = (next: string[]) =>
+    set({
+      fallback: next.length ? (next.length > 1 || listed ? next : next[0]) : undefined,
+    })
   const families = (next?: Spec) => {
     const all = Object.fromEntries(view.families.map((item) => [item.name, specOf(item)]))
     if (next) all[family.name] = next
@@ -210,14 +222,36 @@ function FamilyForm({
       </div>
       <div className="flex flex-col gap-1">
         <div className={label}>Fallback</div>
+        {list.map((ref, index) => (
+          // Parse refuses a list that names one entry twice, and the picker below does not offer one, so a ref is unique.
+          <div className="flex items-center gap-1" key={ref}>
+            <span className="min-w-0 flex-1 truncate font-mono text-[11.5px]" title={ref}>
+              <span className="text-muted-foreground">{ref.slice(0, ref.indexOf('/') + 1)}</span>
+              {short(ref)}
+            </span>
+            <Button
+              aria-label={`Remove ${ref}`}
+              className="size-6 shrink-0 p-0 text-muted-foreground hover:text-error"
+              onClick={() => setFallback(list.toSpliced(index, 1))}
+              size="xs"
+              title="Remove this step"
+              type="button"
+              variant="ghost"
+            >
+              <XIcon className="size-3" />
+            </Button>
+          </div>
+        ))}
         <ModelSelect
-          onChange={(next) => set({ fallback: next })}
-          onClear={draft.fallback ? () => set({ fallback: undefined }) : undefined}
-          placeholder="the default model"
-          value={draft.fallback}
+          exclude={list}
+          onChange={(next) => setFallback([...list, next])}
+          placeholder={list.length ? 'Add another model' : 'the default model'}
+          value={undefined}
         />
         <p className="text-[11px] text-muted-foreground">
-          Where what runs on it moves when this model's provider has no login or runs out of quota.
+          Where what runs on it moves when this model's provider has no login or runs out of quota:
+          the first of these with a login that is not out of quota, one step per failure, in this
+          order.
         </p>
       </div>
       {error && <p className="font-mono text-[11px] break-words text-error">{error}</p>}
@@ -335,11 +369,14 @@ const LIMIT = 150
 function ModelSelect({
   value,
   placeholder = 'Pick a model',
+  exclude = [],
   onChange,
   onClear,
 }: {
   value: string | undefined
   placeholder?: string
+  /** Models already chosen elsewhere in this field: listed but not selectable, so a repeat is not offered. */
+  exclude?: string[]
   onChange: (value: string) => void
   /** Offered as the first row: go back to no model of its own. */
   onClear?: () => void
@@ -423,6 +460,7 @@ function ModelSelect({
                 {items.map((model) => (
                   <ModelRow
                     current={`${model.provider}/${model.id}` === value}
+                    disabled={exclude.includes(`${model.provider}/${model.id}`)}
                     key={`${model.provider}/${model.id}`}
                     model={model}
                     onSelect={() => choose(() => onChange(`${model.provider}/${model.id}`))}

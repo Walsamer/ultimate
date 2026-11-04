@@ -428,6 +428,110 @@ it('moves a conversation to the fallback its family names, before the configured
   expect(plain.asked.faux3).toEqual([])
 })
 
+it('walks a family fallback list one step per failure, through the watchdog', async () => {
+  // Two entries on two providers, and a configured default that has no login here, so only the family's own steps can
+  // move it: the first entry takes the watchdog's continuation, and its own failure leaves the second entry for the
+  // next input. The watchdog grants one continuation per failed run, so the second move is where a conversation with
+  // two spent providers really goes next.
+  const f = await fixture(
+    { primary: () => error(quota), fallback: () => error(quota) },
+    {
+      definition: { family: 'fast', model },
+      families: {
+        families: { fast: { model: 'faux/faux-1', fallback: ['faux2/faux-2', 'faux3/faux-3'] } },
+      },
+      configured: { provider: 'faux9', modelId: 'gone' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  // The first entry, not the second one and not the default: the continuation finishes on faux2.
+  await until(async () => f.asked.faux2.length === 1)
+  expect(f.asked.faux2[0]).toContain('Continue from where you left off')
+  expect(f.asked.faux3).toEqual([])
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  // The first entry refuses in turn: that run is lost, and the watchdog reports it instead of a third attempt.
+  await until(async () => (await f.marks()).faux2 !== undefined)
+  await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  // The next input walks on to the second entry: the provider it marked spent is skipped, not tried again.
+  await (await f.submit(branch, 'and again')).wait(context)
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+    { from: 'faux2/faux-2', to: 'faux3/faux-3', reason: 'quota' },
+  ])
+  const answer = (await f.entries(branch)).findLast((entry) => entry.kind === 'pi.assistant')
+  expect(answer?.model?.[0]).toMatchObject({ provider: 'faux3', model: 'faux-3' })
+})
+
+it('skips a family fallback entry without a login here', async () => {
+  // faux2 is logged out, so the first entry cannot take over and the second one does; the chain is every entry in
+  // order, each one checked, not the list's first name.
+  const f = await fixture(
+    { primary: () => error(quota) },
+    {
+      signedIn: ['faux', 'faux3'],
+      definition: { family: 'fast', model },
+      families: {
+        families: { fast: { model: 'faux/faux-1', fallback: ['faux2/faux-2', 'faux3/faux-3'] } },
+      },
+      configured: { provider: 'faux9', modelId: 'gone' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux3.length === 1)
+  expect(f.asked.faux2).toEqual([])
+  expect(await f.agent(branch)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux3/faux-3', reason: 'quota' },
+  ])
+})
+
+it('lets a later family fallback entry cross from a subscription, and says the provider is billed', async () => {
+  // The list's second entry is the owner saying where to spend, so it may cross even though the first entry was no
+  // crossing at all: the rule holds per step, not for the list's first member.
+  const f = await fixture(
+    { primary: () => error(quota), fallback: () => error(quota) },
+    {
+      subscriptions: ['faux', 'faux2'],
+      definition: { family: 'fast', model },
+      families: {
+        families: { fast: { model: 'faux/faux-1', fallback: ['faux2/faux-2', 'faux3/faux-3'] } },
+      },
+      configured: { provider: 'faux9', modelId: 'gone' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  // Another subscription login: no crossing, so the entry carries no `billed`.
+  await until(async () => f.asked.faux2.length === 1)
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  await until(async () => (await f.marks()).faux2 !== undefined)
+  await until(async () => (await f.entries(f.ultimate, 'watchdog.failure')).length === 1)
+  // The second entry is billed per token: a written-down fallback step may cross, and the entry says so.
+  await (await f.submit(branch, 'and again')).wait(context)
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+    { from: 'faux2/faux-2', to: 'faux3/faux-3', reason: 'quota', billed: true },
+  ])
+  expect(fallbacks(await f.entries(branch))[1].model?.[0]?.content).toBe(
+    'faux2/faux-2 is out of quota here; this conversation now runs on faux3/faux-3, billed per token.',
+  )
+})
+
 it("takes a family's fallback when its model's login is gone, and says which step it was", async () => {
   const f = await fixture(
     { primary: () => fauxAssistantMessage('the answer') },

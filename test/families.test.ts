@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
-import { definitionRuns, familyFallback, mergeFamilies, parseFamilies } from '../lib/families.ts'
+import { definitionRuns, familyFallbacks, mergeFamilies, parseFamilies } from '../lib/families.ts'
 import { readFamilies, readFamilyLayers, writeFamilies } from '../lib/families-settings.ts'
 import { temp } from './helpers.ts'
 
@@ -58,8 +58,8 @@ it("keeps a family's fallback per family, and refuses one that names the family'
     fallback: 'acme/cheap',
     color: 'amber',
   })
-  expect(familyFallback(config, 'fast')).toEqual({ provider: 'acme', modelId: 'cheap' })
-  expect(familyFallback(config, 'default')).toBeUndefined()
+  expect(familyFallbacks(config, 'fast')).toEqual([{ provider: 'acme', modelId: 'cheap' }])
+  expect(familyFallbacks(config, 'default')).toEqual([])
   // A fallback changes nothing about what a conversation runs on: the default family still resolves no model of its
   // own, so its conversations keep the parent's model and only move when that one is gone.
   const withDefault = families({ families: { default: { fallback: 'acme/cheap' } } })
@@ -67,11 +67,47 @@ it("keeps a family's fallback per family, and refuses one that names the family'
     family: 'default',
     via: 'family',
   })
-  expect(familyFallback(withDefault, 'default')).toEqual({ provider: 'acme', modelId: 'cheap' })
+  expect(familyFallbacks(withDefault, 'default')).toEqual([{ provider: 'acme', modelId: 'cheap' }])
   // A family's fallback is a model, never another family: no chain can point back at itself.
   expect(() => parseFamilies({ families: { fast: { fallback: 'tiny' } } })).toThrow('"provider/id"')
   expect(() =>
     parseFamilies({ families: { fast: { model: 'acme/quick', fallback: 'acme/quick' } } }),
+  ).toThrow("must differ from the family's model")
+})
+
+it('walks a fallback list in order, and refuses one it cannot read whole', () => {
+  const config = families({
+    families: { fast: { model: 'acme/quick', fallback: ['hub/free', 'acme/cheap'] } },
+  })
+  // A string is a list of one: the chain reads both shapes the same way.
+  expect(familyFallbacks(config, 'fast')).toEqual([
+    { provider: 'hub', modelId: 'free' },
+    { provider: 'acme', modelId: 'cheap' },
+  ])
+  expect(
+    familyFallbacks(families({ families: { fast: { fallback: 'acme/cheap' } } }), 'fast'),
+  ).toEqual([{ provider: 'acme', modelId: 'cheap' }])
+  // A later layer replaces the list whole: it is an order of steps, not something to append to.
+  const over = families(
+    { families: { fast: { fallback: ['hub/free', 'acme/cheap'] } } },
+    { families: { fast: { fallback: ['hub/other'] } } },
+  )
+  expect(over.families.fast.fallback).toEqual(['hub/other'])
+  // Each entry is refused on its own, naming the field: a list that silently shrank would hide a typo.
+  expect(() => parseFamilies({ families: { fast: { fallback: [] } } })).toThrow('at least one')
+  expect(() => parseFamilies({ families: { fast: { fallback: ['acme/cheap', 7] } } })).toThrow(
+    '.fallback[1] must be "provider/id"',
+  )
+  expect(() => parseFamilies({ families: { fast: { fallback: ['acme/cheap', 'tiny'] } } })).toThrow(
+    'not a family name',
+  )
+  expect(() =>
+    parseFamilies({ families: { fast: { fallback: ['acme/cheap', 'acme/cheap'] } } }),
+  ).toThrow('names acme/cheap twice')
+  expect(() =>
+    parseFamilies({
+      families: { fast: { model: 'acme/quick', fallback: ['hub/free', 'acme/quick'] } },
+    }),
   ).toThrow("must differ from the family's model")
 })
 

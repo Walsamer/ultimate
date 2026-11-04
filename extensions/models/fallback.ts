@@ -1,8 +1,9 @@
 /**
  * A conversation whose model provider either has no login here or refused its last request for a spent account (a
  * quota, a usage limit, a rate limit Pi already retried) switches, as its next run's input is placed, to the same
- * model on another provider, the model its definition runs on, the fallback its family names or the configured
- * default, and says so with one `models.fallback` entry. A subscription switches only to another subscription login,
+ * model on another provider, the model its definition runs on, the first fallback its family names that is usable or
+ * the configured default, and says so with one `models.fallback` entry. A family names one fallback or an ordered list
+ * of them, each failure walking one step further. A subscription switches only to another subscription login,
  * except for the fallback its own family names: that is the owner saying where to spend instead, so that one step may
  * move it to a login billed per token, and the entry and its card say the provider is billed. Without such a
  * fallback nothing replaces it, the conversation keeps its model and the entry asks the user. An availability Pi has
@@ -13,7 +14,7 @@ import { AgentDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryDraft, Tx } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { configuredModel, hasLogin } from '../../lib/agents.ts'
-import { DEFAULT_FAMILY, familyFallback, refOf } from '../../lib/families.ts'
+import { DEFAULT_FAMILY, familyFallbacks, refOf } from '../../lib/families.ts'
 import { readFamilies } from '../../lib/families-settings.ts'
 import { Definition } from './api.ts'
 import { Quota, spent } from './quota.ts'
@@ -72,14 +73,15 @@ export async function fallback(
       allowed(model.provider, 'same'),
   )
   // What the conversation's agent definition runs on, and the families as settings have them now: the definition's
-  // own model, then its family's declared fallback, then the configured default. The family's fallback is what lets a
-  // default family that is itself the spent provider hand over, since it can name a model the chain would never reach.
+  // own model, then its family's declared fallbacks, then the configured default. The family's fallback is what lets a
+  // default family that is itself the spent provider hand over, since it can name a model the chain would never reach;
+  // an ordered list is walked from its first entry, one candidate per step, and the first one that is usable wins.
   const runs = await host.want(Definition)?.runs(tx, conversationId)
   const config = await readFamilies(host.userHome, host.projectRoot, await host.projectSettings())
   const candidates: [Ref | undefined, Step][] = [
     [same && { provider: same.provider, modelId: same.id }, 'same'],
     [runs?.model, 'pin'],
-    [familyFallback(config, runs?.family), 'family'],
+    ...familyFallbacks(config, runs?.family).map((ref): [Ref, Step] => [ref, 'family']),
     [
       configuredModel(fresh, host.settings, refOf(config.families[DEFAULT_FAMILY].model)),
       'default',
