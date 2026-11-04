@@ -21,7 +21,7 @@ describes the intent, not a copy of the numbers, because the numbers changed fou
    therefore a chain that can replace working state with a summary. `docs/audit/model-routing.md` has the measurements;
    a candidate whose window cannot hold the conversation is skipped, and a manual switch asks first.
 2. **A free model's refusal must never pause the host.** A 429 on a free model marks that model and moves to the next
-   entry in the chain; the pause is for a limit that stops *paid* work, not for a free tier doing what free tiers do.
+   entry in the chain; the pause is for a limit that stops _paid_ work, not for a free tier doing what free tiers do.
 3. **Free models are disabled until a person re-enables them** once their quota is hit, per model first, provider-wide
    only after a second different model refuses. Nothing falls through to a paid provider without the chain saying so.
 4. **Windows are working sizes, not maxima.** An advertised 1M window with a 35k input-tokens-per-minute allowance
@@ -31,9 +31,9 @@ describes the intent, not a copy of the numbers, because the numbers changed fou
 
 ## Where the configuration lives
 
-| What | Path | Scope |
-| --- | --- | --- |
-| Families, per project and machine-wide | `~/.ultimate/model-families.json`, `<project>/.ultimate/settings.json` | project wins over user, field by field |
-| Provider definitions and model windows | `~/.pi/agent/models.json` | this machine |
-| Compaction thresholds by model | `server/harness.ts` `compactionOverrides`, or `compaction.modelOverrides` in Pi's settings | clone / user |
-| Which agents exist and their family | `<project>/.ultimate/agents/*.md`, `~/.ultimate/agents/` | project over user over built-in |
+| What                                   | Path                                                                                       | Scope                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Families, per project and machine-wide | `~/.ultimate/model-families.json`, `<project>/.ultimate/settings.json`                     | project wins over user, field by field |
+| Provider definitions and model windows | `~/.pi/agent/models.json`                                                                  | this machine                           |
+| Compaction thresholds by model         | `server/harness.ts` `compactionOverrides`, or `compaction.modelOverrides` in Pi's settings | clone / user                           |
+| Which agents exist and their family    | `<project>/.ultimate/agents/*.md`, `~/.ultimate/agents/`                                   | project over user over built-in        |
