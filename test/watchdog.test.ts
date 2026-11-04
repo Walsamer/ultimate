@@ -457,41 +457,91 @@ it.each(['queued', 'running'] as const)(
   },
 )
 
-it.each([false, true])('waits 60 s, retries once; retry failure: %s', async (retryFails) => {
+it.each([false, true])(
+  'waits 60 s between continuations; retry failure: %s',
+  async (retryFails) => {
+    const seen: string[] = []
+    const f = await fixture((transcript) => {
+      const text = inputText(transcript)
+      if (text === 'fail' || text.startsWith('Your previous run')) {
+        seen.push(text)
+        return text === 'fail' || retryFails
+          ? error(
+              'Incomplete Claude Code upstream response (status unknown, capture incomplete, relay failure Error)',
+            )
+          : fauxAssistantMessage('recovered')
+      }
+      return fauxAssistantMessage('ok')
+    })
+    const branch = await f.conversation('Provider blip')
+    await (await f.submit(branch, 'fail')).wait(context)
+    const sleeping = await f.sleeping()
+    expect(sleeping.state).toMatchObject({ status: 'sleeping', until: 1_060_000 })
+    f.advance(59_999)
+    await f.harness.waitForIdle(context)
+    expect(seen).toEqual(['fail'])
+    await f.reopen()
+    f.advance(1)
+    await until(async () => seen.length === 2)
+    // A retryable error survives more than one continuation: the second failure waits again instead of reporting.
+    const secondWait = retryFails
+      ? ((await f.sleeping()).state as { until?: number }).until
+      : undefined
+    expect(secondWait).toBe(retryFails ? 1_120_000 : undefined)
+    if (retryFails) f.advance(60_000)
+    await until(async () => (await f.entries()).length === (retryFails ? 1 : 0))
+    await f.harness.waitForIdle(context)
+    await f.detach()
+    expect(await f.entries()).toHaveLength(retryFails ? 1 : 0)
+    const retryCard = expect.objectContaining({ retried: true })
+    expect((await f.entries()).map((entry) => entry.data)).toEqual(retryFails ? [retryCard] : [])
+    await f.open()
+    await f.reopen()
+    await f.harness.waitForIdle(context)
+    expect(seen).toHaveLength(retryFails ? 3 : 2)
+    expect(await f.entries()).toHaveLength(retryFails ? 1 : 0)
+  },
+)
+
+it('survives a sustained retryable failure: two continuations, then the run succeeds', async () => {
   const seen: string[] = []
   const f = await fixture((transcript) => {
     const text = inputText(transcript)
-    if (text === 'fail' || text.startsWith('Your previous run')) {
-      seen.push(text)
-      return text === 'fail' || retryFails
-        ? error(
-            'Incomplete Claude Code upstream response (status unknown, capture incomplete, relay failure Error)',
-          )
-        : fauxAssistantMessage('recovered')
-    }
-    return fauxAssistantMessage('ok')
+    if (text !== 'fail' && !text.startsWith('Your previous run')) return fauxAssistantMessage('ok')
+    seen.push(text)
+    return seen.length < 3 ? error(overloaded) : fauxAssistantMessage('recovered')
   })
-  const branch = await f.conversation('Provider blip')
+  const branch = await f.conversation('Hours of 503s')
   await (await f.submit(branch, 'fail')).wait(context)
-  const sleeping = await f.sleeping()
-  expect(sleeping.state).toMatchObject({ status: 'sleeping', until: 1_060_000 })
-  f.advance(59_999)
-  await f.harness.waitForIdle(context)
-  expect(seen).toEqual(['fail'])
-  await f.reopen()
-  f.advance(1)
-  await until(async () => seen.length === 2)
-  if (retryFails) await until(async () => (await f.entries()).length === 1)
-  await f.harness.waitForIdle(context)
-  await f.detach()
-  expect(await f.entries()).toHaveLength(retryFails ? 1 : 0)
-  const retryCard = expect.objectContaining({ retried: true })
-  expect((await f.entries()).map((entry) => entry.data)).toEqual(retryFails ? [retryCard] : [])
-  await f.open()
-  await f.reopen()
-  await f.harness.waitForIdle(context)
-  expect(seen).toHaveLength(2)
-  expect(await f.entries()).toHaveLength(retryFails ? 1 : 0)
+  for (const attempts of [2, 3]) {
+    await f.sleeping()
+    f.advance(60_000)
+    await until(async () => seen.length === attempts)
+    await f.harness.waitForIdle(context)
+  }
+  expect(await f.entries()).toHaveLength(0)
+  const inputs = (
+    await f.host.scanSubmissions({ conversationId: branch }, 100, undefined, context)
+  ).items.filter((input) => input.requestId?.startsWith('watchdog-retry:'))
+  // One run survived two continuations, not the single retry it used to get.
+  expect(inputs.map((input) => input.requestId?.split(':').at(-1))).toEqual(['1', '2'])
+})
+
+it.each([
+  '402 Payment Required',
+  'Claude Code billing: this request was charged to Claude usage credits instead of your plan limits (rate limit status allowed_warning, five_hour).',
+])('reports a non-retryable refusal at once, without retrying it: %s', async (refusal) => {
+  const f = await fixture((transcript) =>
+    inputText(transcript) === 'fail' ? error(refusal) : fauxAssistantMessage('ok'),
+  )
+  const branch = await f.conversation('No credit')
+  await (await f.submit(branch, 'fail')).wait(context)
+  await until(async () => (await f.entries()).length === 1)
+  expect((await f.entries())[0].data).toMatchObject({ retried: false })
+  expect(await f.tasks()).toHaveLength(1)
+  const inputs = (await f.host.scanSubmissions({ conversationId: branch }, 100, undefined, context))
+    .items
+  expect(inputs.some((input) => input.requestId?.startsWith('watchdog-retry:'))).toBe(false)
 })
 
 it.each(['retry', 'report'] as const)(
@@ -518,6 +568,11 @@ it.each(['retry', 'report'] as const)(
     await until(async () => held.entered)
     await f.reopen()
     barrier.resolve()
+    if (phase === 'retry') {
+      // The continuation that survived the crash is the first of the two; the second waits out its own 60 s.
+      await f.sleeping()
+      f.advance(60_000)
+    }
     await until(async () => (await f.entries()).length === 1)
     await until(async () => (await f.tasks()).every((task) => task.state.status === 'terminal'))
     await f.reopen()
@@ -525,10 +580,12 @@ it.each(['retry', 'report'] as const)(
     expect(await f.entries()).toHaveLength(1)
     const requests = (
       await f.host.scanSubmissions({ conversationId: branch }, 100, undefined, context)
-    ).items
-    expect(requests.filter((input) => input.requestId?.startsWith('watchdog-retry:'))).toHaveLength(
+    ).items.filter((input) => input.requestId?.startsWith('watchdog-retry:'))
+    // Each continuation is submitted once: the one the crash interrupted, and the one after it.
+    expect(requests.filter((input) => input.requestId?.endsWith(':1'))).toHaveLength(
       phase === 'retry' ? 1 : 0,
     )
+    expect(requests).toHaveLength(phase === 'retry' ? 2 : 0)
   },
 )
 
@@ -690,7 +747,7 @@ it('recovers no-model failures separately from earlier reply-expecting inputs an
     (tx) => configure(tx, branch, { model: { provider: 'missing', modelId: 'missing' } }),
     context,
   )
-  await (await f.submit(branch, 'retry', 'watchdog-retry:fixture')).wait(context)
+  await (await f.submit(branch, 'retry', 'watchdog-retry:7')).wait(context)
   await (await f.submit(branch, 'manual')).wait(context)
   await f.reopen()
   await until(async () => (await f.entries()).length === 2)
@@ -735,13 +792,16 @@ it('injects idle changes before @ultimate inputs only, never as a system section
   ).not.toContain('Open branches idle')
 })
 
-it('uses a notice, not a card, when @ultimate fails after one retry', async () => {
+it('uses a notice, not a card, when @ultimate fails after two retries', async () => {
   const f = await fixture(() => error(overloaded))
   await (await f.submit(f.ultimate, 'fail')).wait(context)
   await f.sleeping()
   f.advance(60_000)
+  await f.harness.waitForIdle(context)
+  await f.sleeping()
+  f.advance(60_000)
   await until(async () => f.notices.length === 1)
-  expect(f.notices[0]).toContain('After one automatic retry')
+  expect(f.notices[0]).toContain('After 2 automatic retries')
   expect(await f.entries()).toHaveLength(0)
 })
 
@@ -845,8 +905,31 @@ it.each([
     undefined,
   ],
 ] as const)('diagnoses %s', (text, temporary, hint) => {
-  const message = error(text)
-  expect(diagnose(text, message)).toEqual(hint ? { hint, temporary } : { temporary })
+  // The continuation budget has its own case below; what the card says is the hint and whether a retry could help.
+  const { retries: _budget, ...rest } = diagnose(text, error(text))
+  expect(rest).toEqual(hint ? { hint, temporary } : { temporary })
+})
+
+it.each([
+  // The provider's own side may pass: the full budget, so a sustained 503 window outlives one wait.
+  [overloaded, 2],
+  ['503 Service Unavailable', 2],
+  [
+    'Incomplete Claude Code upstream response (status unknown, capture incomplete, relay failure Error)',
+    2,
+  ],
+  // Another model serves the request: one step on to it, and the next move belongs to the next input.
+  [
+    'You exceeded your current quota, please check your plan and billing details. (insufficient_quota)',
+    1,
+  ],
+  ['429 Too Many Requests', 1],
+  ['404 Model not found: Qwen3.6-35B-A3B-FP8', 1],
+  // No continuation fixes these.
+  ['402 Payment Required', 0],
+  ['Claude Code is installed but not logged in. Run `claude auth login` and try again.', 0],
+])('gives %s %i continuation(s)', (text, retries) => {
+  expect(diagnose(text, error(text)).retries).toBe(retries)
 })
 
 it('checks all siblings of a dense owner and times idleNote with 1500 conversations', async () => {

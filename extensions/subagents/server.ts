@@ -1117,10 +1117,18 @@ export default function subagents(
                 )
                 cursor = page.next
               } while (cursor)
-              return tasks.map((task) => ({
-                task: task.id,
-                request: `watchdog-retry:${(task.input as { failedTask: number }).failedTask}`,
-              }))
+              return tasks.map((task) => {
+                // The watchdog's continuation id names its attempt; Stop aborts the one it queued, so build the
+                // same id from the task's own input (see extensions/watchdog/server.ts).
+                const { failedTask, retries } = task.input as {
+                  failedTask: number
+                  retries?: number
+                }
+                return {
+                  task: task.id,
+                  request: `watchdog-retry:${failedTask}:${(retries ?? 0) + 1}`,
+                }
+              })
             }, context)
             const target = await api.memo(
               'stopTarget',

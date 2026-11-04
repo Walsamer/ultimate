@@ -20,7 +20,7 @@ import type {
   Tx,
 } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
-import { modelBlocked } from '../../lib/rate-limit.ts'
+import { modelBlocked, transient } from '../../lib/rate-limit.ts'
 import { Messages } from '../messages/api.ts'
 import { Standing, Subagents } from '../subagents/api.ts'
 import { idleNote } from './idle.ts'
@@ -28,8 +28,13 @@ import { WatchdogApi } from './api.ts'
 import type { ReportedFailure } from './api.ts'
 import type { Failure } from './refs.ts'
 
-/** How long after a temporary failure its one retry starts. */
+/** How long after a temporary failure its next retry starts. */
 const RETRY_AFTER = 60_000
+/**
+ * How many times a run whose error is retryable is continued before its failure is reported: a provider that fails
+ * intermittently for hours outlives one retry, while a provider that is down still reports on the third failure.
+ */
+const RETRIES = 2
 /** Reported failures kept for `failures()`; older ones drop off. */
 export const FAILURE_LIMIT = 20
 
@@ -105,18 +110,20 @@ async function boundary(tx: Tx, task: Generation, next?: Generation) {
 /**
  * What a failed run's error asks for: a broken login needs the user, so it reports at once with a hint to log in again; a
  * refusal another model would not share — a spent account, a model the provider does not serve here, or the provider's own
- * side failing after Pi's retries (`modelBlocked`) — gets one continuation, which the model layer puts on the family's
- * next model; an incomplete Claude Code relay response (status 200 or unknown) is a dropped stream, so it retries like
- * Pi's own retryable errors.
+ * side failing after Pi's retries (`modelBlocked`) — gets a continuation, which the model layer puts on the family's next
+ * model; an incomplete Claude Code relay response (status 200 or unknown) is a dropped stream, so it retries like Pi's own
+ * retryable errors. `retries` is how many continuations the error is worth: a provider that may recover on its own gets
+ * the full budget, while a spent account or an unsupported model needs one step on to another model, no more.
  */
 export function diagnose(error: string, assistant?: AssistantMessage) {
   if (modelBlocked(error))
     return {
       hint: 'The model refused the request; once that clears, resume this conversation with a message',
       temporary: true,
+      retries: transient(error) ? RETRIES : 1,
     }
   if (/not logged in/i.test(error))
-    return { hint: 'Run `claude auth login` in a terminal', temporary: false }
+    return { hint: 'Run `claude auth login` in a terminal', temporary: false, retries: 0 }
   // The conversation's model has no login here; its next input switches it to one that has.
   const missing = /Provider is not configured: ([\w-]+)|No API key (?:found )?for "?([\w-]+)/i.exec(
     error,
@@ -125,21 +132,39 @@ export function diagnose(error: string, assistant?: AssistantMessage) {
     return {
       hint: `${missing[1] ?? missing[2]} has no login here. Log in again (⌘K → Log in to a provider), or message the conversation: its next run switches to a model that has one`,
       temporary: false,
+      retries: 0,
     }
   const provider = /OAuth refresh failed for ([\w-]+)/i.exec(error)?.[1] ?? assistant?.provider
   if (/OAuth refresh failed|invalid_grant/i.test(error))
     return {
       hint: `Log in to ${provider ?? 'the provider'} again: ⌘K → Log in to a provider`,
       temporary: false,
+      retries: 0,
     }
-  return {
-    temporary:
-      /^Incomplete Claude Code upstream response \(status (200|unknown),/.test(error) ||
-      !!(assistant && isRetryableAssistantError(assistant)),
-  }
+  const temporary =
+    /^Incomplete Claude Code upstream response \(status (200|unknown),/.test(error) ||
+    !!(assistant && isRetryableAssistantError(assistant))
+  return { temporary, retries: temporary ? RETRIES : 0 }
 }
 
 type Generation = TaskRecord<JsonValue, JsonValue, JsonValue>
+/**
+ * Which retry of a failed run a submission is: 1 for the first, and so on, so a chain of retries counts itself.
+ * Request ids written before the count existed (`watchdog-retry:<task>`) are the first retry.
+ */
+export function retryNumber(requestId?: string) {
+  const match = /^watchdog-retry:\d+(?::(\d+))?$/.exec(requestId ?? '')
+  return match ? Number(match[1] ?? 1) : 0
+}
+type FailureInput = Omit<Failure, 'retried'> & {
+  failedTask: number
+  recipient: ConversationId
+  until: number
+  /** The continuations already sent for this failure; `Failure`'s report-only `retried` is derived from it. */
+  retries: number
+  /** How many continuations this failure's error is worth, from `diagnose`. */
+  allowed: number
+}
 /** Live commits give us the exact settled inputs. On reopen, only model_error/no_model
  * submissions matter: their entries lie between consecutive failed-run boundaries.
  * Successful and stopped runs cannot match that filter. No-model has no assistant entry,
@@ -189,23 +214,25 @@ async function details(tx: Tx, metadata: ExtensionHost['metadata'], task: Genera
 
 export default function watchdog(host: ExtensionHost) {
   const Watchdog = defineTask<
-    Failure & { failedTask: number; recipient: ConversationId; temporary: boolean; until: number },
+    FailureInput,
     { phase: 'wait' } | { phase: 'retry' } | { phase: 'report' },
     null
   >({
     name: 'watchdog.failure',
     version: 1,
-    initial: (input) => ({ phase: input.temporary && !input.retried ? 'wait' : 'report' }),
+    // `retries` counts the continuations already sent for this failure, so a long run of retryable errors still reports.
+    initial: (input) => ({ phase: input.retries < input.allowed ? 'wait' : 'report' }),
     phases: {
       wait: (task, runtime, ctx) => runtime.sleepUntil(task.input.until, { phase: 'retry' }, ctx),
       retry: async (task, runtime, ctx) => {
-        const { conversation, failedTask, error } = task.input
+        const { conversation, failedTask, error, retries } = task.input
+        const requestId = `watchdog-retry:${failedTask}:${retries + 1}`
         const child = (await runtime.conversation(conversation as ConversationId, ctx))!
         // A replay after submit must finish, not mistake its own retry for someone else's recovery.
         let submitted = false
         let busy = false
         await runtime.commit(async (tx) => {
-          submitted = !!(await tx.submissionByRequest(child.id, `watchdog-retry:${failedTask}`))
+          submitted = !!(await tx.submissionByRequest(child.id, requestId))
           busy = (await tx.doc(LiveDoc, child.id)).run !== undefined
         }, ctx)
         if (!submitted && !busy)
@@ -213,7 +240,7 @@ export default function watchdog(host: ExtensionHost) {
             {
               type: 'input',
               content: `Your previous run stopped with a provider error (${error}). Continue from where you left off; check what you already did and do not redo it.`,
-              requestId: `watchdog-retry:${failedTask}`,
+              requestId,
               whenBusy: 'followUp',
             },
             ctx,
@@ -221,17 +248,17 @@ export default function watchdog(host: ExtensionHost) {
         await runtime.commit(() => terminal, ctx)
       },
       report: async (task, runtime, ctx) => {
-        const { conversation, title, error, step, hint, retried, failedTask, recipient } =
+        const { conversation, title, error, step, hint, retries, failedTask, recipient } =
           task.input
         const data: Failure = {
           conversation,
           title,
           error,
           step,
-          retried,
+          retried: retries > 0,
           ...(hint ? { hint } : {}),
         }
-        const content = `[run failed] #${conversation} "${title}": ${error}. Last step: ${step}.${retried ? ' After one automatic retry.' : ''}${hint ? ` ${hint}.` : ''}`
+        const content = `[run failed] #${conversation} "${title}": ${error}. Last step: ${step}.${retries > 0 ? ` After ${retries} automatic ${retries === 1 ? 'retry' : 'retries'}.` : ''}${hint ? ` ${hint}.` : ''}`
         if (recipient === conversation) {
           // Notices are process-local diagnostics, not submissions; a reopened facet retains no old notice.
           host.notice(content)
@@ -320,7 +347,7 @@ export default function watchdog(host: ExtensionHost) {
         throw new Error('Watchdog needs @ultimate to report a failed run')
       if (task.state.status !== 'terminal' || task.state.outcome.status !== 'failed') return
       const error = task.state.outcome.error.message
-      const { hint, temporary } = diagnose(error, info.assistant)
+      const { hint, retries: allowed } = diagnose(error, info.assistant)
       await tx.createTask(
         Watchdog,
         {
@@ -331,8 +358,11 @@ export default function watchdog(host: ExtensionHost) {
           error,
           step: info.step,
           ...(hint ? { hint } : {}),
-          retried: runInputs.some((input) => input.requestId?.startsWith('watchdog-retry:')),
-          temporary,
+          retries: runInputs.reduce(
+            (most, input) => Math.max(most, retryNumber(input.requestId)),
+            0,
+          ),
+          allowed,
           until: (task.endedAt ?? Date.now()) + RETRY_AFTER,
         },
         { conversationId: recipient, ownership: { kind: 'conversation' }, background: true },
