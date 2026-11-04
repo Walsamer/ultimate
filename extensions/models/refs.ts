@@ -35,11 +35,11 @@ export const LogoutAction = actionRef<{ provider: string }, null>('models', 'log
 /**
  * A `models.fallback` entry: the conversation's model (`provider/id`) either had no login here or refused its last
  * request for a spent account, so its next run switched to `to`: the same model on another provider, the model its
- * definition runs on (`pin`), the fallback its family names (`family`) or the configured default (`default`). With
- * `reason: 'quota'` it was the provider's quota, usage or rate limit; without `to` nothing could replace it (a
- * subscription only moves to another subscription, unless its family's own fallback names a billed login) and it kept
- * its model and needs the user. `billed` marks a move that left a subscription login for one billed per token, which
- * only a family's configured fallback may do.
+ * definition runs on (`pin`), a fallback its family names (`family`, the first entry of an ordered list that is
+ * usable) or the configured default (`default`). With `reason: 'quota'` it was the provider's quota, usage or rate
+ * limit; without `to` nothing could replace it (a subscription only moves to another subscription, unless its family's
+ * own fallback names a billed login) and it kept its model and needs the user. `billed` marks a move that left a
+ * subscription login for one billed per token, which only a family's configured fallback may do.
  */
 export type Fallback = {
   from: string
@@ -62,8 +62,9 @@ export type FamilyView = {
   /** `provider/id`; unset for a default family that follows Pi's default model (`follows`). */
   model?: string
   thinking?: ModelThinkingLevel
-  /** `provider/id` a conversation on it moves to when its model's provider has no login here or runs out of quota. */
-  fallback?: string
+  /** `provider/id` a conversation on it moves to when its model's provider has no login here or runs out of quota;
+   * an ordered list walks one step per failure. */
+  fallback?: string | string[]
   /** Pi's default model and thinking, which a default family without its own runs. */
   follows?: string
   followsThinking?: ModelThinkingLevel
@@ -108,7 +109,7 @@ export const FamiliesAction = actionRef<null, FamiliesView>('models', 'families'
 export type SaveFamilies = {
   families: Record<
     string,
-    { model?: string; thinking?: ModelThinkingLevel; color: string; fallback?: string }
+    { model?: string; thinking?: ModelThinkingLevel; color: string; fallback?: string | string[] }
   >
   /** Which family each feature (`summaries`, `preview`) runs on; agents keep theirs in their definitions. */
   assign: Record<string, string>
