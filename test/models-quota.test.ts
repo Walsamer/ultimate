@@ -13,10 +13,11 @@ import {
   ROOT_CONVERSATION_ID,
 } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryRecord } from '@earendil-works/pi-durable'
-import { afterEach, expect, it } from 'vitest'
-import { outOfQuota } from '../lib/rate-limit.ts'
+import { afterEach, expect, it, vi } from 'vitest'
+import { outOfQuota, resetAt } from '../lib/rate-limit.ts'
 import models from '../extensions/models/server.ts'
-import { Quota, spent } from '../extensions/models/quota.ts'
+import { Quota, RETRY_MINUTES, spent } from '../extensions/models/quota.ts'
+import { SwitchbackDoc } from '../extensions/models/switchback.ts'
 import { Standing } from '../extensions/subagents/api.ts'
 import { Workspaces } from '../extensions/workspaces/workspaces.ts'
 import watchdog from '../extensions/watchdog/server.ts'
@@ -27,6 +28,7 @@ import { temp } from './helpers.ts'
 const cleanups: (() => Promise<void>)[] = []
 afterEach(async () => {
   for (const close of cleanups.splice(0)) await close()
+  vi.restoreAllMocks()
 })
 
 /** What OpenAI answers when the plan behind a login is used up: Pi does not retry it. */
@@ -80,11 +82,15 @@ async function fixture(
     definition?: { family?: string; model?: { provider: string; modelId: string } }
     /** The project settings' `modelFamilies`. */
     families?: unknown
+    /** The rest of the project settings, beside `modelFamilies`. */
+    project?: Record<string, unknown>
     /** `faux2` also serves the conversation's own model id, so the chain's `same` step resolves there. */
     sameId?: boolean
   } = {},
 ) {
   let now = 1_000_000
+  // The refused provider's mark is read off the wall clock, as it is in the server, so the suite owns one clock.
+  vi.spyOn(Date, 'now').mockImplementation(() => now)
   const registry = createRegistry()
   const runtime = createModels()
   const faux = fauxProvider({ models: [{ id: 'faux-1' }] })
@@ -113,11 +119,8 @@ async function fixture(
   const storage = new MemoryStorage()
   storage.close = async () => {}
   const settings = { retry: { maxRetries: 0 } }
-  let harness = await Harness.open(
-    storage,
-    { models: runtime, registry, now: () => now, settings },
-    context,
-  )
+  const openSettings = { models: runtime, registry, now: () => now, settings }
+  let harness = await Harness.open(storage, openSettings, context)
   // The providers with a login here, as the snapshot reports them; a marked provider is the only other reason to move.
   const signedIn = new Set(options.signedIn ?? ['faux', 'faux2', 'faux3'])
   const available = [
@@ -154,8 +157,10 @@ async function fixture(
       api.name === 'models.definition' && options.definition
         ? { runs: async () => options.definition }
         : undefined,
-    projectSettings: async () =>
-      options.families === undefined ? {} : { modelFamilies: options.families },
+    projectSettings: async () => ({
+      ...options.project,
+      ...(options.families === undefined ? {} : { modelFamilies: options.families }),
+    }),
     notice: (text: string) => notices.push(text),
     resource: <T>(key: string, create: () => T) => {
       if (!resources.has(key)) resources.set(key, create())
@@ -244,6 +249,20 @@ async function fixture(
       now += 60_000
       harness.resume()
     },
+    /** The one clock every mark, entry and deadline here reads. */
+    clock: () => now,
+    /** Move the clock past a moment without waking anything: a reset that has come. */
+    advance: (ms: number) => {
+      now += ms
+    },
+    /** Close and reopen the harness on the same storage: documents survive a restart, listeners and memory do not. */
+    restart: async () => {
+      await harness.close(context)
+      harness = await Harness.open(storage, openSettings, context)
+    },
+    /** The move back a review conversation still owes, and where it comes from. */
+    switchback: async (id: ConversationId) =>
+      (await harness.snapshot(SwitchbackDoc, id, context))?.pending,
   }
 }
 const fallbacks = (entries: EntryRecord[]) =>
@@ -707,4 +726,221 @@ it('leaves a provider alone until its cooldown runs out, then lets it be chosen 
   expect(spent(marks, 'faux', 2_000)).toBe(false)
   expect(spent(marks, 'faux2', 1_500)).toBe(false)
   expect(spent({ providers: {} }, 'faux', 1_500)).toBe(false)
+})
+
+const day = 86_400_000
+/** What a refusal names when it names a moment: three days from now. */
+const named = "You've hit your usage limit. Upgrade to Plus or try again in 3 days."
+
+/** This machine's families: `review` on a subscription login, with the paid fallback it names. */
+const reviewFamilies = { families: { review: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } }
+/** What a reviewer conversation is: on the review family, whose model is a subscription login and whose fallback is not. */
+const reviewRun = (families: unknown = reviewFamilies) => ({
+  subscriptions: ['faux'],
+  definition: { family: 'review', model },
+  families,
+  configured: { provider: 'faux3', modelId: 'faux-3' },
+})
+
+it('reads the moment a refusal names, and no moment out of a refusal that names none', () => {
+  const now = Date.parse('2026-11-05T09:00:00Z')
+  // A duration after the words providers use, Pi's own sentence when Codex's body carries `resets_at` included.
+  expect(resetAt(named, now)).toBe(now + 3 * day)
+  expect(
+    resetAt('You have hit your ChatGPT usage limit (plus plan). Try again in ~42 min.', now),
+  ).toBe(now + 42 * 60_000)
+  expect(resetAt('429 Too Many Requests. Retry after 1200 seconds.', now)).toBe(now + 1_200_000)
+  expect(resetAt('{"error":{"code":"rate_limit","resets_in_seconds": 600}}', now)).toBe(
+    now + 600_000,
+  )
+  // A timestamp.
+  expect(resetAt('Rate limit resets at 2026-11-05T12:30:00Z', now)).toBe(
+    Date.parse('2026-11-05T12:30:00Z'),
+  )
+  // What this machine actually gets from Codex, and the other refusals that name nothing.
+  for (const text of [
+    'Codex error: The usage limit has been reached',
+    quota,
+    'Insufficient Balance',
+    "This request would exceed your account's rate limit. Please try again later.",
+  ])
+    expect(resetAt(text, now)).toBeUndefined()
+  // A moment already past, or further out than any quota window, is no moment at all.
+  expect(resetAt('The limit resets at 2026-11-05T08:00:00Z', now)).toBeUndefined()
+  expect(resetAt('You can try again in 12 weeks', now)).toBeUndefined()
+})
+
+it('records the reset a refusal names and runs the review on its paid fallback until then', async () => {
+  const f = await fixture({ primary: () => error(named) }, reviewRun())
+  const review = await f.conversation('Review the range')
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  const moment = f.clock() + 3 * day
+  expect(await f.marks()).toEqual({ faux: { at: f.clock(), until: moment } }) // The watchdog continues the refused run: it starts on the fallback the family names, which is billed per token.
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  expect(await f.agent(review)).toMatchObject({ model: other })
+  const [moved] = fallbacks(await f.entries(review))
+  expect(moved.data).toEqual({
+    from: 'faux/faux-1',
+    to: 'faux2/faux-2',
+    reason: 'quota',
+    billed: true,
+    until: moment,
+  })
+  expect(moved.model?.[0]?.content).toBe(
+    'faux/faux-1 is out of quota here; this conversation now runs on faux2/faux-2, billed per token. It goes back to faux/faux-1 once the limit resets.',
+  )
+  // The move it owes back is written down on the conversation, naming the family the rule applies to.
+  expect(await f.switchback(review)).toEqual({
+    family: 'review',
+    from: 'faux/faux-1',
+    to: 'faux2/faux-2',
+  })
+})
+
+/** A refusal first, then the answer the same provider gives once its limit is back. */
+const refuseOnce = (answer: string) => {
+  let refused = false
+  return () => {
+    if (refused) return fauxAssistantMessage(answer)
+    refused = true
+    return error(named)
+  }
+}
+
+it('runs the next input on the model its family names once the recorded moment has come', async () => {
+  const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
+  const review = await f.conversation('Review the range')
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  // Before the moment nothing changes and nothing is tried: the conversation stays where the fallback put it.
+  await (await f.submit(review, 'and again')).wait(context)
+  expect(await f.agent(review)).toMatchObject({ model: other })
+  expect(f.asked.faux).toHaveLength(1)
+  // At the moment the next input goes back to that model by itself, and the entry says so.
+  f.advance(3 * day)
+  await (await f.submit(review, 'one more')).wait(context)
+  expect(await f.agent(review)).toMatchObject({ model })
+  expect(f.asked.faux).toHaveLength(2)
+  const returned = fallbacks(await f.entries(review)).at(-1)!
+  expect(returned.data).toEqual({ from: 'faux2/faux-2', to: 'faux/faux-1', reason: 'reset' })
+  expect(returned.model?.[0]?.content).toBe(
+    'faux/faux-1 has quota again; this conversation runs back on it.',
+  )
+  expect(await f.switchback(review)).toBeUndefined()
+  // The answer came from the family's model, not from the fallback.
+  const answer = (await f.entries(review)).findLast((entry) => entry.kind === 'pi.assistant')
+  expect(answer?.model?.[0]).toMatchObject({ provider: 'faux', model: 'faux-1' })
+})
+
+it('keeps the pending move back across a restart', async () => {
+  const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
+  const review = await f.conversation('Review the range')
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  const mark = (await f.marks()).faux
+  await f.restart()
+  // Both the mark and the move it owes are documents: the new process reads the same moment.
+  expect((await f.marks()).faux).toEqual(mark)
+  expect(await f.switchback(review)).toEqual({
+    family: 'review',
+    from: 'faux/faux-1',
+    to: 'faux2/faux-2',
+  })
+  f.advance(3 * day)
+  await (await f.submit(review, 'one more')).wait(context)
+  expect(await f.agent(review)).toMatchObject({ model })
+  expect(fallbacks(await f.entries(review)).at(-1)?.data).toEqual({
+    from: 'faux2/faux-2',
+    to: 'faux/faux-1',
+    reason: 'reset',
+  })
+})
+
+it('never moves a family other than review back to its model', async () => {
+  const f = await fixture(
+    { primary: refuseOnce('the work') },
+    {
+      definition: { family: 'fast', model },
+      families: { families: { fast: { model: 'faux/faux-1', fallback: 'faux2/faux-2' } } },
+      configured: { provider: 'faux3', modelId: 'faux-3' },
+    },
+  )
+  const branch = await f.conversation('Implement the task')
+  await (await f.submit(branch, 'do it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  // The fast family writes no move back, and its entry carries no moment either.
+  expect(await f.switchback(branch)).toBeUndefined()
+  f.advance(3 * day)
+  await (await f.submit(branch, 'go on')).wait(context)
+  expect(await f.agent(branch)).toMatchObject({ model: other })
+  expect(f.asked.faux).toHaveLength(1)
+  expect(fallbacks(await f.entries(branch)).map((entry) => entry.data)).toEqual([
+    { from: 'faux/faux-1', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+})
+
+it("lets the user's own re-point of review win over the pending move", async () => {
+  const families = structuredClone(reviewFamilies)
+  const f = await fixture({ primary: refuseOnce('the review') }, reviewRun(families))
+  const review = await f.conversation('Review the range')
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  // The user points review at another model while the move back is pending.
+  families.families.review.model = 'faux3/faux-3'
+  f.advance(3 * day)
+  await (await f.submit(review, 'one more')).wait(context)
+  // The conversation keeps the model it runs on: the pending move is dropped, not turned into a different one.
+  expect(await f.agent(review)).toMatchObject({ model: other })
+  expect(await f.switchback(review)).toBeUndefined()
+  expect(f.asked.faux3).toEqual([])
+  expect(fallbacks(await f.entries(review))).toHaveLength(1)
+})
+
+it('does not take back a model the user picked for the conversation', async () => {
+  const f = await fixture({ primary: refuseOnce('the review') }, reviewRun())
+  const review = await f.conversation('Review the range')
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  // Another model than the one the fallback moved it to: the user chose it, so the move back is dropped.
+  await f.harness.commit(
+    (tx) => configure(tx, review, { model: { provider: 'faux3', modelId: 'faux-3' } }),
+    context,
+  )
+  f.advance(3 * day)
+  await (await f.submit(review, 'one more')).wait(context)
+  expect(await f.agent(review)).toMatchObject({ model: { provider: 'faux3', modelId: 'faux-3' } })
+  expect(await f.switchback(review)).toBeUndefined()
+  expect(f.asked.faux).toHaveLength(1)
+})
+
+it('uses the retry interval when a refusal names no reset, and the project may set its own', async () => {
+  const silent = 'Codex error: The usage limit has been reached'
+  const f = await fixture({ primary: () => error(silent) }, {})
+  const branch = await f.conversation('Write the review')
+  await (await f.submit(branch, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  expect((await f.marks()).faux).toEqual({
+    at: f.clock(),
+    until: f.clock() + RETRY_MINUTES * 60_000,
+  })
+  const slower = await fixture(
+    { primary: () => error(silent) },
+    { project: { quotaRetryMinutes: 30 } },
+  )
+  const patient = await slower.conversation('Write the review')
+  await (await slower.submit(patient, 'review it')).wait(context)
+  await until(async () => (await slower.marks()).faux !== undefined)
+  expect((await slower.marks()).faux?.until).toBe(slower.clock() + 30 * 60_000)
 })

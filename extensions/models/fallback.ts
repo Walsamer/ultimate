@@ -7,7 +7,8 @@
  * except for the fallback its own family names: that is the owner saying where to spend instead, so that one step may
  * move it to a login billed per token, and the entry and its card say the provider is billed. Without such a
  * fallback nothing replaces it, the conversation keeps its model and the entry asks the user. An availability Pi has
- * not settled switches nothing.
+ * not settled switches nothing. The mark that refused a provider also says when it may work again, and the one family
+ * that switches back on its own — `review` — records the move and returns to its family's model then (`switchback.ts`).
  */
 import { clampThinkingLevel } from '@earendil-works/pi-ai'
 import { AgentDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
@@ -19,6 +20,7 @@ import { readFamilies } from '../../lib/families-settings.ts'
 import { Definition } from './api.ts'
 import { Quota, spent } from './quota.ts'
 import type { Fallback } from './refs.ts'
+import { movedOut, REVIEW_FAMILY } from './switchback.ts'
 
 type Ref = { provider: string; modelId: string }
 /** The step of the chain that picked a model: which one it is decides whether it may leave a subscription. */
@@ -49,8 +51,10 @@ export async function fallback(
   const from = agent.model
   const now = Date.now()
   const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
-  // It refused its last request for a spent account; a login is not the problem and needs no check.
-  const refused = spent(marks, from.provider, now)
+  // It refused its last request for a spent account; a login is not the problem and needs no check. The mark also says
+  // when that provider may work again: the reset it named, or the retry interval.
+  const mark = marks.providers[from.provider]
+  const refused = !!mark && mark.until > now
   // This one still has a login and has not run out of quota.
   if (!refused && hasLogin(available, from)) return undefined
   // Certain evidence only: the snapshot has no login for it and a fresh check agrees. A provider still registering,
@@ -91,8 +95,18 @@ export async function fallback(
   const reason: Fallback['reason'] = refused ? 'quota' : found ? found[1] : 'none'
   // The move left the subscription for a login billed per token; the entry and its card say so plainly.
   const billed = !!found && paid && !subscription(host, found[0]!.provider)
+  // Only the review family comes back by itself once its provider is due again (`switchback.ts`), so only its entry
+  // says until when; the other families keep the wording they had.
+  const until = refused ? mark?.until : undefined
+  const back = !!found && until !== undefined && runs?.family === REVIEW_FAMILY
   const data: Fallback = found
-    ? { from: name(from), to: name(found[0]!), reason, ...(billed ? { billed: true } : {}) }
+    ? {
+        from: name(from),
+        to: name(found[0]!),
+        reason,
+        ...(billed ? { billed: true } : {}),
+        ...(back && until !== undefined ? { until } : {}),
+      }
     : { from: name(from), reason }
   if (!found && (await alreadyAsked(tx, conversationId, data))) return undefined
   if (found) {
@@ -101,11 +115,18 @@ export async function fallback(
     const model = runtime.getModel(to.provider, to.modelId)
     if (model && agent.thinkingLevel)
       agent.thinkingLevel = clampThinkingLevel(model, agent.thinkingLevel)
+    // Written down so the conversation's first input after the mark's moment goes back on its own.
+    if (back)
+      await movedOut(tx, conversationId, {
+        family: REVIEW_FAMILY,
+        from: name(from),
+        to: name(to),
+      })
   }
   const spending = billed ? ', billed per token' : ''
   const content = found
     ? refused
-      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}${spending}.`
+      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}${spending}.${back ? ` It goes back to ${data.from} once the limit resets.` : ''}`
       : `Model ${data.from} has no login here; this conversation now runs on ${data.to}${spending}.`
     : refused
       ? `${data.from} is out of quota here and nothing else has a login to take over, so this conversation keeps it until the quota resets or the user picks another model.`
