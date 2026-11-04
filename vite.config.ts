@@ -189,7 +189,9 @@ export default defineConfig({
     ],
     options: { denyWarnings: true, typeAware: true, typeCheck: true },
   },
-  fmt: { semi: false, singleQuote: true },
+  // The project's settings file is machine-owned: Ultimate writes it with `JSON.stringify(…, 2)`, which keeps its
+  // arrays expanded, so formatting it by hand is undone by the next families save in the panel.
+  fmt: { semi: false, singleQuote: true, ignorePatterns: ['.ultimate/settings.json'] },
   test: {
     root: '.',
     globalSetup: ['test/sweep-temp.ts'],
