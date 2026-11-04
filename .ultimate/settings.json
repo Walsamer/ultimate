@@ -6,34 +6,34 @@
   },
   "modelFamilies": {
     "families": {
+      "default": {
+        "model": "deepseek/deepseek-flash",
+        "fallback": "llmhub/GLM-5.3"
+      },
       "lead": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "deepseek/deepseek-flash",
         "thinking": "high",
         "color": "orange",
-        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
+        "fallback": "llmhub/GLM-5.3"
+      },
+      "fast": {
+        "model": "deepseek/deepseek-flash",
+        "fallback": "llmhub/GLM-5.3"
+      },
+      "design": {
+        "model": "deepseek/deepseek-flash",
+        "thinking": "high",
+        "fallback": "llmhub/GLM-5.3"
+      },
+      "tiny": {
+        "model": "llmhub/GLM-5.3",
+        "thinking": "low",
+        "fallback": "deepseek/deepseek-flash"
       },
       "review": {
         "model": "openai-codex/gpt-6.1-sol",
         "thinking": "high",
-        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
-      },
-      "fast": {
-        "model": "llmhub/GLM-5.3",
-        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
-      },
-      "tiny": {
-        "model": "llmhub/DeepSeek-V4.1-Flash-Preview",
-        "thinking": "low",
         "fallback": "deepseek/deepseek-flash"
-      },
-      "design": {
-        "model": "llmhub/GLM-5.3",
-        "thinking": "high",
-        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
-      },
-      "default": {
-        "model": "openai-codex/gpt-6-luna",
-        "fallback": "llmhub/DeepSeek-V4.1-Flash-Preview"
       }
     },
     "assign": {
