@@ -26,8 +26,11 @@ describes the intent, not a copy of the numbers, because the numbers changed fou
    only after a second different model refuses. Nothing falls through to a paid provider without the chain saying so.
 4. **Windows are working sizes, not maxima.** An advertised 1M window with a 35k input-tokens-per-minute allowance
    cannot serve a 300k request. Each hub model declares a `contextWindow` it can actually be served with.
-5. **Providers must be visible to the host.** `~/.pi/agent/models.json` is read at start, so a family naming a `llmhub`
-   model means nothing to a process started before that provider existed.
+5. **Providers must be visible to the host.** `~/.pi/agent/models.json` is read when the model runtime is created, so
+   a family naming a `llmhub` model means nothing to a process started before that provider was registered. Pi re-reads
+   the file on `ModelRuntime.refresh()` — a login, the Claude Code panel's status call — and the running host picked up
+   four newly registered hub models that way, with no restart; a restart is what to do when nothing in the running
+   process triggers a refresh.
 
 ## Where the configuration lives
 

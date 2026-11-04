@@ -60,7 +60,12 @@ const streamTask = (released: Promise<void>) =>
   })
 
 /** A faux harness with the pause extension and a `work` tool that runs until the test releases it, as bash would. */
-async function fixture(home?: string, retry: { maxRetries?: number } = {}) {
+async function fixture(
+  home?: string,
+  retry: { maxRetries?: number } = {},
+  /** A model that costs nothing never pauses the host; the default one is billed, as a subscription or a key is. */
+  options: { free?: boolean } = {},
+) {
   home ??= await temp('ultimate-pause-')
   // Pi's retry backoff in 1 ms, so a retry the pause held runs at once after Play.
   await mkdir(join(home, '.pi'), { recursive: true })
@@ -72,7 +77,14 @@ async function fixture(home?: string, retry: { maxRetries?: number } = {}) {
     ultimateRoot: home,
     userHome: home,
     home,
-    faux: fauxProvider(),
+    faux: fauxProvider({
+      models: [
+        {
+          id: 'faux-1',
+          ...(options.free ? {} : { cost: { input: 3, output: 15, cacheRead: 0, cacheWrite: 0 } }),
+        },
+      ],
+    }),
   })
   let finish: (() => void) | undefined
   let finished = 0
@@ -103,6 +115,7 @@ async function fixture(home?: string, retry: { maxRetries?: number } = {}) {
   const host = {
     ...services,
     harness: () => opened!.harness,
+    modelRuntime: prepared.modelRuntime,
     resource: (() => {
       const resources = new Map<string, unknown>()
       return <T>(key: string, create: () => T) => {
@@ -373,6 +386,24 @@ it('leaves no note when the run handed over during the drain and its successor w
 
 const limit =
   "Incomplete Claude Code upstream response (status 429, capture incomplete, upstream said: This request would exceed your account's rate limit. Please try again later.)"
+
+it("does not pause on a free model's rate limit: its run fails once, for the family chain to walk past", async () => {
+  // Nothing is saved by waiting when the model costs nothing, and the models extension marks it and moves the
+  // conversation to the next model of its family, so a Play would only hold the host for no reason.
+  const f = await fixture(undefined, { maxRetries: 0 }, { free: true })
+  f.prepared.faux!.setResponses([
+    () => fauxAssistantMessage('', { stopReason: 'error', errorMessage: limit }),
+  ])
+  const { root } = await f.open()
+  const submission = await root.submit({ type: 'input', content: 'go' }, context)
+  expect(await submission.wait(context)).toMatchObject({
+    status: 'unanswered',
+    reason: 'model_error',
+  })
+  expect(f.paused()).toBe(false)
+  expect(await f.action('state')).toMatchObject({ paused: false })
+  expect((await f.action('state')).limit).toBeUndefined()
+})
 
 it('pauses on the first rate-limited answer: the run waits in its retry, fails nothing, and continues on play', async () => {
   const f = await fixture()

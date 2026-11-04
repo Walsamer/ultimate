@@ -183,8 +183,8 @@ function resetTime(until: number) {
 }
 
 /**
- * A conversation whose model had no login here or ran out of quota switched to another as its next run started, or,
- * with nothing to replace it, kept its model and waits for the user. A move that left a subscription for a login
+ * A conversation whose model had no login here or refused its last request switched to another as its next run started,
+ * or, with nothing to replace it, kept its model and waits for the user. A move that left a subscription for a login
  * billed per token says so, beside the model it moved to. The review family's move carries the moment to try again and
  * says when it goes back; its return to that model is the same card the other way round.
  */
@@ -193,13 +193,18 @@ function FellBack({ entry }: { entry: EntryRecord }) {
   const actions = useUltimate()
   const provider = from.split('/')[0]
   const quota = reason === 'quota'
+  const refused = reason === 'refused'
   const sentence = (() => {
     if (reason === 'reset')
       return `${to?.split('/')[0]} has quota again, so this conversation runs back on ${to}.`
-    if (reason === 'quota')
+    if (quota)
       return to
         ? `${provider} is out of quota here, so this conversation now runs on ${to}${billed ? ', billed per token' : ''}${until ? `, until ${resetTime(until)}` : ''}.`
         : `${provider} is out of quota here, and nothing else has a login to take over, so its requests fail until the quota resets.`
+    if (refused)
+      return to
+        ? `${from} refused its last request here, so this conversation now runs on ${to}${billed ? ', billed per token' : ''}.`
+        : `${from} refused its last request here, and nothing else this conversation may move to can take over, so its requests fail until that clears.`
     if (reason !== 'none')
       return `${provider} has no login here, so this conversation now runs on ${switchedTo[reason]}${billed ? ', billed per token' : ''}.`
     return `${provider} has no login here, and no other login it may move to can take over, so this conversation keeps its model and its requests fail until you log in to ${provider}.`
@@ -218,7 +223,9 @@ function FellBack({ entry }: { entry: EntryRecord }) {
               : 'model switched'
             : quota
               ? 'needs you · out of quota'
-              : 'needs you · login missing'}
+              : refused
+                ? 'needs you · model refused'
+                : 'needs you · login missing'}
           {to && billed ? ' · billed per token' : ''}
         </span>
       </header>
@@ -243,7 +250,7 @@ function FellBack({ entry }: { entry: EntryRecord }) {
           >
             Pick another
           </button>
-          {quota || reason === 'reset' ? (
+          {quota || refused || reason === 'reset' ? (
             '.'
           ) : (
             <>
