@@ -64,6 +64,9 @@ const textOf = (transcript: Parameters<FauxResponseFactory>[0]) => {
 const error = (text: string) =>
   fauxAssistantMessage('', { stopReason: 'error', errorMessage: text })
 
+/** What a conversation's agent definition runs on, as the subagents extension reports it. */
+type Runs = { family?: string; model?: { provider: string; modelId: string } }
+
 /**
  * A harness running the real models and watchdog backends: the first provider refuses for a spent account, and the
  * conversation should finish on the next one the chain picks. The clock is the harness's, so a watchdog continuation
@@ -79,7 +82,7 @@ async function fixture(
     /** The model the chain's last step resolves to: `faux2/faux-2` unless a test says otherwise. */
     configured?: { provider: string; modelId: string }
     /** What a conversation's agent definition runs on, as the subagents extension reports it. */
-    definition?: { family?: string; model?: { provider: string; modelId: string } }
+    definition?: Runs | ((id: ConversationId) => Runs | undefined)
     /** The project settings' `modelFamilies`. */
     families?: unknown
     /** The rest of the project settings, beside `modelFamilies`. */
@@ -152,11 +155,15 @@ async function fixture(
       getDefaultModel: () => configured.modelId,
     },
     // The definition a conversation runs as, when a test gives it one: the model it runs on, else its family's
-    // fallback, is what takes over.
-    want: (api: { name: string }) =>
-      api.name === 'models.definition' && options.definition
-        ? { runs: async () => options.definition }
-        : undefined,
+    // fallback, is what takes over. One definition for every conversation, or one per conversation.
+    want: (api: { name: string }) => {
+      const definition = options.definition
+      if (api.name !== 'models.definition' || !definition) return undefined
+      return {
+        runs: async (_tx: unknown, id: ConversationId) =>
+          typeof definition === 'function' ? definition(id) : definition,
+      }
+    },
     projectSettings: async () => ({
       ...options.project,
       ...(options.families === undefined ? {} : { modelFamilies: options.families }),
@@ -943,4 +950,63 @@ it('uses the retry interval when a refusal names no reset, and the project may s
   await (await slower.submit(patient, 'review it')).wait(context)
   await until(async () => (await slower.marks()).faux !== undefined)
   expect((await slower.marks()).faux?.until).toBe(slower.clock() + 30 * 60_000)
+})
+
+it('keeps a pending review switch apart from another family refused on another provider', async () => {
+  // The seam the next branch's free chain meets: a refusal that is not review's must not move, clear or re-time the
+  // move review owes, and review must still go back at its own moment.
+  const runs: Record<number, { family?: string; model?: typeof model } | undefined> = {}
+  const f = await fixture(
+    { primary: refuseOnce('the review'), third: () => error(named) },
+    {
+      subscriptions: ['faux'],
+      definition: (id) => runs[id],
+      families: {
+        families: {
+          review: { model: 'faux/faux-1', fallback: 'faux2/faux-2' },
+          tiny: { model: 'faux3/faux-3', fallback: 'faux2/faux-2' },
+        },
+      },
+      configured: { provider: 'faux2', modelId: 'faux-2' },
+    },
+  )
+  const review = await f.conversation('Review the range')
+  runs[review] = { family: 'review', model }
+  await (await f.submit(review, 'review it')).wait(context)
+  await until(async () => (await f.marks()).faux !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 1)
+  const reviewMark = (await f.marks()).faux
+  // Another family, on another provider, refuses for a spent account and walks to its own fallback.
+  const small = await f.conversation('Small job')
+  runs[small] = { family: 'tiny', model: { provider: 'faux3', modelId: 'faux-3' } }
+  await f.harness.commit(
+    (tx) => configure(tx, small, { model: { provider: 'faux3', modelId: 'faux-3' } }),
+    context,
+  )
+  await (await f.submit(small, 'do the small thing')).wait(context)
+  await until(async () => (await f.marks()).faux3 !== undefined)
+  await f.deadline()
+  await until(async () => f.asked.faux2.length === 2)
+  expect(await f.agent(small)).toMatchObject({ model: other })
+  expect(fallbacks(await f.entries(small)).map((entry) => entry.data)).toEqual([
+    { from: 'faux3/faux-3', to: 'faux2/faux-2', reason: 'quota' },
+  ])
+  // Nothing of review's changed: not its mark, not the move it owes, and the other family owes none.
+  expect((await f.marks()).faux).toEqual(reviewMark)
+  expect(await f.switchback(review)).toEqual({
+    family: 'review',
+    from: 'faux/faux-1',
+    to: 'faux2/faux-2',
+  })
+  expect(await f.switchback(small)).toBeUndefined()
+  // And review still goes back at its own moment.
+  f.advance(3 * day)
+  await (await f.submit(review, 'one more')).wait(context)
+  expect(await f.agent(review)).toMatchObject({ model })
+  expect(fallbacks(await f.entries(review)).at(-1)?.data).toEqual({
+    from: 'faux2/faux-2',
+    to: 'faux/faux-1',
+    reason: 'reset',
+  })
 })
