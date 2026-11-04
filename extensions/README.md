@@ -89,7 +89,8 @@ scoped id explicitly when acting on it, as toolbar contributions do with `useCon
 ## Where extensions live
 
 Ultimate looks for extension folders in three places. When two have the same folder name, the later place wins and
-replaces the whole extension, both facets:
+replaces the whole extension, both facets, and the extension diagnostics warn about a user or project folder that
+takes a built-in's name, naming both folders:
 
 | Source    | Folder                            | For                                                                |
 | --------- | --------------------------------- | ------------------------------------------------------------------ |

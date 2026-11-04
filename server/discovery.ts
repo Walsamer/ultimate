@@ -35,6 +35,8 @@ export async function discoverExtensions(
       target: string
       source: Source
       files: string[]
+      /** The built-in folder whose name this user or project folder took; the built-in then does not load. */
+      replaced?: string
       core?: true
       error?: string
     }
@@ -57,21 +59,28 @@ export async function discoverExtensions(
         const files = await readdir(path)
         const core =
           files.includes('api.ts') && coreTier.test(await readFile(join(path, 'api.ts'), 'utf8'))
+        const previous = winners.get(entry.name)
+        // A built-in stays reported along a chain: a project folder over a user folder still hides the built-in.
+        const replaced = previous?.source === 'builtin' ? previous.path : previous?.replaced
         winners.set(entry.name, {
           name: entry.name,
           path,
           target: await realpath(path),
           source: root.source,
           files,
+          ...(replaced ? { replaced } : {}),
           ...(core ? { core } : {}),
         })
       } catch (error) {
+        const previous = winners.get(entry.name)
+        const replaced = previous?.source === 'builtin' ? previous.path : previous?.replaced
         winners.set(entry.name, {
           name: entry.name,
           path,
           target: path,
           source: root.source,
           files: [],
+          ...(replaced ? { replaced } : {}),
           error: String(error),
         })
       }
