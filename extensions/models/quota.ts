@@ -15,11 +15,14 @@ import type { ExtensionHost } from '../../server/extensions.ts'
 
 /**
  * How long a provider that names no reset is left alone before a conversation tries it again; the project's settings
- * raise or lower it with `quotaRetryMinutes` (a positive number of minutes). Every attempt against a provider that is
- * still spent costs one lost run, so this is a patience setting rather than a cooldown: ten minutes catches a limit
- * that reset early, and a limit measured in days is probed at that rate rather than on every review.
+ * raise or lower it with `quotaRetryMinutes`, a whole number of minutes from one minute to a day. Every attempt against
+ * a provider that is still spent costs one lost run, so this is a patience setting rather than a cooldown: ten minutes
+ * catches a limit that reset early, and a limit measured in days is probed at that rate rather than on every review.
  */
 export const RETRY_MINUTES = 10
+
+/** The range a project's `quotaRetryMinutes` may take: shorter is a probe storm, longer outlives any quota window. */
+const RETRY_LIMITS = { min: 1, max: 24 * 60 }
 
 /** `{ providers: { [provider]: { at, until } } }`: when a provider refused, and when to try it again. */
 export const Quota = defineDoc<{ providers: Record<string, { at: number; until: number }> }>({
@@ -107,8 +110,13 @@ async function mark(host: ExtensionHost, provider: string, error: string) {
   }, context)
 }
 
-/** The project's patience for a provider that names no reset; a value that is not a positive number is ignored. */
+/** The project's patience for a provider that names no reset; a value outside the range is ignored. */
 async function retryMinutes(host: ExtensionHost) {
   const value = (await host.projectSettings()).quotaRetryMinutes
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : RETRY_MINUTES
+  return typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= RETRY_LIMITS.min &&
+    value <= RETRY_LIMITS.max
+    ? value
+    : RETRY_MINUTES
 }

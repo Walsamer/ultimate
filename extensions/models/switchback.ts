@@ -67,14 +67,13 @@ export async function switchBack(
   const runtime = host.modelRuntime
   const config = await readFamilies(host.userHome, host.projectRoot, await host.projectSettings())
   const target = refOf(config.families[pending.family]?.model)
-  // The family names another model now, or the provider's login is gone: the move back is no longer the one written
-  // down, so it is dropped rather than run.
-  if (
-    !target ||
-    refName(target) !== pending.from ||
-    !hasLogin(runtime.getAvailableSnapshot(), target)
-  )
-    return drop()
+  // The family names another model now: the move back is no longer the one written down, so it is dropped rather than
+  // turned into a different one.
+  if (!target || refName(target) !== pending.from) return drop()
+  // A login the snapshot does not show is no evidence that it is gone — an empty snapshot says nothing, and one taken
+  // before a login was refreshed does not either (`fallback.ts` draws the same line), so the move is kept and tried
+  // again on the next input instead of thrown away.
+  if (!hasLogin(runtime.getAvailableSnapshot(), target)) return undefined
   const marks = await tx.doc(Quota, ROOT_CONVERSATION_ID)
   const mark = marks.providers[target.provider]
   // The mark is the only clock there is: without it nothing says the provider was refused or when to try again.

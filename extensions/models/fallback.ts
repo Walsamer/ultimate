@@ -15,7 +15,7 @@ import { AgentDoc, ROOT_CONVERSATION_ID } from '@earendil-works/pi-durable'
 import type { ConversationId, EntryDraft, Tx } from '@earendil-works/pi-durable'
 import type { ExtensionHost } from '../../server/extensions.ts'
 import { configuredModel, hasLogin } from '../../lib/agents.ts'
-import { DEFAULT_FAMILY, familyFallbacks, refOf } from '../../lib/families.ts'
+import { DEFAULT_FAMILY, familyFallbacks, refName, refOf } from '../../lib/families.ts'
 import { readFamilies } from '../../lib/families-settings.ts'
 import { Definition } from './api.ts'
 import { Quota, spent } from './quota.ts'
@@ -95,17 +95,22 @@ export async function fallback(
   const reason: Fallback['reason'] = refused ? 'quota' : found ? found[1] : 'none'
   // The move left the subscription for a login billed per token; the entry and its card say so plainly.
   const billed = !!found && paid && !subscription(host, found[0]!.provider)
-  // Only the review family comes back by itself once its provider is due again (`switchback.ts`), so only its entry
-  // says until when; the other families keep the wording they had.
-  const until = refused ? mark?.until : undefined
-  const back = !!found && until !== undefined && runs?.family === REVIEW_FAMILY
+  // Only the review family comes back by itself (`switchback.ts`): its conversation goes back to the model its family
+  // names once that provider is due again. So only its entry says until when — the mark of the provider it goes back to,
+  // not the one it happens to leave now, which with an ordered fallback list is a later step — and only its move is
+  // written down; the other families keep the wording they had.
+  const backTo =
+    runs?.family === REVIEW_FAMILY ? refOf(config.families[runs.family]?.model) : undefined
+  const backMark = backTo ? marks.providers[backTo.provider] : undefined
+  const back = !!found && refused && backMark !== undefined && backMark.until > now
+  const until = back ? backMark?.until : undefined
   const data: Fallback = found
     ? {
         from: name(from),
         to: name(found[0]!),
         reason,
         ...(billed ? { billed: true } : {}),
-        ...(back && until !== undefined ? { until } : {}),
+        ...(until !== undefined ? { until } : {}),
       }
     : { from: name(from), reason }
   if (!found && (await alreadyAsked(tx, conversationId, data))) return undefined
@@ -115,18 +120,19 @@ export async function fallback(
     const model = runtime.getModel(to.provider, to.modelId)
     if (model && agent.thinkingLevel)
       agent.thinkingLevel = clampThinkingLevel(model, agent.thinkingLevel)
-    // Written down so the conversation's first input after the mark's moment goes back on its own.
-    if (back)
+    // Written down so the conversation's first input after the mark's moment goes back on its own: the model its family
+    // names it returns to, wherever this step left it.
+    if (back && backTo)
       await movedOut(tx, conversationId, {
         family: REVIEW_FAMILY,
-        from: name(from),
+        from: refName(backTo),
         to: name(to),
       })
   }
   const spending = billed ? ', billed per token' : ''
   const content = found
     ? refused
-      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}${spending}.${back ? ` It goes back to ${data.from} once the limit resets.` : ''}`
+      ? `${data.from} is out of quota here; this conversation now runs on ${data.to}${spending}.${back && backTo ? ` It goes back to ${refName(backTo)} once the limit resets.` : ''}`
       : `Model ${data.from} has no login here; this conversation now runs on ${data.to}${spending}.`
     : refused
       ? `${data.from} is out of quota here and nothing else has a login to take over, so this conversation keeps it until the quota resets or the user picks another model.`
