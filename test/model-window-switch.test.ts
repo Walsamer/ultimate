@@ -16,12 +16,19 @@ afterAll(async () => {
 const narrow = 131_072
 const wide = 1_000_000
 
-/** A server whose provider offers a wide window and a narrow one, so a switch between them can be asked about. */
+/**
+ * One server whose provider offers a wide window and a narrow one, shared by the tests, each on its own conversation.
+ * The boot is paid inside the first test that needs it rather than by a hook with a budget of its own.
+ */
+let booted: Promise<Server> | undefined
+function boot() {
+  return (booted ??= launch())
+}
 async function launch() {
   const home = await temp('ultimate-window-')
   const projectRoot = join(home, 'project')
   await mkdir(join(projectRoot, '.ultimate'), { recursive: true })
-  const server = await fauxServer({
+  const started = await fauxServer({
     ultimateRoot: resolve('.'),
     projectRoot,
     userHome: home,
@@ -33,8 +40,13 @@ async function launch() {
       ],
     }),
   })
-  servers.push(server)
-  return server
+  servers.push(started)
+  return started
+}
+
+/** A conversation of its own, so a switch here cannot be another test's. */
+async function fresh(server: Server) {
+  return (await post(server, '/api/conversations', {})).data.id as number
 }
 
 /**
@@ -42,7 +54,7 @@ async function launch() {
  * the narrow window's blocking threshold and below the wide one. Written as entries rather than run, because what the
  * guard measures is the conversation's shape, not how it got there.
  */
-async function grow(server: Server, id: ConversationId) {
+async function grow(server: Server, id: number) {
   const text = (mark: string) => `${mark} `.padEnd(35_000, mark)
   // What a provider reports for the prompt it was sent: the last request saw the whole of these eight exchanges.
   const usage = (totalTokens: number) => ({
@@ -55,11 +67,11 @@ async function grow(server: Server, id: ConversationId) {
   })
   await server.harness.commit(async (tx) => {
     for (let turn = 0; turn < 8; turn++) {
-      await tx.appendEntry(id, {
+      await tx.appendEntry(id as ConversationId, {
         kind: 'pi.user',
         model: [{ role: 'user', content: text(`u${turn}`), timestamp: Date.now() }],
       })
-      await tx.appendEntry(id, {
+      await tx.appendEntry(id as ConversationId, {
         kind: 'pi.assistant',
         model: [
           {
@@ -82,37 +94,38 @@ const modelOf = async (server: Server, id: number) =>
     ?.modelId
 
 it('asks before a switch to a model that cannot hold the conversation, and takes the answer', async () => {
-  const server = await launch()
-  await grow(server, 1 as ConversationId)
+  const server = await boot()
+  const id = await fresh(server)
+  await grow(server, id)
 
-  const asked = await configure(server, 1)
+  const asked = await configure(server, id)
   expect(asked.status).toBe(409)
   expect(asked.data.error).toContain('131,072')
   expect(asked.data.error).toContain('condense')
   // Refused means unchanged: the conversation still runs on the model that holds it.
-  expect(await modelOf(server, 1)).toBe('wide')
+  expect(await modelOf(server, id)).toBe('wide')
 
-  expect((await configure(server, 1, { condense: 'anyway' })).status).toBe(200)
-  expect(await modelOf(server, 1)).toBe('narrow')
+  expect((await configure(server, id, { condense: 'anyway' })).status).toBe(200)
+  expect(await modelOf(server, id)).toBe('narrow')
 })
 
 it('condenses the conversation on the model that holds it, then switches', async () => {
-  const server = await launch()
-  await grow(server, 1 as ConversationId)
+  const server = await boot()
+  const id = await fresh(server)
+  await grow(server, id)
   // The summary the condensation asks for; a scripted one keeps it short, as a real one is.
   server.host.faux!.setResponses([fauxAssistantMessage('The work so far, in one paragraph.')])
 
-  expect((await configure(server, 1, { condense: 'before' })).status).toBe(200)
-  expect(await modelOf(server, 1)).toBe('narrow')
-  const conversation = await server.harness.conversation(1 as ConversationId, context)
+  expect((await configure(server, id, { condense: 'before' })).status).toBe(200)
+  expect(await modelOf(server, id)).toBe('narrow')
+  const conversation = await server.harness.conversation(id as ConversationId, context)
   const entries = (await conversation!.entries({}, 64, undefined, context)).items
   expect(entries.some((entry) => entry.kind === 'pi.compaction')).toBe(true)
 })
 
 it('switches a conversation that fits without asking, and refuses an answer it does not know', async () => {
-  const server = await launch()
-  const { data } = await post(server, '/api/conversations', {})
-  const id = data.id as number
+  const server = await boot()
+  const id = await fresh(server)
   expect((await configure(server, id)).status).toBe(200)
   expect(await modelOf(server, id)).toBe('narrow')
   expect((await configure(server, id, { condense: 'later' })).status).toBe(400)
