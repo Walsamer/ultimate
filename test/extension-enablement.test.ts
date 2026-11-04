@@ -225,7 +225,8 @@ it.concurrent('refuses a tool name another extension of the same layer already p
   const info = (name: string) => server.extensions.info().find((e) => e.name === name)
   const clash = async () =>
     (await server.root.agent(context)).tools.find((tool) => tool.name === 'clash_tool')?.description
-  await until(() => !!info('bbb-clash')?.server)
+  // The record exists before its load settles: wait for the failure itself, not for the record.
+  await until(() => !!info('bbb-clash')?.server?.error)
   expect(info('bbb-clash')?.server?.error).toBe(
     'Error: clash_tool is already provided by aaa-clash',
   )
