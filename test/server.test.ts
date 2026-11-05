@@ -259,6 +259,13 @@ export const actions = { state: async () => state }`
     ).toEqual({ opens: 1, closes: 0, facetsClosed: 1 })
     servers.splice(servers.indexOf(server), 1)
     await server.close()
+    // `onClose` writes the file asynchronously; after `close()` resolves the write can still be in flight.
+    await until(async () =>
+      readFile(join(options.userHome, 'closed.json'), 'utf8').then(
+        () => true,
+        () => false,
+      ),
+    )
     expect(JSON.parse(await readFile(join(options.userHome, 'closed.json'), 'utf8'))).toEqual({
       opens: 1,
       closes: 1,
