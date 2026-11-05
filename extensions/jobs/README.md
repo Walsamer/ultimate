@@ -25,8 +25,10 @@ that started it.
   how it ended instead of throwing.
 
 A job reads `J1 running · 3m: npm run bench (pid 1234)`. Its state is `running`, `running (completion unknown)`,
-`exited 0` / `exited 3`, or `stopped`. The system prompt carries one such line per running job, or `None running.`, so
-the model knows what already runs instead of starting it twice.
+`exited 0` / `exited 3`, or `stopped`. The system prompt carries one line per running job, or `None running.`, so
+the model knows what already runs instead of starting it twice. There the elapsed time is the job's start time
+instead (`J1 running · started 2026-11-04T13:22:07.000Z: npm run bench (pid 1234)`): a value that changes every
+second changes the prompt prefix with it and costs the provider's cache for every request while a job runs.
 
 `start` is recorded against the tool call's id in the ledger: a call replayed after a crash answers with the job it
 started instead of starting a second one.

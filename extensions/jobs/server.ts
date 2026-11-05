@@ -22,7 +22,7 @@ import { Committed } from '../coding-tools/api.ts'
 import { JOB_CARD } from './types.ts'
 import type { Job, JobCard, Ledger } from './types.ts'
 
-const Jobs = defineDoc<Ledger>({
+export const Jobs = defineDoc<Ledger>({
   kind: 'ultimate.jobs',
   scope: 'session',
   version: 1,
@@ -48,8 +48,8 @@ function lasted(ms: number) {
   return `${Math.floor(seconds / 3600)}h ${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}m`
 }
 
-/** How a job reads wherever it is reported: `J1 running · 3m: npm run bench (pid 1234)`. */
-function line(job: Job, now = Date.now()) {
+/** One job as it reads wherever it is reported: `J1 running · 3m: npm run bench (pid 1234)`. */
+function describe(job: Job, when: string) {
   const state =
     job.state === 'running'
       ? `running${job.adopted ? ' (completion unknown)' : ''}`
@@ -58,9 +58,21 @@ function line(job: Job, now = Date.now()) {
           ? 'exited'
           : `exited ${job.exitCode}`
         : 'stopped'
-  const ran = lasted((job.endedAt ?? now) - job.startedAt)
   const first = job.command.trim().split('\n')[0]
-  return `${job.id} ${state} · ${ran}: ${first}${job.pid ? ` (pid ${job.pid})` : ''}`
+  return `${job.id} ${state} · ${when}: ${first}${job.pid ? ` (pid ${job.pid})` : ''}`
+}
+
+/** How a job reads in the tool's answer: with how long it ran, which is what the call asked about. */
+function line(job: Job, now = Date.now()) {
+  return describe(job, lasted((job.endedAt ?? now) - job.startedAt))
+}
+
+/**
+ * How a running job reads in the prompt: its start time, never how long it has run. An elapsed time changes with every
+ * second and so with every request, which costs the provider's prompt cache for the whole conversation.
+ */
+function promptLine(job: Job) {
+  return describe(job, `started ${new Date(job.startedAt).toISOString()}`)
 }
 
 function required(value: unknown, field: string): string {
@@ -378,7 +390,7 @@ export default function jobs(host: ExtensionHost) {
         const ledger = await read.snapshot(Jobs, caller)
         const running = Object.values(ledger?.jobs ?? {}).filter((job) => job.state === 'running')
         // Always rendered: a section that disappears and reappears reorders the prompt, which rebuilds it whole.
-        return running.length ? running.map((job) => line(job)).join('\n') : 'None running.'
+        return running.length ? running.map(promptLine).join('\n') : 'None running.'
       }),
     ],
     tools: [
