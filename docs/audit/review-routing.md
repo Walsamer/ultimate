@@ -98,7 +98,10 @@ reviewed work orders _every_ dimension produced something the coordinator fixed.
 
 - `facts.ts` — the fact type and its derivation from git plumbing text (pure).
 - `rules.ts` — the deterministic baseline and the safety floor: seven overrides that force the full team
-  (`dependency`, `schema`, `supervisor`, `checks-failed`, `unknown-type`, `no-diff`, `large > 600 lines`).
+  (`dependency`, `schema`, `supervisor`, `checks-failed`, `unknown-type`, `no-diff`, `large > 600 lines`). Its
+  scores count layers crossed, a contract change, an extension, moves/renames/deletions, file count and size;
+  every one of those is an unvalidated heuristic, and the renames/deletions weight is the weakest of them —
+  it shifts no decision at the fitted threshold in this sample.
 - `jev.ts` — the local model client for `POST /v1/systemone` (the same request shape as
   `extensions/classify/README.md`), a 15–20 s cap, and a typed `JevError` for unreachable / timeout / HTTP /
   malformed. A server that is down, slow or answers the wrong shape is an abstention, never a guess.
@@ -109,8 +112,8 @@ reviewed work orders _every_ dimension produced something the coordinator fixed.
 
 The third output is `enhanced`: not a reviewer, an argument for calling the security and durability angle out
 explicitly in the review request, which costs nothing and runs nobody. It is `max(model, rules)` — the model may
-raise the advice, never lower a path marker the rules saw — it flips above `enhancedAbove = 0.4`, and it stays at
-the rules' own number when an override forces the whole team.
+raise the advice, never lower a path marker the rules saw — and it flips above `enhancedAbove = 0.4`. An override
+neither raises nor lowers it: the reviewers run, the advice is whatever the two signals made it.
 
 Shadow mode, honestly: the router computes a decision for every work order and the harness records it beside
 the real outcome (`research/review-routing/results/decisions.json`). It is wired to nothing and can affect
@@ -168,7 +171,7 @@ every actioned dimension still ran:
 | --------- | ----------------------------------: | -----------------: | ---------------: |
 | A / E / F |                          3 × $0.383 |             3 of 3 |       **$0.383** |
 | B         |                          3 × $0.383 |             3 of 3 |       **$0.383** |
-| C / D     |                        $0.829 total |         **1 of 3** |           220 ms |
+| C / D     |                        $0.829 total |         **1 of 3** |       **$0.829** |
 
 Cheaper per invocation, twice as expensive per _correct_ review. That inversion is the experiment's answer in
 one line: a skipped reviewer that was needed costs a rework cycle, and this project has no rework cycle in the
@@ -190,8 +193,8 @@ work orders; the other 15 were forced to the full team by the overrides. Everyth
 top of the rules was the simplification of unlabelled cases.
 
 **Local latency here is 220 ms (0.8B) and 320 ms (2B)** for the harness's own ~700-byte state, lower than §4's
-figures because that measurement used a 2.7 KB body; between runs the medians drift by about ±10 % (210–240 ms and
-310–340 ms observed), and the order between the two releases flips with input length, so neither is "the fast one".
+figures because that measurement used a 2.7 KB body; between runs the medians drift by about ±10 % (220–240 ms and
+315–332 ms observed), and the order between the two releases flips with input length, so neither is "the fast one".
 
 **Failure path, measured.** With nothing listening, every model strategy abstained on all 22 cases (mode
 `full-team`, override `model-unavailable`) and made zero model calls
@@ -220,8 +223,8 @@ Not one of the four is a rounding error: two are the _only_ simplicity findings 
 1,700-line range, one is the finding that turned a "ship with notes" review into a fix, and one is a
 durability bug (a card lost across a crash).
 
-The rules lost nothing, because on this sample their overrides (two labelled ranges are > 600 lines, all three
-had `checks-failed`) keep the full team, and outside those they dropped simplicity on three small work orders
+The rules lost nothing, because on this sample their overrides (two of the three labelled ranges are > 600 lines
+and two of them had `checks-failed`) keep the full team, and outside those they dropped simplicity on three small work orders
 (`wo-18577`, `wo-25149`, `wo-28007`) and both advisory passes on one small test-only work order (`wo-6420`).
 
 ## 7. The rules versus the model, plainly
