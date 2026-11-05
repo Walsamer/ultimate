@@ -366,6 +366,6 @@ describe('the committed dataset', () => {
     const actioned = labelled.flatMap((item) =>
       Object.values(item.labels!).filter((label) => label.actioned),
     )
-    expect(actioned.length).toBeGreaterThanOrEqual(1)
+    expect(actioned.length).toBeGreaterThanOrEqual(6)
   })
 })

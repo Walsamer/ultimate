@@ -99,9 +99,10 @@ reviewed work orders _every_ dimension produced something the coordinator fixed.
 - `facts.ts` — the fact type and its derivation from git plumbing text (pure).
 - `rules.ts` — the deterministic baseline and the safety floor: seven overrides that force the full team
   (`dependency`, `schema`, `supervisor`, `checks-failed`, `unknown-type`, `no-diff`, `large > 600 lines`). Its
-  scores count layers crossed, a contract change, an extension, moves/renames/deletions, file count and size;
-  every one of those is an unvalidated heuristic, and the renames/deletions weight is the weakest of them —
-  it shifts no decision at the fitted threshold in this sample.
+  scores count layers crossed, a contract change, an extension, moves/renames/deletions, file count and size
+  (the simplicity score counts size, new files, a rename and behaviour changed with no test change); every one
+  of those is an unvalidated heuristic, and the renames/deletions weight is the weakest of them — it shifts no
+  decision at the fitted threshold in this sample.
 - `jev.ts` — the local model client for `POST /v1/systemone` (the same request shape as
   `extensions/classify/README.md`), a 15–20 s cap, and a typed `JevError` for unreachable / timeout / HTTP /
   malformed. A server that is down, slow or answers the wrong shape is an abstention, never a guess.
@@ -193,8 +194,8 @@ work orders; the other 15 were forced to the full team by the overrides. Everyth
 top of the rules was the simplification of unlabelled cases.
 
 **Local latency here is 220 ms (0.8B) and 320 ms (2B)** for the harness's own ~700-byte state, lower than §4's
-figures because that measurement used a 2.7 KB body; between runs the medians drift by about ±10 % (220–240 ms and
-315–332 ms observed), and the order between the two releases flips with input length, so neither is "the fast one".
+figures because that measurement used a 2.7 KB body; between runs the medians drift by about ±10 % (220–242 ms and
+315–339 ms observed), and the order between the two releases flips with input length, so neither is "the fast one".
 
 **Failure path, measured.** With nothing listening, every model strategy abstained on all 22 cases (mode
 `full-team`, override `model-unavailable`) and made zero model calls
