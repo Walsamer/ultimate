@@ -78,18 +78,18 @@ Test on 13 conversations where both numbers are measurable (patches counted from
 context from usage; entry counts are paged and can be off by one or two, which is inside the model's
 noise):
 
-| conversation                   | patches | avg context | predicted | measured uncached | ratio    |
-| ------------------------------ | ------- | ----------- | --------- | ----------------- | -------- |
+| conversation                     | patches | avg context | predicted | measured uncached | ratio    |
+| -------------------------------- | ------- | ----------- | --------- | ----------------- | -------- |
 | standing agent A #42 (@ultimate) | 33      | 280k        | 9.24M     | 9.31M             | 0.99     |
-| standing agent B #40 (@ultimate)       | 33      | 319k        | 10.52M    | 11.25M            | 0.93     |
-| branch #48346 (branch) | 41      | 186k        | 7.61M     | 8.64M             | 0.88     |
-| project A #993            | 37      | 248k        | 9.17M     | 4.98M             | 1.84     |
-| project A #47834          | 45      | 206k        | 9.25M     | 6.05M             | 1.53     |
-| project A #45690          | 33      | 140k        | 4.63M     | 5.05M             | 0.92     |
-| project A #32704          | 23      | 210k        | 4.83M     | 3.44M             | 1.41     |
-| ultimate #13069                | 27      | 180k        | 4.87M     | 3.59M             | 1.36     |
-| … 5 more                       |         |             |           |                   |          |
-| **sum (13 conversations)**     | 358     |             | **76.2M** | **72.7M**         | **1.05** |
+| standing agent B #40 (@ultimate) | 33      | 319k        | 10.52M    | 11.25M            | 0.93     |
+| branch #48346                    | 41      | 186k        | 7.61M     | 8.64M             | 0.88     |
+| project A #993                   | 37      | 248k        | 9.17M     | 4.98M             | 1.84     |
+| project A #47834                 | 45      | 206k        | 9.25M     | 6.05M             | 1.53     |
+| project A #45690                 | 33      | 140k        | 4.63M     | 5.05M             | 0.92     |
+| project A #32704                 | 23      | 210k        | 4.83M     | 3.44M             | 1.41     |
+| ultimate #13069                  | 27      | 180k        | 4.87M     | 3.59M             | 1.36     |
+| … 5 more                         |         |             |           |                   |          |
+| **sum (13 conversations)**       | 358     |             | **76.2M** | **72.7M**         | **1.05** |
 
 A patch predicts the re-bill within 5% in aggregate (over-prediction where context was still small, as
 expected). Distinct content in those same 13 conversations — everything ever read and written, counted
@@ -108,15 +108,15 @@ conversations). An entry carrying more than five keys is a full baseline; a reor
 all-null entry followed by an all-values one, so it lands in that row:
 
 | changed section                                                                           | standing agent A | standing agent B |
-| ----------------------------------------------------------------------------------------- | ------------------------ | ------------------ |
-| full baseline (all sections re-added)                                                     | 4                        | 5                  |
-| `background` (background jobs)                                                            | 9                        | 2                  |
-| `subagents` (agent definitions)                                                           | 6                        | 11                 |
-| `project_context` (AGENTS.md)                                                             | 4                        | 1                  |
-| `automations`                                                                             | 4                        | 2                  |
-| `skills`, `building_blocks`, `environment`, `test_core_changes`, `codemode`, `principles` | 8                        | 16                 |
-| `messages` (pending questions)                                                            | –                        | 3                  |
-| `projects`                                                                                | 1                        | 3                  |
+| ----------------------------------------------------------------------------------------- | ---------------- | ---------------- |
+| full baseline (all sections re-added)                                                     | 4                | 5                |
+| `background` (background jobs)                                                            | 9                | 2                |
+| `subagents` (agent definitions)                                                           | 6                | 11               |
+| `project_context` (AGENTS.md)                                                             | 4                | 1                |
+| `automations`                                                                             | 4                | 2                |
+| `skills`, `building_blocks`, `environment`, `test_core_changes`, `codemode`, `principles` | 8                | 16               |
+| `messages` (pending questions)                                                            | –                | 3                |
+| `projects`                                                                                | 1                | 3                |
 
 Two families:
 
@@ -213,7 +213,7 @@ renders the leading system message as the complete prompt, which is consistent w
 
 ## 6. Case study 3 — standing agents: standing agent B #40, $4.71 and standing agent A #42, $4.84
 
-|                       | standing agent B #40         | standing agent A #42   |
+|                       | standing agent B #40 | standing agent A #42 |
 | --------------------- | -------------------- | -------------------- |
 | role                  | @ultimate (standing) | @ultimate (standing) |
 | requests              | 596                  | 1,011                |
