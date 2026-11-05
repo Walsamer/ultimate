@@ -108,10 +108,9 @@ reviewed work orders _every_ dimension produced something the coordinator fixed.
   which reviewers to start, and `test/review-routing.test.ts` asserts that shape has no verdict in it.
 
 The third output is `enhanced`: not a reviewer, an argument for calling the security and durability angle out
-explicitly in the review request, which costs nothing and runs nobody. It takes the model's answer when there is
-one and the rules' path markers otherwise, it flips above `enhancedAbove = 0.4`, and it deliberately keeps a low
-number even when an override forces the whole team — a flag that costs nothing has no reason to pretend to know
-more than the model said.
+explicitly in the review request, which costs nothing and runs nobody. It is `max(model, rules)` — the model may
+raise the advice, never lower a path marker the rules saw — it flips above `enhancedAbove = 0.4`, and it stays at
+the rules' own number when an override forces the whole team.
 
 Shadow mode, honestly: the router computes a decision for every work order and the harness records it beside
 the real outcome (`research/review-routing/results/decisions.json`). It is wired to nothing and can affect
@@ -155,12 +154,12 @@ labelled dimension) and scored on the odd-indexed half (six labelled dimensions,
 | --- | -------------------------------------------- | ---------------------------: | -------------- | -----------------------: | --------------: | ---------------------: | ------------: |
 | A   | baseline: the full team                      |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |             — |
 | B   | **deterministic rules only**                 |                         2.77 | 22/21/18       |               **$0.363** |        **1.00** |                  **0** |             — |
-| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        242 ms |
-| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        339 ms |
-| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        242 ms |
-| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        339 ms |
-| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        242 ms |
-| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        339 ms |
+| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        220 ms |
+| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        320 ms |
+| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        220 ms |
+| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        320 ms |
+| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        220 ms |
+| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        320 ms |
 
 Cost per **correctly reviewed** work order — the brief's metric, spend over the labelled work orders whose
 every actioned dimension still ran:
@@ -169,7 +168,7 @@ every actioned dimension still ran:
 | --------- | ----------------------------------: | -----------------: | ---------------: |
 | A / E / F |                          3 × $0.383 |             3 of 3 |       **$0.383** |
 | B         |                          3 × $0.383 |             3 of 3 |       **$0.383** |
-| C / D     |                        $0.829 total |         **1 of 3** |       **$0.829** |
+| C / D     |                        $0.829 total |         **1 of 3** |           220 ms |
 
 Cheaper per invocation, twice as expensive per _correct_ review. That inversion is the experiment's answer in
 one line: a skipped reviewer that was needed costs a rework cycle, and this project has no rework cycle in the
@@ -190,9 +189,9 @@ money is untested, while the part that was tested is wrong.
 work orders; the other 15 were forced to the full team by the overrides. Everything the model contributed on
 top of the rules was the simplification of unlabelled cases.
 
-**Local latency here is 242 ms (0.8B) and 339 ms (2B)** for the harness's own ~700-byte state, lower than §4's
-figures because that measurement used a 2.7 KB body; across the harness runs the medians were 224–242 ms and
-315–339 ms, and the order between the two releases flips with input length, so neither is "the fast one".
+**Local latency here is 220 ms (0.8B) and 320 ms (2B)** for the harness's own ~700-byte state, lower than §4's
+figures because that measurement used a 2.7 KB body; between runs the medians drift by about ±10 % (210–240 ms and
+310–340 ms observed), and the order between the two releases flips with input length, so neither is "the fast one".
 
 **Failure path, measured.** With nothing listening, every model strategy abstained on all 22 cases (mode
 `full-team`, override `model-unavailable`) and made zero model calls
@@ -221,8 +220,9 @@ Not one of the four is a rounding error: two are the _only_ simplicity findings 
 1,700-line range, one is the finding that turned a "ship with notes" review into a fix, and one is a
 durability bug (a card lost across a crash).
 
-The rules lost nothing, because on this sample their overrides (both ranges are > 600 lines, one also had
-`checks-failed`) keep the full team, and outside those they only dropped simplicity on four small work orders.
+The rules lost nothing, because on this sample their overrides (two labelled ranges are > 600 lines, all three
+had `checks-failed`) keep the full team, and outside those they dropped simplicity on three small work orders
+(`wo-18577`, `wo-25149`, `wo-28007`) and both advisory passes on one small test-only work order (`wo-6420`).
 
 ## 7. The rules versus the model, plainly
 

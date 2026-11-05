@@ -926,7 +926,7 @@
       "simplicity": 0.409,
       "enhanced": 0.172
     },
-    "latencyMs": 306,
+    "latencyMs": 207.4,
     "estimatedCost": 0.3117,
     "missed": []
   },
@@ -944,7 +944,7 @@
       "simplicity": 0.265,
       "enhanced": 0.218
     },
-    "latencyMs": 208.7,
+    "latencyMs": 205.2,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -962,7 +962,7 @@
       "simplicity": 0.259,
       "enhanced": 0.194
     },
-    "latencyMs": 298.4,
+    "latencyMs": 194,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -981,7 +981,7 @@
       "simplicity": 0.318,
       "enhanced": 0.206
     },
-    "latencyMs": 214,
+    "latencyMs": 209.6,
     "estimatedCost": 0.3117,
     "missed": [
       {
@@ -1005,7 +1005,7 @@
       "simplicity": 0.23,
       "enhanced": 0.249
     },
-    "latencyMs": 264.3,
+    "latencyMs": 263.8,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1023,7 +1023,7 @@
       "simplicity": 0.125,
       "enhanced": 0.055
     },
-    "latencyMs": 245.3,
+    "latencyMs": 190.1,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1041,7 +1041,7 @@
       "simplicity": 0.201,
       "enhanced": 0.083
     },
-    "latencyMs": 194.9,
+    "latencyMs": 195.9,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1057,9 +1057,9 @@
     "probabilities": {
       "architecture": 0.422,
       "simplicity": 0.148,
-      "enhanced": 0.311
+      "enhanced": 0.5
     },
-    "latencyMs": 244.7,
+    "latencyMs": 232.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1075,9 +1075,9 @@
     "probabilities": {
       "architecture": 0.467,
       "simplicity": 0.206,
-      "enhanced": 0.072
+      "enhanced": 0.2
     },
-    "latencyMs": 191.7,
+    "latencyMs": 197.9,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1093,9 +1093,9 @@
     "probabilities": {
       "architecture": 0.432,
       "simplicity": 0.259,
-      "enhanced": 0.315
+      "enhanced": 0.7
     },
-    "latencyMs": 280.6,
+    "latencyMs": 271.5,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1113,7 +1113,7 @@
       "simplicity": 0.188,
       "enhanced": 0.443
     },
-    "latencyMs": 212.6,
+    "latencyMs": 209.3,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1130,9 +1130,9 @@
     "probabilities": {
       "architecture": 0.735,
       "simplicity": 0.272,
-      "enhanced": 0.352
+      "enhanced": 0.5
     },
-    "latencyMs": 273.3,
+    "latencyMs": 266.6,
     "estimatedCost": 0.2939,
     "missed": [
       {
@@ -1156,7 +1156,7 @@
       "simplicity": 0.211,
       "enhanced": 0.065
     },
-    "latencyMs": 191.5,
+    "latencyMs": 190.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1174,7 +1174,7 @@
       "simplicity": 0.212,
       "enhanced": 0.153
     },
-    "latencyMs": 237.5,
+    "latencyMs": 225.8,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1190,9 +1190,9 @@
     "probabilities": {
       "architecture": 0.53,
       "simplicity": 0.187,
-      "enhanced": 0.366
+      "enhanced": 0.5
     },
-    "latencyMs": 242,
+    "latencyMs": 227.3,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1210,7 +1210,7 @@
       "simplicity": 0.177,
       "enhanced": 0.221
     },
-    "latencyMs": 218.3,
+    "latencyMs": 220.3,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1228,7 +1228,7 @@
       "simplicity": 0.219,
       "enhanced": 0.149
     },
-    "latencyMs": 221.3,
+    "latencyMs": 225.2,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1244,9 +1244,9 @@
     "probabilities": {
       "architecture": 0.464,
       "simplicity": 0.253,
-      "enhanced": 0.169
+      "enhanced": 0.8
     },
-    "latencyMs": 313,
+    "latencyMs": 313.4,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1283,7 +1283,7 @@
       "simplicity": 0.323,
       "enhanced": 0.179
     },
-    "latencyMs": 295.1,
+    "latencyMs": 271.6,
     "estimatedCost": 0.3117,
     "missed": []
   },
@@ -1303,7 +1303,7 @@
       "simplicity": 0.364,
       "enhanced": 0.077
     },
-    "latencyMs": 222.8,
+    "latencyMs": 219.8,
     "estimatedCost": 0.3827,
     "missed": []
   },
@@ -1322,7 +1322,7 @@
       "simplicity": 0.375,
       "enhanced": 0.073
     },
-    "latencyMs": 220.2,
+    "latencyMs": 217.3,
     "estimatedCost": 0.3117,
     "missed": []
   },
@@ -1340,7 +1340,7 @@
       "simplicity": 0.345,
       "enhanced": 0.202
     },
-    "latencyMs": 367.1,
+    "latencyMs": 336.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1358,7 +1358,7 @@
       "simplicity": 0.356,
       "enhanced": 0.398
     },
-    "latencyMs": 307.9,
+    "latencyMs": 310.9,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1376,7 +1376,7 @@
       "simplicity": 0.383,
       "enhanced": 0.397
     },
-    "latencyMs": 314.2,
+    "latencyMs": 310.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1395,7 +1395,7 @@
       "simplicity": 0.337,
       "enhanced": 0.492
     },
-    "latencyMs": 308.6,
+    "latencyMs": 310.3,
     "estimatedCost": 0.2939,
     "missed": [
       {
@@ -1420,7 +1420,7 @@
       "simplicity": 0.389,
       "enhanced": 0.171
     },
-    "latencyMs": 373.9,
+    "latencyMs": 344.4,
     "estimatedCost": 0.2939,
     "missed": []
   },
@@ -1438,7 +1438,7 @@
       "simplicity": 0.204,
       "enhanced": 0.07
     },
-    "latencyMs": 325.4,
+    "latencyMs": 307.3,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1457,7 +1457,7 @@
       "simplicity": 0.392,
       "enhanced": 0.136
     },
-    "latencyMs": 331.1,
+    "latencyMs": 316.9,
     "estimatedCost": 0.2939,
     "missed": []
   },
@@ -1473,9 +1473,9 @@
     "probabilities": {
       "architecture": 0.57,
       "simplicity": 0.243,
-      "enhanced": 0.178
+      "enhanced": 0.5
     },
-    "latencyMs": 365,
+    "latencyMs": 340.1,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1491,9 +1491,9 @@
     "probabilities": {
       "architecture": 0.559,
       "simplicity": 0.264,
-      "enhanced": 0.043
+      "enhanced": 0.2
     },
-    "latencyMs": 322.4,
+    "latencyMs": 331.9,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1511,7 +1511,7 @@
       "simplicity": 0.36,
       "enhanced": 0.77
     },
-    "latencyMs": 377.6,
+    "latencyMs": 377.1,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1530,7 +1530,7 @@
       "simplicity": 0.252,
       "enhanced": 0.867
     },
-    "latencyMs": 340.9,
+    "latencyMs": 334.6,
     "estimatedCost": 0.2939,
     "missed": []
   },
@@ -1549,7 +1549,7 @@
       "simplicity": 0.45,
       "enhanced": 0.913
     },
-    "latencyMs": 377.5,
+    "latencyMs": 356.3,
     "estimatedCost": 0.3117,
     "missed": [
       {
@@ -1573,7 +1573,7 @@
       "simplicity": 0.318,
       "enhanced": 0.066
     },
-    "latencyMs": 338.7,
+    "latencyMs": 307.9,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1591,7 +1591,7 @@
       "simplicity": 0.334,
       "enhanced": 0.076
     },
-    "latencyMs": 334.6,
+    "latencyMs": 318.2,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1607,9 +1607,9 @@
     "probabilities": {
       "architecture": 0.583,
       "simplicity": 0.231,
-      "enhanced": 0.211
+      "enhanced": 0.5
     },
-    "latencyMs": 330.9,
+    "latencyMs": 319.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1628,7 +1628,7 @@
       "simplicity": 0.297,
       "enhanced": 0.68
     },
-    "latencyMs": 333.8,
+    "latencyMs": 317.7,
     "estimatedCost": 0.2939,
     "missed": []
   },
@@ -1646,7 +1646,7 @@
       "simplicity": 0.396,
       "enhanced": 0.262
     },
-    "latencyMs": 342.4,
+    "latencyMs": 318.5,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1662,9 +1662,9 @@
     "probabilities": {
       "architecture": 0.546,
       "simplicity": 0.374,
-      "enhanced": 0.121
+      "enhanced": 0.8
     },
-    "latencyMs": 417,
+    "latencyMs": 380.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1700,7 +1700,7 @@
       "simplicity": 0.366,
       "enhanced": 0.155
     },
-    "latencyMs": 374.1,
+    "latencyMs": 348.7,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1718,7 +1718,7 @@
       "simplicity": 0.226,
       "enhanced": 0.225
     },
-    "latencyMs": 338.9,
+    "latencyMs": 317.1,
     "estimatedCost": 0.223,
     "missed": []
   },
@@ -1738,7 +1738,7 @@
       "simplicity": 0.493,
       "enhanced": 0.028
     },
-    "latencyMs": 317.6,
+    "latencyMs": 320.3,
     "estimatedCost": 0.3827,
     "missed": []
   },
@@ -1921,7 +1921,7 @@
     "probabilities": {
       "architecture": 0.422,
       "simplicity": 0.148,
-      "enhanced": 0.311
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -1945,7 +1945,7 @@
     "probabilities": {
       "architecture": 0.467,
       "simplicity": 0.206,
-      "enhanced": 0.072
+      "enhanced": 0.2
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -1970,7 +1970,7 @@
     "probabilities": {
       "architecture": 0.432,
       "simplicity": 0.259,
-      "enhanced": 0.315
+      "enhanced": 0.7
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2016,7 +2016,7 @@
     "probabilities": {
       "architecture": 0.735,
       "simplicity": 0.272,
-      "enhanced": 0.352
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2083,7 +2083,7 @@
     "probabilities": {
       "architecture": 0.53,
       "simplicity": 0.187,
-      "enhanced": 0.366
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2151,7 +2151,7 @@
     "probabilities": {
       "architecture": 0.464,
       "simplicity": 0.253,
-      "enhanced": 0.169
+      "enhanced": 0.8
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2419,7 +2419,7 @@
     "probabilities": {
       "architecture": 0.57,
       "simplicity": 0.243,
-      "enhanced": 0.178
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2443,7 +2443,7 @@
     "probabilities": {
       "architecture": 0.559,
       "simplicity": 0.264,
-      "enhanced": 0.043
+      "enhanced": 0.2
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2579,7 +2579,7 @@
     "probabilities": {
       "architecture": 0.583,
       "simplicity": 0.231,
-      "enhanced": 0.211
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2623,7 +2623,7 @@
       "simplicity": 0.396,
       "enhanced": 0.262
     },
-    "latencyMs": 0.3,
+    "latencyMs": 0,
     "estimatedCost": 0.3827,
     "missed": []
   },
@@ -2644,7 +2644,7 @@
     "probabilities": {
       "architecture": 0.546,
       "simplicity": 0.374,
-      "enhanced": 0.121
+      "enhanced": 0.8
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2905,7 +2905,7 @@
     "probabilities": {
       "architecture": 0.422,
       "simplicity": 0.148,
-      "enhanced": 0.311
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2928,7 +2928,7 @@
     "probabilities": {
       "architecture": 0.467,
       "simplicity": 0.206,
-      "enhanced": 0.072
+      "enhanced": 0.2
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2952,7 +2952,7 @@
     "probabilities": {
       "architecture": 0.432,
       "simplicity": 0.259,
-      "enhanced": 0.315
+      "enhanced": 0.7
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -2996,7 +2996,7 @@
     "probabilities": {
       "architecture": 0.735,
       "simplicity": 0.272,
-      "enhanced": 0.352
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -3056,7 +3056,7 @@
     "probabilities": {
       "architecture": 0.53,
       "simplicity": 0.187,
-      "enhanced": 0.366
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.2939,
@@ -3117,7 +3117,7 @@
     "probabilities": {
       "architecture": 0.464,
       "simplicity": 0.253,
-      "enhanced": 0.169
+      "enhanced": 0.8
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -3374,7 +3374,7 @@
     "probabilities": {
       "architecture": 0.57,
       "simplicity": 0.243,
-      "enhanced": 0.178
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -3397,7 +3397,7 @@
     "probabilities": {
       "architecture": 0.559,
       "simplicity": 0.264,
-      "enhanced": 0.043
+      "enhanced": 0.2
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,
@@ -3525,7 +3525,7 @@
     "probabilities": {
       "architecture": 0.583,
       "simplicity": 0.231,
-      "enhanced": 0.211
+      "enhanced": 0.5
     },
     "latencyMs": 0,
     "estimatedCost": 0.2939,
@@ -3586,7 +3586,7 @@
     "probabilities": {
       "architecture": 0.546,
       "simplicity": 0.374,
-      "enhanced": 0.121
+      "enhanced": 0.8
     },
     "latencyMs": 0,
     "estimatedCost": 0.3827,

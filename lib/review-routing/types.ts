@@ -54,8 +54,6 @@ export type ReviewFacts = {
   testsChanged: boolean
   /** Lines added plus removed in `test/`. */
   testLines: number
-  /** `server/`, `shared/` or `web/src`: the layers that need the restart tool. */
-  coreTouched: boolean
   /** A document kind, event, protocol or storage shape changed. */
   schemaTouched: boolean
   /** A facet contract changed: `api.ts`, `refs.ts`, an agent definition, a tool list. */

@@ -8,6 +8,7 @@
  *    says which reviewers to start.
  * 3. When the facts or the model are not good enough, run the whole team. Abstaining is the cheap mistake.
  */
+import { JevError } from './jev.ts'
 import { ruleOutcome } from './rules.ts'
 import type {
   Decision,
@@ -32,19 +33,16 @@ export const enhancedAbove = 0.4
 const questions = [
   {
     name: 'architecture',
-    type: 'noul' as const,
     instructions:
       "An architecture reviewer asks whether this change uses the codebase's own structure: existing seams, extensions instead of core, no second implementation beside an existing one, boundaries and facets respected. Would such a reviewer have something concrete to report about this work order?",
   },
   {
     name: 'simplicity',
-    type: 'noul' as const,
     instructions:
       'A simplicity reviewer asks whether this change introduces speculative abstractions, duplication, dead code or slop, and whether its tests prove behaviour rather than restate the implementation. Would such a reviewer have something concrete to report about this work order?',
   },
   {
     name: 'enhanced',
-    type: 'noul' as const,
     instructions:
       'Does this change need security or durability scrutiny beyond the ordinary correctness pass: secrets, authentication, process execution, path or input handling, stored state that must survive a crash, replay or double effects?',
   },
@@ -77,7 +75,13 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
     try {
       model = readAnswers(await options.model(facts, questions))
     } catch (error) {
-      const note = `model unavailable (${error instanceof Error ? error.message : String(error)}): the whole team runs`
+      const reason =
+        error instanceof JevError
+          ? `${error.kind}: ${error.message}`
+          : error instanceof Error
+            ? error.message
+            : String(error)
+      const note = `model unavailable (${reason}): the whole team runs`
       const abstained = (probability: number): DimensionDecision =>
         decision(true, probability, [{ source: 'override', note }])
       return {
@@ -132,7 +136,12 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
 
   const abstain =
     options.model !== undefined && uncertainty >= (options.abstainAbove ?? defaultAbstainAbove)
-  const enhancedProbability = model?.enhanced ?? rules.enhanced.probability
+  // The advice may be raised by the model, never lowered: a path marker the rules saw is not something a small
+  // model gets to overrule on a flag that costs nothing.
+  const enhancedProbability =
+    model?.enhanced === undefined
+      ? rules.enhanced.probability
+      : Math.max(model.enhanced, rules.enhanced.probability)
   const fullTeam = forced.length > 0 || abstain
 
   if (forced.length) evidence.push({ source: 'override', note: `forced by: ${forced.join(', ')}` })
@@ -170,7 +179,7 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
  * A probability for every question that was asked, or nothing. A caller that answers two of three, or with a
  * number that is not a probability, gets the same treatment as a caller that failed: the whole team runs.
  */
-export const readAnswers = (answers: readonly ModelAnswer[]): Record<string, number> => {
+const readAnswers = (answers: readonly ModelAnswer[]): Record<string, number> => {
   const read: Record<string, number> = {}
   for (const question of questions) {
     const answer = answers.find((candidate) => candidate.name === question.name)

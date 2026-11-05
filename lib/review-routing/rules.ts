@@ -60,16 +60,12 @@ export const ruleOutcome = (facts: ReviewFacts): RuleOutcome => {
   }
   if (facts.renamedFiles > 0 || facts.deletedFiles > 0) {
     architecture.probability += 0.15
-    architecture.evidence.push({
-      source: 'rule',
-      note: `${facts.renamedFiles} file(s) moved or renamed, ${facts.deletedFiles} deleted`,
-    })
+    const moves = [
+      facts.renamedFiles > 0 ? `${facts.renamedFiles} moved or renamed` : '',
+      facts.deletedFiles > 0 ? `${facts.deletedFiles} deleted` : '',
+    ].filter(Boolean)
+    architecture.evidence.push({ source: 'rule', note: `${moves.join(', ')} file(s)` })
   }
-  if (facts.coreTouched)
-    architecture.evidence.push({
-      source: 'rule',
-      note: 'a core layer changed: what loads it and when is part of the question',
-    })
   if (facts.files >= 8) {
     architecture.probability += 0.1
     architecture.evidence.push({ source: 'rule', note: `${facts.files} files changed` })

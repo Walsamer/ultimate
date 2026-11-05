@@ -23,7 +23,6 @@ const facts = (over: Partial<ReviewFacts> = {}): ReviewFacts => ({
   extensions: ['models'],
   testsChanged: true,
   testLines: 30,
-  coreTouched: false,
   schemaTouched: false,
   contractTouched: false,
   dependencyTouched: false,
@@ -47,7 +46,7 @@ describe('what a router may never do', () => {
     const cases: ReviewFacts[] = [
       facts({ changeType: 'docs', areas: ['docs'], files: 1, insertions: 2, deletions: 0 }),
       facts(),
-      facts({ insertions: 5000, deletions: 5000, files: 90, coreTouched: true }),
+      facts({ insertions: 5000, deletions: 5000, files: 90, areas: ['core-server', 'core-web'] }),
       facts({ validation: 'unknown', changeType: 'unknown' }),
     ]
     for (const item of cases) {
@@ -73,7 +72,7 @@ describe('what a router may never do', () => {
   })
 
   it('keeps every probability a probability', async () => {
-    const decided = await route(facts({ coreTouched: true, insertions: 300 }), {
+    const decided = await route(facts({ areas: ['core-server'], insertions: 300 }), {
       model: answer(0.62, 0.31),
     })
     for (const dimension of Object.values(decided.dimensions)) {
@@ -184,12 +183,19 @@ describe('when the local model is not good enough', () => {
 })
 
 describe('the security and durability advice', () => {
-  it("takes the model's number when it has one, and the rules' when it does not", async () => {
-    const withModel = await route(facts({ securityTouched: true }), {
+  it("takes the model's number when it is higher, and the rules' when it is not", async () => {
+    const raised = await route(facts({ securityTouched: true }), {
       model: answer(0.9, 0.9, 0.95),
     })
-    expect(withModel.enhanced.probability).toBe(0.95)
-    expect(withModel.enhanced.run).toBe(true)
+    expect(raised.enhanced.probability).toBe(0.95)
+    expect(raised.enhanced.run).toBe(true)
+
+    // A small model does not get to overrule a path marker the rules saw: the advice may only be raised.
+    const overruled = await route(facts({ securityTouched: true }), {
+      model: answer(0.9, 0.9, 0.05),
+    })
+    expect(overruled.enhanced.probability).toBe(0.5)
+    expect(overruled.enhanced.run).toBe(true)
 
     const rulesOnly = await route(facts({ securityTouched: true }))
     expect(rulesOnly.enhanced.probability).toBeGreaterThanOrEqual(0.5)
@@ -201,12 +207,13 @@ describe('the security and durability advice', () => {
     expect(quiet.enhanced.run).toBe(false)
   })
 
-  it('never lets a low answer hide the advice on a change that forces the full team', async () => {
+  it('never invents advice for a change nobody flagged', async () => {
     const decided = await route(facts({ dependencyTouched: true }), { model: answer(0, 0, 0) })
-    // The reviewers all run because of the override; the advice keeps the model's low number rather than
-    // inventing a high one -- it costs nothing, so it must not pretend to know more than the model said.
+    // The reviewers all run because of the override, and the advice stays at the rules' own number for a
+    // dependency change: the model's zero cannot lower it below that, and nothing inflates it.
     expect(chosen(decided)).toHaveLength(3)
-    expect(decided.enhanced.probability).toBe(0)
+    expect(decided.enhanced.probability).toBe(0.2)
+    expect(decided.enhanced.run).toBe(false)
   })
 })
 
@@ -282,7 +289,7 @@ describe('the local model client', () => {
 })
 
 describe('pre-review facts', () => {
-  it('derives the areas, the size and the risks from git plumbing output alone', () => {
+  it('derives the areas, the size and the test changes from git plumbing output alone', () => {
     const derived = factsFromRange({
       id: 'wo-test-cccccccc',
       base: 'a'.repeat(40),
@@ -291,7 +298,7 @@ describe('pre-review facts', () => {
       numstat: ['120\t4\tserver/owned-env.ts', '30\t0\ttest/jobs.test.ts', '-\t-\tdocs/logo.png'],
       nameStatus: ['M\tserver/owned-env.ts', 'A\ttest/jobs.test.ts', 'M\tdocs/logo.png'],
     })
-    expect(derived.coreTouched).toBe(true)
+    expect(derived.areas).toEqual(['core-server', 'docs', 'test'])
     expect(derived.testsChanged).toBe(true)
     expect(derived.insertions).toBe(150)
     expect(derived.deletions).toBe(4)

@@ -262,13 +262,12 @@ export const actions = { state: async () => state }`
     // `onClose` writes the file asynchronously; after `close()` resolves the write can still be in flight, and
     // `writeFile` truncates before it writes, so wait for content that parses rather than for the path to exist.
     await until(async () =>
-      readFile(join(options.userHome, 'closed.json'), 'utf8').then(
-        (text) => {
-          JSON.parse(text)
-          return true
-        },
-        () => false,
-      ),
+      readFile(join(options.userHome, 'closed.json'), 'utf8')
+        .then((text) => JSON.parse(text))
+        .then(
+          () => true,
+          () => false,
+        ),
     )
     expect(JSON.parse(await readFile(join(options.userHome, 'closed.json'), 'utf8'))).toEqual({
       opens: 1,

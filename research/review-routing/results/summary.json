@@ -109,7 +109,6 @@
       "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -147,7 +146,6 @@
       "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -198,10 +196,9 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 242,
+        "median": 220,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -252,10 +249,9 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 339,
+        "median": 320,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -293,10 +289,9 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 242,
+        "median": 220,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 19,
       "modelUnavailable": 0
     },
@@ -334,10 +329,9 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 339,
+        "median": 320,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 11,
       "modelUnavailable": 0
     },
@@ -366,10 +360,9 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 242,
+        "median": 220,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -398,10 +391,9 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 339,
+        "median": 320,
         "samples": 22
       },
-      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     }

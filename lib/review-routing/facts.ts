@@ -123,9 +123,6 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
     if (!isTest(rest.join('\t'))) return sum
     return sum + (Number(added) || 0) + (Number(removed) || 0)
   }, 0)
-  const coreTouched = areas.some(
-    (area) => area === 'core-server' || area === 'core-shared' || area === 'core-web',
-  )
   const schemaTouched = paths.some((path) => schema.some((marker) => path.includes(marker)))
   const contractTouched = paths.some(
     (path) => /(^|\/)(api|refs)\.ts$/.test(path) || areaOf(path) === 'agents',
@@ -154,7 +151,6 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
     extensions,
     testsChanged,
     testLines,
-    coreTouched,
     schemaTouched,
     contractTouched,
     dependencyTouched,

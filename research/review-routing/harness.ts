@@ -352,7 +352,6 @@ const run = async () => {
             samples: (strategy.arm === '0.8B' ? model8b : model2b).latencies.length,
           }
         : null,
-      modelCalls: strategy.arm ? (strategy.arm === '0.8B' ? model8b : model2b).latencies.length : 0,
       abstained: rows.filter(
         (row) =>
           row.decision.overrides.includes('model-unavailable') ||

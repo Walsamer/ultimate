@@ -109,7 +109,6 @@
       "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -147,7 +146,6 @@
       "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -188,7 +186,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -229,7 +226,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -270,7 +266,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -311,7 +306,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -343,7 +337,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -375,7 +368,6 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     }
