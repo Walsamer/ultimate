@@ -23,7 +23,6 @@ const facts = (over: Partial<ReviewFacts> = {}): ReviewFacts => ({
   extensions: ['models'],
   testsChanged: true,
   testLines: 30,
-  docsChanged: false,
   coreTouched: false,
   schemaTouched: false,
   contractTouched: false,
@@ -32,16 +31,15 @@ const facts = (over: Partial<ReviewFacts> = {}): ReviewFacts => ({
   binTouched: false,
   changeType: 'feature',
   validation: 'passed',
-  riskFlags: [],
   ...over,
 })
 
 const answer =
   (architecture: number, simplicity: number, enhanced = 0.1): ModelCaller =>
   async () => [
-    { name: 'architecture', type: 'noul', probability: architecture },
-    { name: 'simplicity', type: 'noul', probability: simplicity },
-    { name: 'enhanced', type: 'noul', probability: enhanced },
+    { name: 'architecture', probability: architecture },
+    { name: 'simplicity', probability: simplicity },
+    { name: 'enhanced', probability: enhanced },
   ]
 
 describe('what a router may never do', () => {
@@ -148,13 +146,23 @@ describe('when the local model is not good enough', () => {
   })
 
   it('runs the whole team when the model answers in a shape we did not ask for', async () => {
-    const garbled: ModelCaller = async () => [
-      { name: 'architecture', type: 'choice', choice: 'yes' },
-    ]
-    const decided = await route(facts(), { model: garbled })
-    // The missing probabilities leave the rules' own numbers in place rather than inventing ones.
-    expect(Number.isFinite(decided.dimensions.architecture.probability)).toBe(true)
-    expect(decided.dimensions.correctness.run).toBe(true)
+    const partial: ModelCaller = async () => [{ name: 'architecture', probability: 0.9 }]
+    const decided = await route(facts(), { model: partial })
+    expect(decided.mode).toBe('full-team')
+    expect(decided.overrides).toContain('model-unavailable')
+    expect(chosen(decided)).toEqual(['correctness', 'architecture', 'simplicity'])
+    // Nothing the rules computed is dressed up as the model's answer.
+    expect(decided.dimensions.architecture.evidence.every((item) => item.source !== 'model')).toBe(
+      true,
+    )
+  })
+
+  it('refuses a number that is not a probability instead of acting on it', async () => {
+    for (const bad of [Number.NaN, -0.2, 1.5]) {
+      const decided = await route(facts(), { model: answer(bad, 0.1) })
+      expect(decided.mode).toBe('full-team')
+      expect(decided.overrides).toContain('model-unavailable')
+    }
   })
 
   it('abstains near a threshold instead of guessing', async () => {
@@ -175,6 +183,33 @@ describe('when the local model is not good enough', () => {
   })
 })
 
+describe('the security and durability advice', () => {
+  it("takes the model's number when it has one, and the rules' when it does not", async () => {
+    const withModel = await route(facts({ securityTouched: true }), {
+      model: answer(0.9, 0.9, 0.95),
+    })
+    expect(withModel.enhanced.probability).toBe(0.95)
+    expect(withModel.enhanced.run).toBe(true)
+
+    const rulesOnly = await route(facts({ securityTouched: true }))
+    expect(rulesOnly.enhanced.probability).toBeGreaterThanOrEqual(0.5)
+    expect(rulesOnly.enhanced.run).toBe(true)
+    expect(rulesOnly.enhanced.evidence.length).toBeGreaterThan(0)
+
+    const quiet = await route(facts())
+    expect(quiet.enhanced.probability).toBe(0)
+    expect(quiet.enhanced.run).toBe(false)
+  })
+
+  it('never lets a low answer hide the advice on a change that forces the full team', async () => {
+    const decided = await route(facts({ dependencyTouched: true }), { model: answer(0, 0, 0) })
+    // The reviewers all run because of the override; the advice keeps the model's low number rather than
+    // inventing a high one -- it costs nothing, so it must not pretend to know more than the model said.
+    expect(chosen(decided)).toHaveLength(3)
+    expect(decided.enhanced.probability).toBe(0)
+  })
+})
+
 describe('the local model client', () => {
   const body =
     (payload: unknown, status = 200): typeof fetch =>
@@ -185,16 +220,8 @@ describe('the local model client', () => {
       })
 
   const questions = [
-    {
-      name: 'architecture',
-      type: 'noul' as const,
-      instructions: 'would an architecture pass have something to say?',
-    },
-    {
-      name: 'simplicity',
-      type: 'noul' as const,
-      instructions: 'would a simplicity pass have something to say?',
-    },
+    { name: 'architecture', instructions: 'would an architecture pass have something to say?' },
+    { name: 'simplicity', instructions: 'would a simplicity pass have something to say?' },
   ]
 
   it('reads a noul answer as a probability', async () => {
@@ -212,8 +239,8 @@ describe('the local model client', () => {
       questions,
     )
     expect(answers).toEqual([
-      { name: 'architecture', type: 'noul', probability: 0.71 },
-      { name: 'simplicity', type: 'noul', probability: 0.2 },
+      { name: 'architecture', probability: 0.71 },
+      { name: 'simplicity', probability: 0.2 },
     ])
   })
 
@@ -257,6 +284,7 @@ describe('the local model client', () => {
 describe('pre-review facts', () => {
   it('derives the areas, the size and the risks from git plumbing output alone', () => {
     const derived = factsFromRange({
+      id: 'wo-test-cccccccc',
       base: 'a'.repeat(40),
       head: 'c'.repeat(40),
       subjects: ['Jobs: a finished job writes its card'],
@@ -274,6 +302,7 @@ describe('pre-review facts', () => {
 
   it('says "unknown" rather than guessing a type it cannot read', () => {
     const derived = factsFromRange({
+      id: 'wo-test-cccccccc',
       base: 'a'.repeat(40),
       head: 'c'.repeat(40),
       subjects: ['Collapse large pastes into markers'],
@@ -307,11 +336,13 @@ describe('the committed dataset', () => {
   it('is committed, immutable and free of host paths', () => {
     expect(cases.length).toBeGreaterThanOrEqual(20)
     expect(new Set(cases.map((item) => item.id)).size).toBe(cases.length)
-    expect(raw).not.toMatch(/\/Users\/|\/Volumes\/|C:\\\\Users/)
+    expect(raw).not.toMatch(/\/Users\/|\/Volumes\/|[A-Za-z]:\\/)
     for (const item of cases) {
       expect(item.id).toMatch(/^wo-\d+-[0-9a-f]{8}$/)
       expect(item.head).toMatch(/^[0-9a-f]{40}$/)
       expect(item.base).not.toBe(item.head)
+      // One id per case, so a decision can be joined back to the work order it is about.
+      expect(item.facts.id).toBe(item.id)
     }
   })
 

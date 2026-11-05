@@ -106,13 +106,10 @@
       "costPerCorrectlyReviewed": 0.3827,
       "labelledWorkOrders": 3,
       "labelledCorrect": 3,
-      "decidedByTheModelAlone": 0,
+      "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": {
-        "2": 1,
-        "0.8": 1
-      },
+      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -147,13 +144,10 @@
       "costPerCorrectlyReviewed": 0.3827,
       "labelledWorkOrders": 3,
       "labelledCorrect": 3,
-      "decidedByTheModelAlone": 7,
+      "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": {
-        "2": 1,
-        "0.8": 1
-      },
+      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -204,13 +198,10 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 240,
+        "median": 242,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 1,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -261,13 +252,10 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 332,
+        "median": 339,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 22,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -305,13 +293,10 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 240,
+        "median": 242,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 22,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 19,
       "modelUnavailable": 0
     },
@@ -349,13 +334,10 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 332,
+        "median": 339,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 22,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 11,
       "modelUnavailable": 0
     },
@@ -384,13 +366,10 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 240,
+        "median": 242,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 22,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -419,13 +398,10 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 240,
+        "median": 339,
         "samples": 22
       },
-      "modelCalls": {
-        "2": 22,
-        "0.8": 22
-      },
+      "modelCalls": 22,
       "abstained": 0,
       "modelUnavailable": 0
     }

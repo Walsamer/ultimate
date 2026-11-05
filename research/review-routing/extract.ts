@@ -80,6 +80,7 @@ const caseId = (conversation: number, head: string) => `wo-${conversation}-${hea
 const scrub = (subject: string): string =>
   subject
     .replace(/(?:\/[\w.-]+){2,}/g, '<path>')
+    .replace(/[A-Za-z]:\\[^\s'"]*/g, '<path>')
     .replace(/^Merge branch '([^']+)' of <path> into (.+)$/, "Merge branch '$1' into $2")
 
 export type Case = {
@@ -132,6 +133,7 @@ const extract = (): Case[] =>
     )
     const id = caseId(order.conversation, order.head)
     const facts = factsFromRange({
+      id,
       base,
       head: order.head,
       subjects,
@@ -173,7 +175,7 @@ const check = async () => {
     if (item.head === item.base) problems.push(`${item.id} has an empty range`)
   }
   // Features must never leak the host: the dataset is committed, so no absolute path may reach it.
-  if (/\/Users\/|\/Volumes\/|C:\\\\Users/.test(rendered))
+  if (/\/Users\/|\/Volumes\/|[A-Za-z]:\\/.test(rendered))
     problems.push('an absolute host path reached the dataset')
   const recorded = cases.filter((item) => item.provenance.range === 'recorded-review')
   for (const item of recorded) {

@@ -259,10 +259,14 @@ export const actions = { state: async () => state }`
     ).toEqual({ opens: 1, closes: 0, facetsClosed: 1 })
     servers.splice(servers.indexOf(server), 1)
     await server.close()
-    // `onClose` writes the file asynchronously; after `close()` resolves the write can still be in flight.
+    // `onClose` writes the file asynchronously; after `close()` resolves the write can still be in flight, and
+    // `writeFile` truncates before it writes, so wait for content that parses rather than for the path to exist.
     await until(async () =>
       readFile(join(options.userHome, 'closed.json'), 'utf8').then(
-        () => true,
+        (text) => {
+          JSON.parse(text)
+          return true
+        },
         () => false,
       ),
     )

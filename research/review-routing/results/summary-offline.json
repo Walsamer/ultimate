@@ -106,13 +106,10 @@
       "costPerCorrectlyReviewed": 0.3827,
       "labelledWorkOrders": 3,
       "labelledCorrect": 3,
-      "decidedByTheModelAlone": 0,
+      "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -147,13 +144,10 @@
       "costPerCorrectlyReviewed": 0.3827,
       "labelledWorkOrders": 3,
       "labelledCorrect": 3,
-      "decidedByTheModelAlone": 7,
+      "decidedByTheModelAlone": null,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": null,
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 0,
       "modelUnavailable": 0
     },
@@ -194,10 +188,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -238,10 +229,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -282,10 +270,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -326,10 +311,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -361,10 +343,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     },
@@ -396,10 +375,7 @@
         "median": 0,
         "samples": 0
       },
-      "modelCalls": {
-        "2": 0,
-        "0.8": 0
-      },
+      "modelCalls": 0,
       "abstained": 22,
       "modelUnavailable": 22
     }

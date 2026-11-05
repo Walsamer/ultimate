@@ -6,6 +6,8 @@
 import type { Area, ChangeType, ReviewFacts, Validation } from './types.ts'
 
 export type GitRangeInput = {
+  /** The case id this range belongs to: `wo-<conversation>-<head8>`. */
+  id: string
   base: string
   head: string
   /** Commit subjects, oldest first. */
@@ -121,7 +123,6 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
     if (!isTest(rest.join('\t'))) return sum
     return sum + (Number(added) || 0) + (Number(removed) || 0)
   }, 0)
-  const docsChanged = paths.some(isDocs)
   const coreTouched = areas.some(
     (area) => area === 'core-server' || area === 'core-shared' || area === 'core-web',
   )
@@ -137,18 +138,8 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
   const binTouched = paths.some((path) => path.startsWith('bin/'))
   const changeType = changeTypeOf(input.subjects, paths)
 
-  const riskFlags: string[] = []
-  if (schemaTouched) riskFlags.push('schema')
-  if (contractTouched) riskFlags.push('contract')
-  if (dependencyTouched) riskFlags.push('dependency')
-  if (securityTouched) riskFlags.push('security')
-  if (binTouched) riskFlags.push('supervisor')
-  if (renamedFiles > 0) riskFlags.push('rename')
-  if (!testsChanged && (insertions > 0 || deletions > 0)) riskFlags.push('no-test-change')
-  if (paths.some((path) => path.includes('migrat'))) riskFlags.push('migration')
-
   return {
-    id: `wo-${input.head.slice(0, 8)}`,
+    id: input.id,
     base: input.base,
     head: input.head,
     commits: input.subjects.length,
@@ -163,7 +154,6 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
     extensions,
     testsChanged,
     testLines,
-    docsChanged,
     coreTouched,
     schemaTouched,
     contractTouched,
@@ -172,7 +162,6 @@ export const factsFromRange = (input: GitRangeInput): ReviewFacts => {
     binTouched,
     changeType,
     validation: input.validation ?? 'unknown',
-    riskFlags,
   }
 }
 

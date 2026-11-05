@@ -54,7 +54,6 @@ export type ReviewFacts = {
   testsChanged: boolean
   /** Lines added plus removed in `test/`. */
   testLines: number
-  docsChanged: boolean
   /** `server/`, `shared/` or `web/src`: the layers that need the restart tool. */
   coreTouched: boolean
   /** A document kind, event, protocol or storage shape changed. */
@@ -69,8 +68,6 @@ export type ReviewFacts = {
   changeType: ChangeType
   /** The lander's check results for this work order, when the record has them. */
   validation: Validation
-  /** Free-form deterministic risk markers a rule can key on (`secrets`, `exec`, `migration`, …). */
-  riskFlags: string[]
 }
 
 export type EvidenceSource = 'facts' | 'rule' | 'model' | 'override'
@@ -102,16 +99,10 @@ export type Decision = {
 /** A local model caller: given the facts, answer probabilities for the routable dimensions. */
 export type ModelCaller = (facts: ReviewFacts, questions: ModelQuestion[]) => Promise<ModelAnswer[]>
 
-export type ModelQuestion = { name: string; type: 'noul' | 'choice'; instructions: string }
+export type ModelQuestion = { name: string; instructions: string }
 
-/** One answer: a probability for `noul`, or a label plus probabilities for `choice`. */
-export type ModelAnswer = {
-  name: string
-  type: 'noul' | 'choice'
-  probability?: number
-  choice?: string
-  probabilities?: Record<string, number>
-}
+/** One answer: the probability the model gave for one yes/no question. */
+export type ModelAnswer = { name: string; probability: number }
 
 export type RouteOptions = {
   /** The local decision model. Absent means rules only (strategy B). */

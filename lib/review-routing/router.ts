@@ -14,6 +14,7 @@ import type {
   Dimension,
   DimensionDecision,
   Evidence,
+  ModelAnswer,
   ReviewFacts,
   Routable,
   RouteOptions,
@@ -24,6 +25,9 @@ export const defaultThresholds: Record<Routable, number> = { architecture: 0.5, 
 
 /** Above this the model is too close to a threshold to be trusted, and the whole team runs. */
 export const defaultAbstainAbove = 0.85
+
+/** Where the security/durability advice flips from "the correctness pass covers it" to "say it explicitly". */
+export const enhancedAbove = 0.4
 
 const questions = [
   {
@@ -71,12 +75,7 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
   let model: Record<string, number> | undefined
   if (options.model) {
     try {
-      const answers = await options.model(facts, questions)
-      model = {}
-      for (const answer of answers) {
-        if (answer.type === 'noul' && typeof answer.probability === 'number')
-          model[answer.name] = answer.probability
-      }
+      model = readAnswers(await options.model(facts, questions))
     } catch (error) {
       const note = `model unavailable (${error instanceof Error ? error.message : String(error)}): the whole team runs`
       const abstained = (probability: number): DimensionDecision =>
@@ -154,7 +153,7 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
       architecture: run('architecture'),
       simplicity: run('simplicity'),
     },
-    enhanced: decision(enhancedProbability >= 0.4, enhancedProbability, [
+    enhanced: decision(enhancedProbability >= enhancedAbove, enhancedProbability, [
       ...rules.enhanced.evidence,
       ...(model?.enhanced === undefined
         ? []
@@ -165,6 +164,27 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
     mode: fullTeam ? 'full-team' : 'routed',
     evidence,
   }
+}
+
+/**
+ * A probability for every question that was asked, or nothing. A caller that answers two of three, or with a
+ * number that is not a probability, gets the same treatment as a caller that failed: the whole team runs.
+ */
+export const readAnswers = (answers: readonly ModelAnswer[]): Record<string, number> => {
+  const read: Record<string, number> = {}
+  for (const question of questions) {
+    const answer = answers.find((candidate) => candidate.name === question.name)
+    const probability = answer?.probability
+    if (
+      typeof probability !== 'number' ||
+      !Number.isFinite(probability) ||
+      probability < 0 ||
+      probability > 1
+    )
+      throw new Error(`the model gave no usable answer for ${question.name}`)
+    read[question.name] = probability
+  }
+  return read
 }
 
 /** Which reviewers a decision starts, in team order — the one thing a caller acts on. */

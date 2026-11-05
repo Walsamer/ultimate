@@ -25,47 +25,38 @@ export type JevOptions = {
 
 type SystemoneBody = {
   state: string
-  questions: Record<string, { type: string; instructions: string }>
+  questions: Record<string, { type: 'noul'; instructions: string }>
 }
 
-type SystemoneAnswer = {
-  type: string
-  noul?: number
-  choice?: string
-  confidence?: number
-  probabilities?: Record<string, number>
-}
+type SystemoneAnswer = { type: string; noul?: number }
 
 /** Answers for the questions we asked, in the order we asked them, or a `JevError`. */
 export const askJev = async (
   options: JevOptions,
   state: string,
   questions: ModelQuestion[],
-  signal?: AbortSignal,
 ): Promise<ModelAnswer[]> => {
   const body: SystemoneBody = {
     state,
     questions: Object.fromEntries(
       questions.map((question) => [
         question.name,
-        { type: question.type, instructions: question.instructions },
+        { type: 'noul' as const, instructions: question.instructions },
       ]),
     ),
   }
-  const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000)
-  const combined = signal ? AbortSignal.any([signal, timeout]) : timeout
+  const deadline = AbortSignal.timeout(options.timeoutMs ?? 20_000)
   let response: Response
   try {
     response = await (options.fetch ?? fetch)(`${options.url.replace(/\/$/, '')}/v1/systemone`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
-      signal: combined,
+      signal: deadline,
     })
   } catch (error) {
-    const timedOut = combined.aborted && !signal?.aborted
     throw new JevError(
-      timedOut ? 'timeout' : 'unreachable',
+      deadline.aborted ? 'timeout' : 'unreachable',
       `local decision model at ${options.url}: ${describeError(error)}`,
     )
   }
@@ -88,25 +79,15 @@ export const askJev = async (
   return questions.map((question) => {
     const answer = answers[question.name]
     if (!answer) throw new JevError('malformed', `no answer for question ${question.name}`)
-    if (question.type === 'noul') {
-      const probability = answer.noul
-      if (
-        typeof probability !== 'number' ||
-        !Number.isFinite(probability) ||
-        probability < 0 ||
-        probability > 1
-      )
-        throw new JevError('malformed', `question ${question.name}: noul is not a probability`)
-      return { name: question.name, type: 'noul' as const, probability }
-    }
-    if (typeof answer.choice !== 'string')
-      throw new JevError('malformed', `question ${question.name}: choice missing`)
-    return {
-      name: question.name,
-      type: 'choice' as const,
-      choice: answer.choice,
-      probabilities: answer.probabilities,
-    }
+    const probability = answer.noul
+    if (
+      typeof probability !== 'number' ||
+      !Number.isFinite(probability) ||
+      probability < 0 ||
+      probability > 1
+    )
+      throw new JevError('malformed', `question ${question.name}: noul is not a probability`)
+    return { name: question.name, probability }
   })
 }
 

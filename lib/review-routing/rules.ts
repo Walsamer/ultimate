@@ -58,13 +58,18 @@ export const ruleOutcome = (facts: ReviewFacts): RuleOutcome => {
       note: `touches extension(s) ${facts.extensions.join(', ') || '(unnamed)'}`,
     })
   }
-  if (facts.renamedFiles > 0) {
+  if (facts.renamedFiles > 0 || facts.deletedFiles > 0) {
     architecture.probability += 0.15
     architecture.evidence.push({
       source: 'rule',
-      note: `${facts.renamedFiles} file(s) moved or renamed`,
+      note: `${facts.renamedFiles} file(s) moved or renamed, ${facts.deletedFiles} deleted`,
     })
   }
+  if (facts.coreTouched)
+    architecture.evidence.push({
+      source: 'rule',
+      note: 'a core layer changed: what loads it and when is part of the question',
+    })
   if (facts.files >= 8) {
     architecture.probability += 0.1
     architecture.evidence.push({ source: 'rule', note: `${facts.files} files changed` })

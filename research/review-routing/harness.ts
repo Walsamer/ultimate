@@ -119,11 +119,13 @@ const labelled = (items: Case[]) =>
       })),
   )
 
+type Arm = '0.8B' | '2B'
 type Method = {
   name: string
   label: string
   options: (thresholds: Thresholds) => Parameters<typeof route>[1]
-  needsModel: boolean
+  /** Which server this arm asks, when it asks one at all. */
+  arm?: Arm
 }
 
 /** The hand-set pair a production plan would start from, reported beside the fitted numbers. */
@@ -133,13 +135,12 @@ const methods: Method[] = [
   {
     name: 'B',
     label: 'deterministic rules only',
-    needsModel: false,
     options: (thresholds) => ({ thresholds }),
   },
   {
     name: 'C',
     label: '0.8B v3, model alone',
-    needsModel: true,
+    arm: '0.8B',
     options: (thresholds) => ({
       model: model8b.call,
       thresholds,
@@ -150,7 +151,7 @@ const methods: Method[] = [
   {
     name: 'D',
     label: '2B v4, model alone',
-    needsModel: true,
+    arm: '2B',
     options: (thresholds) => ({
       model: model2b.call,
       thresholds,
@@ -161,25 +162,25 @@ const methods: Method[] = [
   {
     name: 'E8',
     label: 'hybrid: 0.8B + rules overrides + abstain',
-    needsModel: true,
+    arm: '0.8B',
     options: (thresholds) => ({ model: model8b.call, thresholds, abstainAbove: 0.85 }),
   },
   {
     name: 'E2',
     label: 'hybrid: 2B v4 + rules overrides + abstain',
-    needsModel: true,
+    arm: '2B',
     options: (thresholds) => ({ model: model2b.call, thresholds, abstainAbove: 0.85 }),
   },
   {
     name: 'F8',
     label: '0.8B + rules overrides, hand-set 0.5/0.5 threshold, no abstain',
-    needsModel: true,
+    arm: '0.8B',
     options: () => ({ model: model8b.call, thresholds: fixed, overrides: 'on', abstainAbove: 2 }),
   },
   {
     name: 'F2',
     label: '2B v4 + rules overrides, hand-set 0.5/0.5 threshold, no abstain',
-    needsModel: true,
+    arm: '2B',
     options: () => ({ model: model2b.call, thresholds: fixed, overrides: 'on', abstainAbove: 2 }),
   },
 ]
@@ -216,18 +217,10 @@ const run = async () => {
   const strategies: {
     name: string
     label: string
-    needsModel: boolean
+    arm?: Arm
     options: Parameters<typeof route>[1]
     thresholds: Thresholds | null
-  }[] = [
-    {
-      name: 'A',
-      label: 'baseline: the full team, as today',
-      needsModel: false,
-      options: {},
-      thresholds: null,
-    },
-  ]
+  }[] = [{ name: 'A', label: 'baseline: the full team, as today', options: {}, thresholds: null }]
   const calibration: Record<string, unknown> = {}
   for (const method of methods) {
     const fit = method.name.startsWith('F') ? null : await calibrate(method)
@@ -235,7 +228,7 @@ const run = async () => {
     strategies.push({
       name: method.name,
       label: method.label,
-      needsModel: method.needsModel,
+      arm: method.arm,
       options: method.options(fit?.thresholds ?? fixed),
       thresholds: fit?.thresholds ?? fixed,
     })
@@ -347,23 +340,19 @@ const run = async () => {
       })(),
       labelledWorkOrders: rows.filter((row) => row.item.labels).length,
       labelledCorrect: rows.filter((row) => row.item.labels && row.missed.length === 0).length,
-      decidedByTheModelAlone: rows.filter((row) => row.decision.mode === 'routed').length,
+      decidedByTheModelAlone: strategy.arm
+        ? rows.filter((row) => row.decision.mode === 'routed').length
+        : null,
       measuredBaselinePerWorkOrder: Number(mean(rows.map(() => teamCost(all))).toFixed(4)),
-      latencyMs: strategy.needsModel
+      latencyMs: strategy.arm
         ? {
             median: Number(
-              percentile(
-                strategy.name === 'D' || strategy.name === 'E2'
-                  ? model2b.latencies
-                  : model8b.latencies,
-                0.5,
-              ).toFixed(0),
+              percentile((strategy.arm === '0.8B' ? model8b : model2b).latencies, 0.5).toFixed(0),
             ),
-            samples: (strategy.name === 'D' || strategy.name === 'E2' ? model2b : model8b).latencies
-              .length,
+            samples: (strategy.arm === '0.8B' ? model8b : model2b).latencies.length,
           }
         : null,
-      modelCalls: { 0.8: model8b.latencies.length, 2: model2b.latencies.length },
+      modelCalls: strategy.arm ? (strategy.arm === '0.8B' ? model8b : model2b).latencies.length : 0,
       abstained: rows.filter(
         (row) =>
           row.decision.overrides.includes('model-unavailable') ||

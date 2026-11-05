@@ -8,14 +8,14 @@ untouched, and no code in `lib/review-routing/` has a caller in the app.
 dropped findings an author then fixed, the deterministic rules keep everything for 5 % less, and the entire
 prize for dropping both advisory passes is ≈ $0.16 per work order.**
 
-|                                    | measured on this machine                                                          |
-| ---------------------------------- | --------------------------------------------------------------------------------- |
-| independently reviewed work orders | **3** of 22 (14 %); 7 dimension verdicts, 6 of them actioned before landing       |
-| achievable saving                  | **at most 42 %** of review spend, ≈ **$0.16** per work order (correctness stays)  |
-| rules only (B)                     | 2.77 reviewer runs per work order, **$0.363** per correct review, 0 findings lost |
-| model alone (C 0.8B / D 2B)        | 1.3 runs, $0.250 spent, **$0.829 per correct review**, **2 findings lost each**   |
-| hybrid (E, fitted)                 | abstains on 11–19 of 22 work orders: **the full team, at full cost**              |
-| local inference                    | 0.8B **576 ms** / 2B v4 **247 ms** warm (2.7 KB state), 1.4 / 3.5 GB of weights   |
+|                                    | measured on this machine                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| independently reviewed work orders | **3** of 22 (14 %); 7 dimension verdicts, 6 of them actioned before landing                                  |
+| achievable saving                  | **at most 42 %** of review spend, ≈ **$0.16** per work order (correctness stays)                             |
+| rules only (B)                     | 2.77 reviewer runs per work order, **$0.363** per work order, **$0.383** per correct review, 0 findings lost |
+| model alone (C 0.8B / D 2B)        | 1.3 runs, $0.250 spent, **$0.829 per correct review**, **2 findings lost each**                              |
+| hybrid (E, fitted)                 | abstains on 11–19 of 22 work orders: **the full team, at full cost**                                         |
+| local inference                    | 0.8B **576 ms** / 2B v4 **247 ms** warm (2.7 KB state), 1.4 / 3.5 GB of weights                              |
 
 Everything below is reproducible from this repository: `research/review-routing/` holds the dataset, the
 extractor, the harness, the raw results and the model install; `lib/review-routing/` holds the adapter.
@@ -34,7 +34,7 @@ definitions exist:
 | `extensions/subagents/server.ts:866-873`                             | Renders `Available definitions` into the lead's prompt — the only place a choice could be injected.                                                                                  |
 | `agents/reviewer.md:16-18`, `:28-40`                                 | The lead merges the reports and answers APPROVED / NEEDS CHANGES. Nothing else decides a verdict.                                                                                    |
 | `.ultimate/agents/reviewer-{correctness,architecture,simplicity}.md` | The three dimensions this project runs: `family: review`, `tools: [read, bash]`, read-only.                                                                                          |
-| `extensions/subagents/definitions.tsx:379-390`                       | `discoverAgents` — which definitions exist, whether a project file replaces a built-in.                                                                                              |
+| `lib/agents.ts:395`                                                  | `discoverAgents` — which definitions exist, whether a project file replaces a built-in (`extensions/subagents/definitions.tsx:379-390` is the editor dialog over it).                |
 | `extensions/workspaces/lander.ts:617-663`                            | The lander's gate: it runs the configured checks, merges, pushes. **It has no notion of review.**                                                                                    |
 
 So a feature flag can sit beside the decision without touching a verdict: filter the `reviewer-*` entries that
@@ -107,6 +107,12 @@ reviewed work orders _every_ dimension produced something the coordinator fixed.
 - `types.ts` — the vocabulary. There is no field for approve, deny, blocking or verdict: a `Decision` says
   which reviewers to start, and `test/review-routing.test.ts` asserts that shape has no verdict in it.
 
+The third output is `enhanced`: not a reviewer, an argument for calling the security and durability angle out
+explicitly in the review request, which costs nothing and runs nobody. It takes the model's answer when there is
+one and the rules' path markers otherwise, it flips above `enhancedAbove = 0.4`, and it deliberately keeps a low
+number even when an override forces the whole team — a flag that costs nothing has no reason to pretend to know
+more than the model said.
+
 Shadow mode, honestly: the router computes a decision for every work order and the harness records it beside
 the real outcome (`research/review-routing/results/decisions.json`). It is wired to nothing and can affect
 nothing — no commit, merge, verdict or workflow reads it. A live shadow would need exactly one change, the
@@ -149,12 +155,12 @@ labelled dimension) and scored on the odd-indexed half (six labelled dimensions,
 | --- | -------------------------------------------- | ---------------------------: | -------------- | -----------------------: | --------------: | ---------------------: | ------------: |
 | A   | baseline: the full team                      |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |             — |
 | B   | **deterministic rules only**                 |                         2.77 | 22/21/18       |               **$0.363** |        **1.00** |                  **0** |             — |
-| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        240 ms |
-| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        332 ms |
-| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        240 ms |
-| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        332 ms |
-| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        240 ms |
-| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        240 ms |
+| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        242 ms |
+| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        339 ms |
+| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        242 ms |
+| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        339 ms |
+| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        242 ms |
+| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        339 ms |
 
 Cost per **correctly reviewed** work order — the brief's metric, spend over the labelled work orders whose
 every actioned dimension still ran:
@@ -162,8 +168,8 @@ every actioned dimension still ran:
 | strategy  | spend on the 3 labelled work orders | correctly reviewed | cost per correct |
 | --------- | ----------------------------------: | -----------------: | ---------------: |
 | A / E / F |                          3 × $0.383 |             3 of 3 |       **$0.383** |
-| B         |                          3 × $0.363 |             3 of 3 |       **$0.383** |
-| C / D     |                          3 × $0.250 |         **1 of 3** |       **$0.829** |
+| B         |                          3 × $0.383 |             3 of 3 |       **$0.383** |
+| C / D     |                        $0.829 total |         **1 of 3** |       **$0.829** |
 
 Cheaper per invocation, twice as expensive per _correct_ review. That inversion is the experiment's answer in
 one line: a skipped reviewer that was needed costs a rework cycle, and this project has no rework cycle in the
@@ -184,9 +190,9 @@ money is untested, while the part that was tested is wrong.
 work orders; the other 15 were forced to the full team by the overrides. Everything the model contributed on
 top of the rules was the simplification of unlabelled cases.
 
-**Local latency here is 240 ms (0.8B) and 332 ms (2B)**, lower than §4's figures because the harness sends a
-~700-byte state (`describeFacts`) rather than a 2.7 KB body; across three runs the medians were 224–240 ms and
-315–332 ms, and the order between the two releases flips with input length, so neither is "the fast one".
+**Local latency here is 242 ms (0.8B) and 339 ms (2B)** for the harness's own ~700-byte state, lower than §4's
+figures because that measurement used a 2.7 KB body; across the harness runs the medians were 224–242 ms and
+315–339 ms, and the order between the two releases flips with input length, so neither is "the fast one".
 
 **Failure path, measured.** With nothing listening, every model strategy abstained on all 22 cases (mode
 `full-team`, override `model-unavailable`) and made zero model calls
@@ -196,8 +202,8 @@ top of the rules was the simplification of unlabelled cases.
 (`wo-3055`'s team), $0.4338 (`wo-13069`'s team), $0.0882 (a solo review) — $0.8531 in total, and $0.383 per
 reviewed work order with the current team. Every other number above is **estimated** by applying those
 measured per-reviewer costs to the run set a strategy chose: no reviewer was re-run, no provider was called,
-and local inference is free in money but not in time. Estimated totals across the 22 work orders: A $8.43,
-B $7.99, C/D $5.50, E $8.43, F $7.72.
+and local inference is free in money but not in time. Estimated totals across the 22 work orders: A $8.42,
+B $7.99, C/D $5.50, E $8.42, F $7.73.
 
 ## 6. Every finding a router would have lost, individually
 
@@ -253,7 +259,9 @@ as a floor.** Concretely, in order:
 What would change the answer: a sample where most dimension verdicts are negative (say 40 reviewed work
 orders with 30 "nothing actioned"), so that skipping a dimension is right most of the time instead of half the
 time — and where the model separates those two populations. On the current data the model's probabilities for
-the work order that needed architecture (0.49) and one that needed nothing (0.42) are the same number.
+the work order that needed architecture (0.49) and a test-only change (0.14, and unlabelled, so no claim
+about it goes beyond the model's own output) are far apart only in one direction: the model separates the
+trivial from the ordinary, not the ordinary that needed a reviewer from the ordinary that did not.
 
 ## 9. Limitations a reader should weigh
 
@@ -267,7 +275,7 @@ the work order that needed architecture (0.49) and one that needed nothing (0.42
   reading of the diff's content, and the "security"/"schema" markers are path heuristics, not analysis. The
   `validation` field comes from the lander's recorded check runs — the same commands the coordinator runs
   before asking for review — and can only ever force the full team, never the other way.
-- **One machine, one run.** M1 Max 32 GB, macOS 27.2, one client in sequence; the 2B's cold-load advantage
+- **One machine, a handful of runs.** M1 Max 32 GB, macOS 27.2, one client in sequence; the 2B's cold-load advantage
   partly reflects a warm file cache, and the two models were measured with different processes.
 - **The 22 cases are this project's own history**, including two upstream-sync work orders whose "own change"
   is a merge. They are marked `changeType: unknown` and force the full team, so they cannot flatter a router.
