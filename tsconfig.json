@@ -19,6 +19,7 @@
     "server",
     "shared",
     "lib",
+    "research",
     "scripts",
     "extensions/**/*.ts",
     ".ultimate/extensions/**/*.ts",
