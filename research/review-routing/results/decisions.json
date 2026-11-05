@@ -1,0 +1,3677 @@
+[
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "A",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [],
+    "uncertainty": 0,
+    "probabilities": {
+      "architecture": 1,
+      "simplicity": 1,
+      "enhanced": 1
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "unknown-type"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0,
+      "simplicity": 0.4,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.9,
+    "probabilities": {
+      "architecture": 0.3,
+      "simplicity": 0.6,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.9,
+    "probabilities": {
+      "architecture": 0.3,
+      "simplicity": 0.6,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.75,
+    "probabilities": {
+      "architecture": 0.45,
+      "simplicity": 0.7,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.6,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.6,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "B",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0,
+      "simplicity": 0,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.9,
+    "probabilities": {
+      "architecture": 0.3,
+      "simplicity": 0.6,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "unknown-type"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0,
+      "simplicity": 0,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "large"
+    ],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.2,
+      "simplicity": 0.6,
+      "enhanced": 0.2
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large"
+    ],
+    "uncertainty": 0.6,
+    "probabilities": {
+      "architecture": 0.95,
+      "simplicity": 0.6,
+      "enhanced": 0.7
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.9,
+    "probabilities": {
+      "architecture": 0.3,
+      "simplicity": 0.4,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.6,
+    "probabilities": {
+      "architecture": 0.65,
+      "simplicity": 0.6,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.3,
+      "simplicity": 0.2,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.4,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.2,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.5,
+      "simplicity": 0,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.2,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "schema",
+      "checks-failed"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.95,
+      "simplicity": 0.4,
+      "enhanced": 0.8
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.4,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0.4,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.8,
+    "probabilities": {
+      "architecture": 0.6,
+      "simplicity": 0,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "B",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.2,
+      "simplicity": 0,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.891,
+    "probabilities": {
+      "architecture": 0.427,
+      "simplicity": 0.409,
+      "enhanced": 0
+    },
+    "latencyMs": 211.9,
+    "estimatedCost": 0.3117,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.965,
+    "probabilities": {
+      "architecture": 0.429,
+      "simplicity": 0.265,
+      "enhanced": 0
+    },
+    "latencyMs": 204.5,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.959,
+    "probabilities": {
+      "architecture": 0.371,
+      "simplicity": 0.259,
+      "enhanced": 0
+    },
+    "latencyMs": 193.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.982,
+    "probabilities": {
+      "architecture": 0.486,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 207.9,
+    "estimatedCost": 0.3117,
+    "missed": [
+      {
+        "dimension": "architecture",
+        "note": "[P3] what a handler shows renders as core UI with no boundary and no extension name — the landed commit carries `{ extension, version }` per handler and wraps the shown node in a boundary.",
+        "conversation": 4201
+      }
+    ]
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.93,
+    "probabilities": {
+      "architecture": 0.592,
+      "simplicity": 0.23,
+      "enhanced": 0
+    },
+    "latencyMs": 253.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.825,
+    "probabilities": {
+      "architecture": 0.137,
+      "simplicity": 0.125,
+      "enhanced": 0
+    },
+    "latencyMs": 190,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.901,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.201,
+      "enhanced": 0
+    },
+    "latencyMs": 195.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.848,
+    "probabilities": {
+      "architecture": 0.422,
+      "simplicity": 0.148,
+      "enhanced": 0.5
+    },
+    "latencyMs": 231.3,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.906,
+    "probabilities": {
+      "architecture": 0.467,
+      "simplicity": 0.206,
+      "enhanced": 0.2
+    },
+    "latencyMs": 193.8,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.959,
+    "probabilities": {
+      "architecture": 0.432,
+      "simplicity": 0.259,
+      "enhanced": 0.7
+    },
+    "latencyMs": 272.1,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.888,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.188,
+      "enhanced": 0
+    },
+    "latencyMs": 208.8,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.972,
+    "probabilities": {
+      "architecture": 0.735,
+      "simplicity": 0.272,
+      "enhanced": 0.5
+    },
+    "latencyMs": 266.4,
+    "estimatedCost": 0.2939,
+    "missed": [
+      {
+        "dimension": "simplicity",
+        "note": "[P2] the dead-leader adoption branch has no test and [P2] `append` reads and rewrites the whole log per chunk — both addressed, the test added.",
+        "conversation": 15289
+      }
+    ]
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.984,
+    "probabilities": {
+      "architecture": 0.684,
+      "simplicity": 0.211,
+      "enhanced": 0
+    },
+    "latencyMs": 191.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.912,
+    "probabilities": {
+      "architecture": 0.561,
+      "simplicity": 0.212,
+      "enhanced": 0
+    },
+    "latencyMs": 219.2,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.887,
+    "probabilities": {
+      "architecture": 0.53,
+      "simplicity": 0.187,
+      "enhanced": 0.5
+    },
+    "latencyMs": 224.3,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.877,
+    "probabilities": {
+      "architecture": 0.547,
+      "simplicity": 0.177,
+      "enhanced": 0
+    },
+    "latencyMs": 224.2,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.919,
+    "probabilities": {
+      "architecture": 0.511,
+      "simplicity": 0.219,
+      "enhanced": 0
+    },
+    "latencyMs": 225.5,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.953,
+    "probabilities": {
+      "architecture": 0.464,
+      "simplicity": 0.253,
+      "enhanced": 0.8
+    },
+    "latencyMs": 312.2,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "C",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.967,
+    "probabilities": {
+      "architecture": 0.656,
+      "simplicity": 0.267,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.977,
+    "probabilities": {
+      "architecture": 0.603,
+      "simplicity": 0.323,
+      "enhanced": 0
+    },
+    "latencyMs": 279,
+    "estimatedCost": 0.3117,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.982,
+    "probabilities": {
+      "architecture": 0.718,
+      "simplicity": 0.364,
+      "enhanced": 0
+    },
+    "latencyMs": 223.6,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "C",
+    "ran": [
+      "correctness",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.925,
+    "probabilities": {
+      "architecture": 0.506,
+      "simplicity": 0.375,
+      "enhanced": 0
+    },
+    "latencyMs": 215,
+    "estimatedCost": 0.3117,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.945,
+    "probabilities": {
+      "architecture": 0.417,
+      "simplicity": 0.345,
+      "enhanced": 0
+    },
+    "latencyMs": 333.7,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.956,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.356,
+      "enhanced": 0
+    },
+    "latencyMs": 308,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 1,
+    "probabilities": {
+      "architecture": 0.7,
+      "simplicity": 0.383,
+      "enhanced": 0
+    },
+    "latencyMs": 310.5,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.947,
+    "probabilities": {
+      "architecture": 0.753,
+      "simplicity": 0.337,
+      "enhanced": 0
+    },
+    "latencyMs": 311.4,
+    "estimatedCost": 0.2939,
+    "missed": [
+      {
+        "dimension": "simplicity",
+        "note": "[P3] the SDK exports two constants nobody uses — the landed commit exports `imageMimeTypes` alone.",
+        "conversation": 4223
+      }
+    ]
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.989,
+    "probabilities": {
+      "architecture": 0.798,
+      "simplicity": 0.389,
+      "enhanced": 0
+    },
+    "latencyMs": 344.2,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.804,
+    "probabilities": {
+      "architecture": 0.314,
+      "simplicity": 0.204,
+      "enhanced": 0
+    },
+    "latencyMs": 308.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.992,
+    "probabilities": {
+      "architecture": 0.785,
+      "simplicity": 0.392,
+      "enhanced": 0
+    },
+    "latencyMs": 307.5,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.87,
+    "probabilities": {
+      "architecture": 0.57,
+      "simplicity": 0.243,
+      "enhanced": 0.5
+    },
+    "latencyMs": 315.5,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.864,
+    "probabilities": {
+      "architecture": 0.559,
+      "simplicity": 0.264,
+      "enhanced": 0.2
+    },
+    "latencyMs": 307.7,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.96,
+    "probabilities": {
+      "architecture": 0.455,
+      "simplicity": 0.36,
+      "enhanced": 0.7
+    },
+    "latencyMs": 351.8,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.924,
+    "probabilities": {
+      "architecture": 0.776,
+      "simplicity": 0.252,
+      "enhanced": 0
+    },
+    "latencyMs": 312.7,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.95,
+    "probabilities": {
+      "architecture": 0.494,
+      "simplicity": 0.45,
+      "enhanced": 0.5
+    },
+    "latencyMs": 349.1,
+    "estimatedCost": 0.3117,
+    "missed": [
+      {
+        "dimension": "architecture",
+        "note": "[P2] the finish card is at-most-once (`reported` set before the card) and [P2] a job's log routine is a second copy of automations', plus [P2] the leftover count crossing the boundary through a string literal — all three addressed.",
+        "conversation": 15322
+      }
+    ]
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.957,
+    "probabilities": {
+      "architecture": 0.657,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 309.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.954,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.334,
+      "enhanced": 0
+    },
+    "latencyMs": 313.7,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.883,
+    "probabilities": {
+      "architecture": 0.583,
+      "simplicity": 0.231,
+      "enhanced": 0.5
+    },
+    "latencyMs": 315.6,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.926,
+    "probabilities": {
+      "architecture": 0.774,
+      "simplicity": 0.297,
+      "enhanced": 0
+    },
+    "latencyMs": 316.9,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.996,
+    "probabilities": {
+      "architecture": 0.65,
+      "simplicity": 0.396,
+      "enhanced": 0
+    },
+    "latencyMs": 318.2,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.974,
+    "probabilities": {
+      "architecture": 0.546,
+      "simplicity": 0.374,
+      "enhanced": 0.8
+    },
+    "latencyMs": 384.8,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.957,
+    "probabilities": {
+      "architecture": 0.607,
+      "simplicity": 0.357,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.966,
+    "probabilities": {
+      "architecture": 0.652,
+      "simplicity": 0.366,
+      "enhanced": 0
+    },
+    "latencyMs": 349.4,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "D",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.918,
+    "probabilities": {
+      "architecture": 0.618,
+      "simplicity": 0.226,
+      "enhanced": 0
+    },
+    "latencyMs": 314.9,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "D",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.98,
+    "probabilities": {
+      "architecture": 0.72,
+      "simplicity": 0.493,
+      "enhanced": 0
+    },
+    "latencyMs": 312.6,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "unknown-type"
+    ],
+    "uncertainty": 0.791,
+    "probabilities": {
+      "architecture": 0.427,
+      "simplicity": 0.409,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.935,
+    "probabilities": {
+      "architecture": 0.429,
+      "simplicity": 0.265,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.941,
+    "probabilities": {
+      "architecture": 0.371,
+      "simplicity": 0.259,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.882,
+    "probabilities": {
+      "architecture": 0.486,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.97,
+    "probabilities": {
+      "architecture": 0.592,
+      "simplicity": 0.23,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.937,
+    "probabilities": {
+      "architecture": 0.137,
+      "simplicity": 0.125,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.999,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.201,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "unknown-type",
+      "uncertain"
+    ],
+    "uncertainty": 0.948,
+    "probabilities": {
+      "architecture": 0.422,
+      "simplicity": 0.148,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.994,
+    "probabilities": {
+      "architecture": 0.467,
+      "simplicity": 0.206,
+      "enhanced": 0.2
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.941,
+    "probabilities": {
+      "architecture": 0.432,
+      "simplicity": 0.259,
+      "enhanced": 0.7
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.988,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.188,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.928,
+    "probabilities": {
+      "architecture": 0.735,
+      "simplicity": 0.272,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.989,
+    "probabilities": {
+      "architecture": 0.684,
+      "simplicity": 0.211,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.988,
+    "probabilities": {
+      "architecture": 0.561,
+      "simplicity": 0.212,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.987,
+    "probabilities": {
+      "architecture": 0.53,
+      "simplicity": 0.187,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.977,
+    "probabilities": {
+      "architecture": 0.547,
+      "simplicity": 0.177,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.981,
+    "probabilities": {
+      "architecture": 0.511,
+      "simplicity": 0.219,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "schema",
+      "checks-failed",
+      "uncertain"
+    ],
+    "uncertainty": 0.947,
+    "probabilities": {
+      "architecture": 0.464,
+      "simplicity": 0.253,
+      "enhanced": 0.8
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "uncertain"
+    ],
+    "uncertainty": 0.933,
+    "probabilities": {
+      "architecture": 0.656,
+      "simplicity": 0.267,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.877,
+    "probabilities": {
+      "architecture": 0.603,
+      "simplicity": 0.323,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.836,
+    "probabilities": {
+      "architecture": 0.718,
+      "simplicity": 0.364,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "E8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.825,
+    "probabilities": {
+      "architecture": 0.506,
+      "simplicity": 0.375,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "unknown-type",
+      "uncertain"
+    ],
+    "uncertainty": 0.855,
+    "probabilities": {
+      "architecture": 0.417,
+      "simplicity": 0.345,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.844,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.356,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.817,
+    "probabilities": {
+      "architecture": 0.7,
+      "simplicity": 0.383,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.863,
+    "probabilities": {
+      "architecture": 0.753,
+      "simplicity": 0.337,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.811,
+    "probabilities": {
+      "architecture": 0.798,
+      "simplicity": 0.389,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.996,
+    "probabilities": {
+      "architecture": 0.314,
+      "simplicity": 0.204,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.808,
+    "probabilities": {
+      "architecture": 0.785,
+      "simplicity": 0.392,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "unknown-type",
+      "uncertain"
+    ],
+    "uncertainty": 0.957,
+    "probabilities": {
+      "architecture": 0.57,
+      "simplicity": 0.243,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.936,
+    "probabilities": {
+      "architecture": 0.559,
+      "simplicity": 0.264,
+      "enhanced": 0.2
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large"
+    ],
+    "uncertainty": 0.84,
+    "probabilities": {
+      "architecture": 0.455,
+      "simplicity": 0.36,
+      "enhanced": 0.7
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.948,
+    "probabilities": {
+      "architecture": 0.776,
+      "simplicity": 0.252,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.75,
+    "probabilities": {
+      "architecture": 0.494,
+      "simplicity": 0.45,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.882,
+    "probabilities": {
+      "architecture": 0.657,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large",
+      "uncertain"
+    ],
+    "uncertainty": 0.866,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.334,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.969,
+    "probabilities": {
+      "architecture": 0.583,
+      "simplicity": 0.231,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.903,
+    "probabilities": {
+      "architecture": 0.774,
+      "simplicity": 0.297,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.804,
+    "probabilities": {
+      "architecture": 0.65,
+      "simplicity": 0.396,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "schema",
+      "checks-failed"
+    ],
+    "uncertainty": 0.826,
+    "probabilities": {
+      "architecture": 0.546,
+      "simplicity": 0.374,
+      "enhanced": 0.8
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed"
+    ],
+    "uncertainty": 0.843,
+    "probabilities": {
+      "architecture": 0.607,
+      "simplicity": 0.357,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.834,
+    "probabilities": {
+      "architecture": 0.652,
+      "simplicity": 0.366,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "uncertain"
+    ],
+    "uncertainty": 0.974,
+    "probabilities": {
+      "architecture": 0.618,
+      "simplicity": 0.226,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "E2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.707,
+    "probabilities": {
+      "architecture": 0.72,
+      "simplicity": 0.493,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "unknown-type"
+    ],
+    "uncertainty": 0.927,
+    "probabilities": {
+      "architecture": 0.427,
+      "simplicity": 0.409,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.929,
+    "probabilities": {
+      "architecture": 0.429,
+      "simplicity": 0.265,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.871,
+    "probabilities": {
+      "architecture": 0.371,
+      "simplicity": 0.259,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.986,
+    "probabilities": {
+      "architecture": 0.486,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.908,
+    "probabilities": {
+      "architecture": 0.592,
+      "simplicity": 0.23,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "F8",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.637,
+    "probabilities": {
+      "architecture": 0.137,
+      "simplicity": 0.125,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.99,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.201,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "unknown-type"
+    ],
+    "uncertainty": 0.922,
+    "probabilities": {
+      "architecture": 0.422,
+      "simplicity": 0.148,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "large"
+    ],
+    "uncertainty": 0.967,
+    "probabilities": {
+      "architecture": 0.467,
+      "simplicity": 0.206,
+      "enhanced": 0.2
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large"
+    ],
+    "uncertainty": 0.932,
+    "probabilities": {
+      "architecture": 0.432,
+      "simplicity": 0.259,
+      "enhanced": 0.7
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.99,
+    "probabilities": {
+      "architecture": 0.51,
+      "simplicity": 0.188,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.772,
+    "probabilities": {
+      "architecture": 0.735,
+      "simplicity": 0.272,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.816,
+    "probabilities": {
+      "architecture": 0.684,
+      "simplicity": 0.211,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.939,
+    "probabilities": {
+      "architecture": 0.561,
+      "simplicity": 0.212,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.97,
+    "probabilities": {
+      "architecture": 0.53,
+      "simplicity": 0.187,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.953,
+    "probabilities": {
+      "architecture": 0.547,
+      "simplicity": 0.177,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.989,
+    "probabilities": {
+      "architecture": 0.511,
+      "simplicity": 0.219,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "schema",
+      "checks-failed"
+    ],
+    "uncertainty": 0.964,
+    "probabilities": {
+      "architecture": 0.464,
+      "simplicity": 0.253,
+      "enhanced": 0.8
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed"
+    ],
+    "uncertainty": 0.844,
+    "probabilities": {
+      "architecture": 0.656,
+      "simplicity": 0.267,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.897,
+    "probabilities": {
+      "architecture": 0.603,
+      "simplicity": 0.323,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.864,
+    "probabilities": {
+      "architecture": 0.718,
+      "simplicity": 0.364,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "F8",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.994,
+    "probabilities": {
+      "architecture": 0.506,
+      "simplicity": 0.375,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-750-27a6671a",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "unknown-type"
+    ],
+    "uncertainty": 0.917,
+    "probabilities": {
+      "architecture": 0.417,
+      "simplicity": 0.345,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-1006-314e7986",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.856,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.356,
+      "enhanced": 0
+    },
+    "latencyMs": 0.5,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-2903-8d2f06b4",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.883,
+    "probabilities": {
+      "architecture": 0.7,
+      "simplicity": 0.383,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-3055-066f6a46",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
+    "uncertainty": 0.837,
+    "probabilities": {
+      "architecture": 0.753,
+      "simplicity": 0.337,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-4589-b652fe45",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.889,
+    "probabilities": {
+      "architecture": 0.798,
+      "simplicity": 0.389,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-6420-c8ce2758",
+    "strategy": "F2",
+    "ran": [
+      "correctness"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.814,
+    "probabilities": {
+      "architecture": 0.314,
+      "simplicity": 0.204,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.223,
+    "missed": []
+  },
+  {
+    "case": "wo-7252-8a15a25a",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.892,
+    "probabilities": {
+      "architecture": 0.785,
+      "simplicity": 0.392,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-7341-20a0462e",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "unknown-type"
+    ],
+    "uncertainty": 0.93,
+    "probabilities": {
+      "architecture": 0.57,
+      "simplicity": 0.243,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11247-06a2bc13",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "large"
+    ],
+    "uncertainty": 0.941,
+    "probabilities": {
+      "architecture": 0.559,
+      "simplicity": 0.264,
+      "enhanced": 0.2
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-11307-793d7404",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large"
+    ],
+    "uncertainty": 0.955,
+    "probabilities": {
+      "architecture": 0.455,
+      "simplicity": 0.36,
+      "enhanced": 0.7
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-12385-2c4b2098",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.752,
+    "probabilities": {
+      "architecture": 0.776,
+      "simplicity": 0.252,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-13069-af91500a",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.994,
+    "probabilities": {
+      "architecture": 0.494,
+      "simplicity": 0.45,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-16671-eb28f8f2",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.843,
+    "probabilities": {
+      "architecture": 0.657,
+      "simplicity": 0.318,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-17250-708ca677",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.846,
+    "probabilities": {
+      "architecture": 0.654,
+      "simplicity": 0.334,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-18050-3e10b6d9",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.917,
+    "probabilities": {
+      "architecture": 0.583,
+      "simplicity": 0.231,
+      "enhanced": 0.5
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-18577-b811cb64",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.797,
+    "probabilities": {
+      "architecture": 0.774,
+      "simplicity": 0.297,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-19703-ea7a5340",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.896,
+    "probabilities": {
+      "architecture": 0.65,
+      "simplicity": 0.396,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-20877-315f52d0",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "schema",
+      "checks-failed"
+    ],
+    "uncertainty": 0.954,
+    "probabilities": {
+      "architecture": 0.546,
+      "simplicity": 0.374,
+      "enhanced": 0.8
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-22139-6d26a6b3",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "checks-failed"
+    ],
+    "uncertainty": 0.893,
+    "probabilities": {
+      "architecture": 0.607,
+      "simplicity": 0.357,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-23051-4b91ee22",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
+    "mode": "full-team",
+    "overrides": [
+      "large"
+    ],
+    "uncertainty": 0.866,
+    "probabilities": {
+      "architecture": 0.652,
+      "simplicity": 0.366,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.3827,
+    "missed": []
+  },
+  {
+    "case": "wo-25149-c2248f64",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.882,
+    "probabilities": {
+      "architecture": 0.618,
+      "simplicity": 0.226,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  },
+  {
+    "case": "wo-28007-532f8b5b",
+    "strategy": "F2",
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
+    "mode": "routed",
+    "overrides": [],
+    "uncertainty": 0.993,
+    "probabilities": {
+      "architecture": 0.72,
+      "simplicity": 0.493,
+      "enhanced": 0
+    },
+    "latencyMs": 0,
+    "estimatedCost": 0.2939,
+    "missed": []
+  }
+]

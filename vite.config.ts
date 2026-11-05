@@ -190,8 +190,13 @@ export default defineConfig({
     options: { denyWarnings: true, typeAware: true, typeCheck: true },
   },
   // The project's settings file is machine-owned: Ultimate writes it with `JSON.stringify(…, 2)`, which keeps its
-  // arrays expanded, so formatting it by hand is undone by the next families save in the panel.
-  fmt: { semi: false, singleQuote: true, ignorePatterns: ['.ultimate/settings.json'] },
+  // arrays expanded, so formatting it by hand is undone by the next families save in the panel. The experiment's
+  // results are machine output too: the harness rewrites them on every run.
+  fmt: {
+    semi: false,
+    singleQuote: true,
+    ignorePatterns: ['.ultimate/settings.json', 'research/review-routing/results/'],
+  },
   test: {
     root: '.',
     globalSetup: ['test/sweep-temp.ts'],

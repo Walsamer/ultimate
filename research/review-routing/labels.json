@@ -1,0 +1,106 @@
+{
+  "$comment": [
+    "Ground truth for the three work orders that were independently reviewed, hand-read from the reviewers' own reports and from the commits the coordinator made afterwards.",
+    "`actioned` means the change was altered in response to that dimension's finding(s) before landing — a blocking finding in practice, whatever priority the reviewer gave it (a P3 the coordinator acts on blocks just as much as a P2).",
+    "A dimension that did not run has `ran: false` and no label: that is insufficient evidence, not a negative.",
+    "Sources: conversation ids name the reviewer's own conversation in the state store; `fixedIn` names the commit that addressed the finding."
+  ],
+  "wo-3055-066f6a46": {
+    "reviewedBase": "7616eaa93759ee4a6999d165749894e946937a93",
+    "reviewedHead": "066f6a46cc9ffbb9543daf48dcf9b794541f8ceb",
+    "landedAs": "3b555592541826cef07b73ab80d13c2d86224d72",
+    "dimensions": {
+      "correctness": {
+        "ran": true,
+        "conversation": 4234,
+        "verdict": "APPROVED",
+        "findings": 6,
+        "maxPriority": "P3",
+        "actioned": true,
+        "fixedIn": "3b555592541826cef07b73ab80d13c2d86224d72",
+        "note": "[P3] the precedence comment promises an override the code does not have — the landed commit reverses the iteration order (`composerInputs`) and rewrites the comment, which is a behaviour change, not a comment fix."
+      },
+      "architecture": {
+        "ran": true,
+        "conversation": 4201,
+        "verdict": "APPROVED",
+        "findings": 5,
+        "maxPriority": "P3",
+        "actioned": true,
+        "fixedIn": "3b555592541826cef07b73ab80d13c2d86224d72",
+        "note": "[P3] what a handler shows renders as core UI with no boundary and no extension name — the landed commit carries `{ extension, version }` per handler and wraps the shown node in a boundary."
+      },
+      "simplicity": {
+        "ran": true,
+        "conversation": 4223,
+        "verdict": "APPROVED",
+        "findings": 8,
+        "maxPriority": "P3",
+        "actioned": true,
+        "fixedIn": "3b555592541826cef07b73ab80d13c2d86224d72",
+        "note": "[P3] the SDK exports two constants nobody uses — the landed commit exports `imageMimeTypes` alone."
+      }
+    }
+  },
+  "wo-13069-af91500a": {
+    "reviewedBase": "85d194280425c6f34a8ad6e311e85d12914a12d7",
+    "reviewedHead": "af91500aed4387ff68fd2270eb9cdf2244944dc6",
+    "landedAs": "442afa8c1d8d47a3ab30c83629116994e305ce27",
+    "dimensions": {
+      "correctness": {
+        "ran": true,
+        "conversation": 15311,
+        "verdict": "APPROVED",
+        "findings": 6,
+        "maxPriority": "P3",
+        "actioned": false,
+        "note": "[P3] the spill file is truncated when output arrives after `spill.finish()` — not addressed by the follow-up commit; only the shell-call rename reached `server/owned-env.ts`."
+      },
+      "architecture": {
+        "ran": true,
+        "conversation": 15322,
+        "verdict": "APPROVED",
+        "findings": 10,
+        "maxPriority": "P2",
+        "actioned": true,
+        "fixedIn": "442afa8c1d8d47a3ab30c83629116994e305ce27",
+        "note": "[P2] the finish card is at-most-once (`reported` set before the card) and [P2] a job's log routine is a second copy of automations', plus [P2] the leftover count crossing the boundary through a string literal — all three addressed."
+      },
+      "simplicity": {
+        "ran": true,
+        "conversation": 15289,
+        "verdict": "APPROVED",
+        "findings": 15,
+        "maxPriority": "P2",
+        "actioned": true,
+        "fixedIn": "442afa8c1d8d47a3ab30c83629116994e305ce27",
+        "note": "[P2] the dead-leader adoption branch has no test and [P2] `append` reads and rewrites the whole log per chunk — both addressed, the test added."
+      }
+    }
+  },
+  "wo-22139-6d26a6b3": {
+    "reviewedBase": "7d088f5bb715cd4a37831cc1085e4b6dca51a5a5",
+    "reviewedHead": "6d26a6b3c4ecd1feca5f039aa4a695ad2e24fe45",
+    "landedAs": "8290debadc76868783c50d532768eb7f3f5088a3",
+    "dimensions": {
+      "correctness": {
+        "ran": true,
+        "conversation": 23882,
+        "verdict": "NEEDS CHANGES",
+        "findings": 4,
+        "maxPriority": "P2",
+        "actioned": true,
+        "fixedIn": "3c0b2d76d5fae105f9b4ca9c796818c90909c3c9",
+        "note": "[P2] `switchBack` drops the pending return on unsettled login evidence — fixed, and a2fddafa adds the test the review asked for; the [P3] naming the family model is fixed in the same commit."
+      },
+      "architecture": {
+        "ran": false,
+        "note": "no architecture reviewer was started for this work order: insufficient evidence, not a negative"
+      },
+      "simplicity": {
+        "ran": false,
+        "note": "no simplicity reviewer was started for this work order: insufficient evidence, not a negative"
+      }
+    }
+  }
+}

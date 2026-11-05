@@ -1,0 +1,398 @@
+{
+  "measured": {
+    "source": "pi.usage of conversations 4005, 4201, 4223, 4234, 15240, 15289, 15311, 15322, 23882",
+    "teamCost": {
+      "wo-3055-066f6a46": 0.3311,
+      "wo-13069-af91500a": 0.4338
+    },
+    "solo": 0.0882,
+    "perDimension": {
+      "correctness": [0.1013, 0.1806],
+      "architecture": [0.0338, 0.1081],
+      "simplicity": [0.0634, 0.1141]
+    }
+  },
+  "cases": 22,
+  "labelled": 3,
+  "calibration": {
+    "B": {
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "recall": 1,
+      "runs": 3,
+      "labelled": 1,
+      "actioned": 1
+    },
+    "C": {
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "recall": 1,
+      "runs": 3,
+      "labelled": 1,
+      "actioned": 1
+    },
+    "D": {
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "recall": 1,
+      "runs": 3,
+      "labelled": 1,
+      "actioned": 1
+    },
+    "E8": {
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "recall": 1,
+      "runs": 3,
+      "labelled": 1,
+      "actioned": 1
+    },
+    "E2": {
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "recall": 1,
+      "runs": 3,
+      "labelled": 1,
+      "actioned": 1
+    },
+    "F8": "hand-set 0.5/0.5, no abstain",
+    "F2": "hand-set 0.5/0.5, no abstain"
+  },
+  "agreement": {
+    "B": 1,
+    "C": 0.82,
+    "D": 0.82,
+    "E8": 0.82,
+    "E2": 0.82,
+    "F8": 0.82,
+    "F2": 0.82
+  },
+  "summary": [
+    {
+      "strategy": "A",
+      "label": "baseline: the full team, as today",
+      "thresholds": null,
+      "calibration": null,
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": null,
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 0,
+      "modelUnavailable": 0
+    },
+    {
+      "strategy": "B",
+      "label": "deterministic rules only",
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "calibration": {
+        "thresholds": {
+          "architecture": 0.2,
+          "simplicity": 0.2
+        },
+        "recall": 1,
+        "runs": 3,
+        "labelled": 1,
+        "actioned": 1
+      },
+      "meanInvocations": 2.77,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 21,
+        "simplicity": 18
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3633,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 7,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": null,
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 0,
+      "modelUnavailable": 0
+    },
+    {
+      "strategy": "C",
+      "label": "0.8B v3, model alone",
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "calibration": {
+        "thresholds": {
+          "architecture": 0.2,
+          "simplicity": 0.2
+        },
+        "recall": 1,
+        "runs": 3,
+        "labelled": 1,
+        "actioned": 1
+      },
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    },
+    {
+      "strategy": "D",
+      "label": "2B v4, model alone",
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "calibration": {
+        "thresholds": {
+          "architecture": 0.2,
+          "simplicity": 0.2
+        },
+        "recall": 1,
+        "runs": 3,
+        "labelled": 1,
+        "actioned": 1
+      },
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    },
+    {
+      "strategy": "E8",
+      "label": "hybrid: 0.8B + rules overrides + abstain",
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "calibration": {
+        "thresholds": {
+          "architecture": 0.2,
+          "simplicity": 0.2
+        },
+        "recall": 1,
+        "runs": 3,
+        "labelled": 1,
+        "actioned": 1
+      },
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    },
+    {
+      "strategy": "E2",
+      "label": "hybrid: 2B v4 + rules overrides + abstain",
+      "thresholds": {
+        "architecture": 0.2,
+        "simplicity": 0.2
+      },
+      "calibration": {
+        "thresholds": {
+          "architecture": 0.2,
+          "simplicity": 0.2
+        },
+        "recall": 1,
+        "runs": 3,
+        "labelled": 1,
+        "actioned": 1
+      },
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    },
+    {
+      "strategy": "F8",
+      "label": "0.8B + rules overrides, hand-set 0.5/0.5 threshold, no abstain",
+      "thresholds": {
+        "architecture": 0.5,
+        "simplicity": 0.5
+      },
+      "calibration": "hand-set 0.5/0.5, no abstain",
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    },
+    {
+      "strategy": "F2",
+      "label": "2B v4 + rules overrides, hand-set 0.5/0.5 threshold, no abstain",
+      "thresholds": {
+        "architecture": 0.5,
+        "simplicity": 0.5
+      },
+      "calibration": "hand-set 0.5/0.5, no abstain",
+      "meanInvocations": 3,
+      "invocations": {
+        "correctness": 22,
+        "architecture": 22,
+        "simplicity": 22
+      },
+      "heldOutActioned": 5,
+      "heldOutCaught": 5,
+      "heldOutRecall": 1,
+      "missedActioned": [],
+      "estimatedCostPerWorkOrder": 0.3826,
+      "costPerCorrectlyReviewed": 0.3827,
+      "labelledWorkOrders": 3,
+      "labelledCorrect": 3,
+      "decidedByTheModelAlone": 0,
+      "measuredBaselinePerWorkOrder": 0.3826,
+      "latencyMs": {
+        "median": 0,
+        "samples": 0
+      },
+      "modelCalls": {
+        "2": 0,
+        "0.8": 0
+      },
+      "abstained": 22,
+      "modelUnavailable": 22
+    }
+  ]
+}
