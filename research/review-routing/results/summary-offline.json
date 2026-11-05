@@ -7,9 +7,18 @@
     },
     "solo": 0.0882,
     "perDimension": {
-      "correctness": [0.1013, 0.1806],
-      "architecture": [0.0338, 0.1081],
-      "simplicity": [0.0634, 0.1141]
+      "correctness": [
+        0.1013,
+        0.1806
+      ],
+      "architecture": [
+        0.0338,
+        0.1081
+      ],
+      "simplicity": [
+        0.0634,
+        0.1141
+      ]
     }
   },
   "cases": 22,

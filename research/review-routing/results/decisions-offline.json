@@ -2,7 +2,11 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -18,7 +22,11 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -34,7 +42,11 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -50,7 +62,11 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -66,7 +82,11 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -82,7 +102,11 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -98,7 +122,11 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -114,7 +142,11 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -130,7 +162,11 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -146,7 +182,11 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -162,7 +202,11 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -178,7 +222,11 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -194,7 +242,11 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -210,7 +262,11 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -226,7 +282,11 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -242,7 +302,11 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -258,7 +322,11 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -274,7 +342,11 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -290,7 +362,11 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -306,7 +382,11 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -322,7 +402,11 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -338,7 +422,11 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "A",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
     "overrides": [],
     "uncertainty": 0,
@@ -354,9 +442,16 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "unknown-type"],
+    "overrides": [
+      "checks-failed",
+      "unknown-type"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0,
@@ -370,9 +465,16 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large"],
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
     "uncertainty": 0.9,
     "probabilities": {
       "architecture": 0.3,
@@ -386,9 +488,15 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.9,
     "probabilities": {
       "architecture": 0.3,
@@ -402,9 +510,16 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large"],
+    "overrides": [
+      "checks-failed",
+      "large"
+    ],
     "uncertainty": 0.75,
     "probabilities": {
       "architecture": 0.45,
@@ -418,9 +533,15 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.6,
     "probabilities": {
       "architecture": 0.6,
@@ -434,7 +555,9 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "B",
-    "ran": ["correctness"],
+    "ran": [
+      "correctness"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 0.8,
@@ -450,9 +573,15 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.9,
     "probabilities": {
       "architecture": 0.3,
@@ -466,9 +595,15 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["unknown-type"],
+    "overrides": [
+      "unknown-type"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0,
@@ -482,9 +617,16 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "large"],
+    "overrides": [
+      "dependency",
+      "large"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -498,9 +640,17 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "unknown-type", "large"],
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large"
+    ],
     "uncertainty": 0.6,
     "probabilities": {
       "architecture": 0.95,
@@ -514,9 +664,15 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.9,
     "probabilities": {
       "architecture": 0.3,
@@ -530,9 +686,15 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.6,
     "probabilities": {
       "architecture": 0.65,
@@ -546,7 +708,11 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 1,
@@ -562,9 +728,15 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0.6,
@@ -578,7 +750,11 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 1,
@@ -594,7 +770,10 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "B",
-    "ran": ["correctness", "architecture"],
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 0.8,
@@ -610,7 +789,11 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 1,
@@ -626,9 +809,16 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["schema", "checks-failed"],
+    "overrides": [
+      "schema",
+      "checks-failed"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0.95,
@@ -642,9 +832,15 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed"],
+    "overrides": [
+      "checks-failed"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0.6,
@@ -658,9 +854,15 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "B",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large"],
+    "overrides": [
+      "large"
+    ],
     "uncertainty": 0.8,
     "probabilities": {
       "architecture": 0.6,
@@ -674,7 +876,10 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "B",
-    "ran": ["correctness", "architecture"],
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 0.8,
@@ -690,7 +895,10 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "B",
-    "ran": ["correctness", "architecture"],
+    "ran": [
+      "correctness",
+      "architecture"
+    ],
     "mode": "routed",
     "overrides": [],
     "uncertainty": 1,
@@ -706,9 +914,15 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -722,9 +936,15 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -738,9 +958,15 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -754,9 +980,15 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -770,9 +1002,15 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -786,9 +1024,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -802,9 +1046,15 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -818,9 +1068,15 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -834,9 +1090,15 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -850,9 +1112,15 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -866,9 +1134,15 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -882,9 +1156,15 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -898,9 +1178,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -914,9 +1200,15 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -930,9 +1222,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -946,9 +1244,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -962,9 +1266,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -978,9 +1288,15 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -994,9 +1310,15 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1010,9 +1332,15 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1026,9 +1354,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1042,9 +1376,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "C",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1058,9 +1398,15 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1074,9 +1420,15 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1090,9 +1442,15 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1106,9 +1464,15 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -1122,9 +1486,15 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1138,9 +1508,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1154,9 +1530,15 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1170,9 +1552,15 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1186,9 +1574,15 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1202,9 +1596,15 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -1218,9 +1618,15 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1234,9 +1640,15 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -1250,9 +1662,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1266,9 +1684,15 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1282,9 +1706,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1298,9 +1728,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -1314,9 +1750,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1330,9 +1772,15 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -1346,9 +1794,15 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1362,9 +1816,15 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1378,9 +1838,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1394,9 +1860,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "D",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1410,9 +1882,17 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "unknown-type", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1426,9 +1906,17 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1442,9 +1930,16 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1458,9 +1953,17 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -1474,9 +1977,16 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1490,9 +2000,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1506,9 +2022,16 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1522,9 +2045,16 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["unknown-type", "model-unavailable"],
+    "overrides": [
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1538,9 +2068,17 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1554,9 +2092,18 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "unknown-type", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -1570,9 +2117,16 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1586,9 +2140,16 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -1602,9 +2163,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1618,9 +2185,16 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1634,9 +2208,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1650,9 +2230,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -1666,9 +2252,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1682,9 +2274,17 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["schema", "checks-failed", "model-unavailable"],
+    "overrides": [
+      "schema",
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -1698,9 +2298,16 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1714,9 +2321,16 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1730,9 +2344,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1746,9 +2366,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "E8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1762,9 +2388,17 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "unknown-type", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1778,9 +2412,17 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1794,9 +2436,16 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1810,9 +2459,17 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -1826,9 +2483,16 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1842,9 +2506,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1858,9 +2528,16 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1874,9 +2551,16 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["unknown-type", "model-unavailable"],
+    "overrides": [
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -1890,9 +2574,17 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -1906,9 +2598,18 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "unknown-type", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -1922,9 +2623,16 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1938,9 +2646,16 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -1954,9 +2669,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -1970,9 +2691,16 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -1986,9 +2714,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2002,9 +2736,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -2018,9 +2758,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2034,9 +2780,17 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["schema", "checks-failed", "model-unavailable"],
+    "overrides": [
+      "schema",
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -2050,9 +2804,16 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2066,9 +2827,16 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2082,9 +2850,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2098,9 +2872,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "E2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -2114,9 +2894,17 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "unknown-type", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2130,9 +2918,17 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2146,9 +2942,16 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2162,9 +2965,17 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -2178,9 +2989,16 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2194,9 +3012,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2210,9 +3034,16 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2226,9 +3057,16 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["unknown-type", "model-unavailable"],
+    "overrides": [
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2242,9 +3080,17 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -2258,9 +3104,18 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "unknown-type", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -2274,9 +3129,16 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2290,9 +3152,16 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -2306,9 +3175,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2322,9 +3197,16 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2338,9 +3220,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2354,9 +3242,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -2370,9 +3264,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2386,9 +3286,17 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["schema", "checks-failed", "model-unavailable"],
+    "overrides": [
+      "schema",
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -2402,9 +3310,16 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2418,9 +3333,16 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2434,9 +3356,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2450,9 +3378,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "F8",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -2466,9 +3400,17 @@
   {
     "case": "wo-750-27a6671a",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "unknown-type", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2482,9 +3424,17 @@
   {
     "case": "wo-1006-314e7986",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2498,9 +3448,16 @@
   {
     "case": "wo-2903-8d2f06b4",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2514,9 +3471,17 @@
   {
     "case": "wo-3055-066f6a46",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "large", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.45,
@@ -2530,9 +3495,16 @@
   {
     "case": "wo-4589-b652fe45",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2546,9 +3518,15 @@
   {
     "case": "wo-6420-c8ce2758",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2562,9 +3540,16 @@
   {
     "case": "wo-7252-8a15a25a",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2578,9 +3563,16 @@
   {
     "case": "wo-7341-20a0462e",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["unknown-type", "model-unavailable"],
+    "overrides": [
+      "unknown-type",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0,
@@ -2594,9 +3586,17 @@
   {
     "case": "wo-11247-06a2bc13",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,
@@ -2610,9 +3610,18 @@
   {
     "case": "wo-11307-793d7404",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["dependency", "unknown-type", "large", "model-unavailable"],
+    "overrides": [
+      "dependency",
+      "unknown-type",
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -2626,9 +3635,16 @@
   {
     "case": "wo-12385-2c4b2098",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2642,9 +3658,16 @@
   {
     "case": "wo-13069-af91500a",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.65,
@@ -2658,9 +3681,15 @@
   {
     "case": "wo-16671-eb28f8f2",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.3,
@@ -2674,9 +3703,16 @@
   {
     "case": "wo-17250-708ca677",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2690,9 +3726,15 @@
   {
     "case": "wo-18050-3e10b6d9",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2706,9 +3748,15 @@
   {
     "case": "wo-18577-b811cb64",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.5,
@@ -2722,9 +3770,15 @@
   {
     "case": "wo-19703-ea7a5340",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2738,9 +3792,17 @@
   {
     "case": "wo-20877-315f52d0",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["schema", "checks-failed", "model-unavailable"],
+    "overrides": [
+      "schema",
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.95,
@@ -2754,9 +3816,16 @@
   {
     "case": "wo-22139-6d26a6b3",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["checks-failed", "model-unavailable"],
+    "overrides": [
+      "checks-failed",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2770,9 +3839,16 @@
   {
     "case": "wo-23051-4b91ee22",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["large", "model-unavailable"],
+    "overrides": [
+      "large",
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2786,9 +3862,15 @@
   {
     "case": "wo-25149-c2248f64",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.6,
@@ -2802,9 +3884,15 @@
   {
     "case": "wo-28007-532f8b5b",
     "strategy": "F2",
-    "ran": ["correctness", "architecture", "simplicity"],
+    "ran": [
+      "correctness",
+      "architecture",
+      "simplicity"
+    ],
     "mode": "full-team",
-    "overrides": ["model-unavailable"],
+    "overrides": [
+      "model-unavailable"
+    ],
     "uncertainty": 1,
     "probabilities": {
       "architecture": 0.2,

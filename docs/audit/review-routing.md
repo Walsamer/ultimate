@@ -149,12 +149,12 @@ labelled dimension) and scored on the odd-indexed half (six labelled dimensions,
 | --- | -------------------------------------------- | ---------------------------: | -------------- | -----------------------: | --------------: | ---------------------: | ------------: |
 | A   | baseline: the full team                      |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |             — |
 | B   | **deterministic rules only**                 |                         2.77 | 22/21/18       |               **$0.363** |        **1.00** |                  **0** |             — |
-| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        224 ms |
-| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        315 ms |
-| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        224 ms |
-| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        315 ms |
-| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        224 ms |
-| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        224 ms |
+| C   | 0.8B, model alone                            |                         1.32 | 22/2/5         |                   $0.250 |        **0.60** |                  **2** |        240 ms |
+| D   | 2B v4, model alone                           |                         1.36 | 22/6/2         |                   $0.250 |        **0.60** |                  **2** |        332 ms |
+| E8  | hybrid: 0.8B + overrides + abstain (fitted)  |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        240 ms |
+| E2  | hybrid: 2B v4 + overrides + abstain (fitted) |                         3.00 | 22/22/22       |                   $0.383 |            1.00 |                      0 |        332 ms |
+| F8  | 0.8B + overrides, hand-set 0.5 threshold     |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        240 ms |
+| F2  | 2B v4 + overrides, hand-set 0.5 threshold    |                         2.64 | 22/21/15       |                   $0.351 |            1.00 |                      0 |        240 ms |
 
 Cost per **correctly reviewed** work order — the brief's metric, spend over the labelled work orders whose
 every actioned dimension still ran:
@@ -184,9 +184,9 @@ money is untested, while the part that was tested is wrong.
 work orders; the other 15 were forced to the full team by the overrides. Everything the model contributed on
 top of the rules was the simplification of unlabelled cases.
 
-**Local latency here is 224 ms (0.8B) and 315 ms (2B)**, lower than §4's figures because the harness sends a
-~700-byte state (`describeFacts`) rather than a 2.7 KB body — and the order between the two releases flips
-with input length, so neither is "the fast one".
+**Local latency here is 240 ms (0.8B) and 332 ms (2B)**, lower than §4's figures because the harness sends a
+~700-byte state (`describeFacts`) rather than a 2.7 KB body; across three runs the medians were 224–240 ms and
+315–332 ms, and the order between the two releases flips with input length, so neither is "the fast one".
 
 **Failure path, measured.** With nothing listening, every model strategy abstained on all 22 cases (mode
 `full-team`, override `model-unavailable`) and made zero model calls

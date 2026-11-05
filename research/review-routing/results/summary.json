@@ -204,7 +204,7 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 224,
+        "median": 240,
         "samples": 22
       },
       "modelCalls": {
@@ -261,7 +261,7 @@
       "decidedByTheModelAlone": 22,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 315,
+        "median": 332,
         "samples": 22
       },
       "modelCalls": {
@@ -305,7 +305,7 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 224,
+        "median": 240,
         "samples": 22
       },
       "modelCalls": {
@@ -349,7 +349,7 @@
       "decidedByTheModelAlone": 2,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 315,
+        "median": 332,
         "samples": 22
       },
       "modelCalls": {
@@ -384,7 +384,7 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 224,
+        "median": 240,
         "samples": 22
       },
       "modelCalls": {
@@ -419,7 +419,7 @@
       "decidedByTheModelAlone": 7,
       "measuredBaselinePerWorkOrder": 0.3826,
       "latencyMs": {
-        "median": 224,
+        "median": 240,
         "samples": 22
       },
       "modelCalls": {

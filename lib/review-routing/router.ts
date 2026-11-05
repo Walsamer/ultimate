@@ -133,7 +133,7 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
 
   const abstain =
     options.model !== undefined && uncertainty >= (options.abstainAbove ?? defaultAbstainAbove)
-  const enhancedProbability = rules.enhanced.probability
+  const enhancedProbability = model?.enhanced ?? rules.enhanced.probability
   const fullTeam = forced.length > 0 || abstain
 
   if (forced.length) evidence.push({ source: 'override', note: `forced by: ${forced.join(', ')}` })
@@ -154,7 +154,12 @@ export const route = async (facts: ReviewFacts, options: RouteOptions = {}): Pro
       architecture: run('architecture'),
       simplicity: run('simplicity'),
     },
-    enhanced: decision(enhancedProbability >= 0.4, enhancedProbability, rules.enhanced.evidence),
+    enhanced: decision(enhancedProbability >= 0.4, enhancedProbability, [
+      ...rules.enhanced.evidence,
+      ...(model?.enhanced === undefined
+        ? []
+        : [{ source: 'model' as const, note: `p=${enhancedProbability.toFixed(2)}` }]),
+    ]),
     uncertainty,
     overrides: abstain ? [...forced, 'uncertain'] : forced,
     mode: fullTeam ? 'full-team' : 'routed',
