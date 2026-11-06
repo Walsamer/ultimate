@@ -727,9 +727,11 @@ export function createLander(
             // A replay after the fast-forward finds exactly the integrated commit; anything else moved.
             if (current === integrated) return false
             if (current !== base) return true
+            // Declared outside the try: the catch below names where a refusal happened.
+            let worktree: string | undefined
             try {
               // Fast-forward the checkout that has the target checked out, so its files follow the branch.
-              const worktree = (await git(source, 'worktree', 'list', '--porcelain'))
+              worktree = (await git(source, 'worktree', 'list', '--porcelain'))
                 .split('\n\n')
                 .map((record) => record.split('\n'))
                 .find((record) => record.includes(`branch refs/heads/${target}`))?.[0]

@@ -81,7 +81,9 @@ function stepLabel(step: {
   if (step.fill !== undefined) return `fill ${JSON.stringify(step.fill[0])}`
   if (step.press !== undefined) return `press ${step.press}`
   if (step.wait !== undefined)
-    return typeof step.wait === 'number' ? `wait ${step.wait} ms` : `wait for ${JSON.stringify(step.wait)}`
+    return typeof step.wait === 'number'
+      ? `wait ${step.wait} ms`
+      : `wait for ${JSON.stringify(step.wait)}`
   if (step.send !== undefined) return 'send'
   if (step.until !== undefined) return `until ${JSON.stringify(step.until)}`
   if (step.eval !== undefined) return 'eval'
