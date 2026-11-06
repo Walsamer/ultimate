@@ -721,6 +721,7 @@ export function createLander(
           const { base, integrated, flaky } = prepared
           await step('fast-forwarding')
           let refused: string | undefined
+          let refusedAt = source
           const moved = await serial(source, async () => {
             const current = await git(source, 'rev-parse', `refs/heads/${target}`)
             // A replay after the fast-forward finds exactly the integrated commit; anything else moved.
@@ -737,14 +738,25 @@ export function createLander(
               else await git(source, 'update-ref', `refs/heads/${target}`, integrated, base)
             } catch (error) {
               refused = failure(error)
+              refusedAt = worktree ?? source
             }
             return false
           })
-          if (refused)
+          if (refused) {
+            // The refusal is usually a checkout that is not clean, and it is read only after every check suite ran:
+            // name the files, so resubmitting is one step instead of a guess.
+            const dirty = (await git(refusedAt, 'status', '--porcelain').catch(() => ''))
+              .split('\n')
+              .filter(Boolean)
+              .slice(0, 5)
             return fail(
               `the checkout of ${target} refused the fast-forward to ${integrated.slice(0, 7)}`,
               refused,
+              dirty.length
+                ? `${refusedAt} has uncommitted changes (${dirty.join(', ')}); commit or stash them there, then submit again`
+                : `Check \`git status\` in ${refusedAt}: a checkout that cannot take the fast-forward is usually not clean.`,
             )
+          }
           if (moved) {
             if (attempt < attempts) return retry()
             return fail(`${target} kept moving during ${attempts} attempts.`)

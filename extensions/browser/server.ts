@@ -64,6 +64,30 @@ const untilTimeoutMs = 300_000
 /** How long closing a context, or the browser after it, may take before it counts as wedged. */
 const closeTimeoutMs = 5_000
 
+/**
+ * What a step was waiting for, named in the failure: a 30 s timeout that says only "step timed out after 30 s"
+ * sends the caller back to guess the same selector again, which is how one chapter spent two identical retries.
+ */
+function stepLabel(step: {
+  click?: string
+  fill?: string[]
+  press?: string
+  wait?: number | string
+  eval?: string
+  send?: string
+  until?: unknown
+}): string {
+  if (step.click !== undefined) return `click ${JSON.stringify(step.click)}`
+  if (step.fill !== undefined) return `fill ${JSON.stringify(step.fill[0])}`
+  if (step.press !== undefined) return `press ${step.press}`
+  if (step.wait !== undefined)
+    return typeof step.wait === 'number' ? `wait ${step.wait} ms` : `wait for ${JSON.stringify(step.wait)}`
+  if (step.send !== undefined) return 'send'
+  if (step.until !== undefined) return `until ${JSON.stringify(step.until)}`
+  if (step.eval !== undefined) return 'eval'
+  return 'step'
+}
+
 export function timeout(ms: number, limit: keyof typeof limits) {
   return Object.assign(new Error(`${limits[limit]} timed out after ${ms} ms (${ms / 1000}s)`), {
     name: 'TimeoutError',
@@ -318,7 +342,7 @@ export default function browserExtension(host: ExtensionHost) {
                   `Step ${index + 1}: OK${value === undefined ? '' : ` ${JSON.stringify(value)}`}`,
                 )
               } catch (error) {
-                outcomes.push(`Step ${index + 1}: ${String(error)}`)
+                outcomes.push(`Step ${index + 1} (${stepLabel(step)}): ${String(error)}`)
                 throw error
               }
             }

@@ -233,18 +233,19 @@ function createReporter() {
               message = (await tx.entry(answer))?.model?.[0] as AssistantMessage | undefined
             }, context)
           const failed = !answered(message)
+          const where = failed ? await worktreeTip(task.input.conversationId, context) : ''
           const body =
             answer === undefined
-              ? `Failed: ${report}`
+              ? `Failed: ${report}${where}`
               : failed
-                ? `Failed: ${unanswered(message)}`
+                ? `Failed: ${unanswered(message)}${where}`
                 : answerText(message)
           await parent.submit(
             {
               type: 'input',
               content:
                 answer === undefined
-                  ? `[subagent ${task.input.conversationId} failed: ${report}]`
+                  ? `[subagent ${task.input.conversationId} failed: ${report}${where}]`
                   : report,
               entry: {
                 kind: 'subagents.report',
@@ -550,6 +551,24 @@ export default function subagents(
   // Core services, always on; each handle resolves the current provider at every call.
   const conversations = host.need(ConversationsApi)
   const workspaces = host.need(WorkspacesApi)
+  /**
+   * Where a failed child's work may already be: its worktree and newest commit, one clause.
+   *
+   * A dead child leaves no card of its own, so the parent saw only "ended its turn without an answer" and
+   * branched the same ask again -- three times for one llmhub ask, while the third branch already held the
+   * finished commit. Naming the tip makes "read the dead branch first" one glance instead of a hunt.
+   */
+  const worktreeTip = async (id: ConversationId, ctx: Context) => {
+    const workspace = await workspaces.get(id, ctx)
+    if (!workspace || workspace.state !== 'ready') return ''
+    const tip = await workspaces
+      .git(workspace.path, 'log', '--oneline', '-1')
+      .then((value) => value.trim())
+      .catch(() => '')
+    return tip
+      ? `; its worktree ${workspace.path} is at ${tip} -- read its git log before branching the ask again`
+      : ''
+  }
   const residentDefinitions = async () =>
     (
       await discoverAgents(host.ultimateRoot, host.projectRoot, host.userHome, host.modelRuntime)
