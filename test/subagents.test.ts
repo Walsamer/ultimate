@@ -761,9 +761,44 @@ describe('provider error recovery', () => {
     expect(result.text).toContain('failed')
     const [child] = await children(f.opened)
     const waited = await call(f.opened, { action: 'wait', id: child.conversationId })
-    expect(waited.text).toContain('ended its turn without an answer (error)')
+    expect(waited.text).toContain(
+      'ended its turn without an answer (error: invalid model configuration)',
+    )
     await f.opened.harness.waitForIdle(context)
     expect(await reports(f.opened)).toHaveLength(0)
+  })
+
+  it('names the provider error in what it waited for, and only the stop reason when it said nothing', async () => {
+    // "ended its turn without an answer (error)" is the same card for a 503 and for a model that was never
+    // configured. The message the provider wrote is the difference, and the second child is the control: with
+    // nothing said, the clause stays exactly what it was.
+    const f = await fixture(undefined, undefined, undefined, (transcript) => {
+      const last = transcript.messages.findLast((message) => message.role !== 'system')!
+      if (last.role !== 'user') return undefined
+      if (last.content === 'SAID')
+        return fauxAssistantMessage('', {
+          stopReason: 'error',
+          errorMessage: 'Status 503: deepseek is overloaded\nplease retry',
+        })
+      if (last.content === 'LONG')
+        return fauxAssistantMessage('', { stopReason: 'error', errorMessage: 'x'.repeat(300) })
+      if (last.content === 'SILENT') return fauxAssistantMessage('', { stopReason: 'error' })
+      return undefined
+    })
+    const waited = async (task: string) => {
+      await call(f.opened, { action: 'start', agent: 'scout', task })
+      const child = (await children(f.opened)).at(-1)!.conversationId
+      return (await call(f.opened, { action: 'wait', id: child })).text
+    }
+    expect(await waited('SAID')).toContain(
+      'ended its turn without an answer (error: Status 503: deepseek is overloaded please retry)',
+    )
+    const silent = await waited('SILENT')
+    expect(silent).toContain('ended its turn without an answer (error)')
+    expect(silent).not.toContain('error:')
+    const long = await waited('LONG')
+    expect(long).toContain(`(error: ${'x'.repeat(159)}…)`)
+    expect(long).not.toContain('x'.repeat(161))
   })
 })
 

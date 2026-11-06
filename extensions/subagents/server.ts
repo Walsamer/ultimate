@@ -101,8 +101,24 @@ const answered = (message: AssistantMessage | undefined) =>
   message.stopReason !== 'aborted' &&
   message.stopReason !== 'error' &&
   textOf(message).trim() !== ''
+/**
+ * What the provider said when the turn ended, as one clause, or nothing when it said nothing.
+ *
+ * The stop reason alone says a run died and never which provider refused it, so "deepseek returned 503" and "the
+ * model was not configured" read the same on the card. It is folded to one line and cut, because a 503 can carry a
+ * page of HTML rather than a sentence and a card is not a log.
+ */
+const failureDetail = (message: AssistantMessage | undefined) => {
+  const said = message?.errorMessage?.replace(/\s+/g, ' ').trim()
+  if (!said) return ''
+  return `: ${said.length > 160 ? `${said.slice(0, 159).trimEnd()}…` : said}`
+}
 const unanswered = (message: AssistantMessage | undefined) =>
-  `ended its turn without an answer${message?.stopReason === 'aborted' || message?.stopReason === 'error' ? ` (${message.stopReason})` : ''}`
+  `ended its turn without an answer${
+    message?.stopReason === 'aborted' || message?.stopReason === 'error'
+      ? ` (${message.stopReason}${failureDetail(message)})`
+      : ''
+  }`
 const answerText = (message: AssistantMessage | undefined) =>
   `Returned model: ${message?.provider && message?.model ? `${message.provider}/${message.model}` : 'unknown'}\n${textOf(message)}`
 const reportText = (id: ConversationId, agent: string, message: AssistantMessage | undefined) =>
@@ -114,7 +130,7 @@ const replyText = (id: ConversationId, message: AssistantMessage | undefined) =>
   answered(message)
     ? answerText(message)
     : `Subagent ${id} ${unanswered(message)}. Message it to continue.`
-function createReporter() {
+function createReporter(tip: (id: ConversationId, ctx: Context) => Promise<string>) {
   return defineTask<
     {
       conversationId: ConversationId
@@ -233,7 +249,7 @@ function createReporter() {
               message = (await tx.entry(answer))?.model?.[0] as AssistantMessage | undefined
             }, context)
           const failed = !answered(message)
-          const where = failed ? await worktreeTip(task.input.conversationId, context) : ''
+          const where = failed ? await tip(task.input.conversationId, context) : ''
           const body =
             answer === undefined
               ? `Failed: ${report}${where}`
@@ -684,7 +700,7 @@ export default function subagents(
       }, ctx)
     },
   })
-  const Reporter = createReporter()
+  const Reporter = createReporter(worktreeTip)
   let unsubscribe: (() => void) | undefined
   let recovery = Promise.resolve()
   const recover = async (submission: SubmissionRecord) => {
