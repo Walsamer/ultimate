@@ -57,7 +57,13 @@ export async function resolve(
       )
     id = await service.standing(to.slice(1), ctx)
   } else if (/^#?\d+$/.test(to)) id = Number(to.replace('#', ''))
-  if (id === undefined) throw new Error(`No recipient for ${to}`)
+  if (id === undefined) {
+    if ((await host.projects()).some((project) => project.name === to))
+      throw new Error(
+        `No recipient for ${to}. Another project's Ultimate is reached with codemode ultimate.tell({project:${JSON.stringify(to)}, text}).`,
+      )
+    throw new Error(`No recipient for ${to}`)
+  }
   if (id === from) throw new Error('You cannot message yourself')
   await host.harness().commit(async (tx) => {
     if (!(await tx.conversation(id as ConversationId)))

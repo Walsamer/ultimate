@@ -1794,6 +1794,18 @@ async function remoteFixture(url?: string) {
   })
   return f
 }
+it('hints at ultimate.tell for project recipients without sending or changing unknown-name errors', async () => {
+  const f = await remoteFixture()
+  const send = (to: string) =>
+    f.service().send(ROOT_CONVERSATION_ID, { to, text: 'Hello', reply: false }, to, context)
+  await expect(send('poe2-rust')).rejects.toThrow(
+    new Error(
+      'No recipient for poe2-rust. Another project\'s Ultimate is reached with codemode ultimate.tell({project:"poe2-rust", text}).',
+    ),
+  )
+  await expect(send('nonesuch')).rejects.toThrow(new Error('No recipient for nonesuch'))
+  expect(await f.log()).toBeUndefined()
+})
 // The sender runs on this machine, so its answer routes back to the local poe2-rust instance.
 const from = { project: 'poe2-rust', machine: hostname() }
 it("delivers another Ultimate's message to @ultimate only, labelled as it, once per key", async () => {
