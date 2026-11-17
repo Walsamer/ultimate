@@ -31,7 +31,7 @@ function call(row: CallRow) {
     `${row.caller} → ${row.name}`,
     `${Math.round(row.ms)}ms`,
     row.ok ? 'ok' : `failed: ${cut(row.error ?? '', 160)}`,
-    row.args && `args=${cut(row.args, 100)}`,
+    row.headline && `args=${row.headline}`,
   ]
     .filter(Boolean)
     .join('  ')
@@ -62,6 +62,7 @@ export default function debug(host: ExtensionHost) {
     since?: number | string
     limit?: number
     trace?: string
+    before?: string
     conversation?: number
     name?: string
   }) {
@@ -136,6 +137,7 @@ export default function debug(host: ExtensionHost) {
           .query({
             ...(args.conversation === undefined ? {} : { conversation: args.conversation }),
             ...(args.since === undefined ? {} : { since: args.since }),
+            ...(args.before === undefined ? {} : { before: args.before }),
             limit,
           })
           .toReversed()
@@ -143,7 +145,7 @@ export default function debug(host: ExtensionHost) {
           [
             age(row.at).padEnd(4),
             call(row),
-            ids({ trace: row.trace, conversation: row.conversation, entry: row.entry }),
+            ids({ id: row.id, trace: row.trace, conversation: row.conversation, entry: row.entry }),
           ].join('  '),
         )
         return lines.length ? bounded(lines, limit) : 'No calls.'
@@ -176,7 +178,7 @@ export default function debug(host: ExtensionHost) {
           'call: `events` lists durable events newest first (filter `events` by name like `workspaces.landed`, `since` an event id); ' +
           '`reactors` shows each reactor with its cursor, lag (pending events), whether it runs, and its last failure; ' +
           '`catalogue` lists each extension API with its provider, needs and wants, plus missing providers and cycles; ' +
-          '`trace` lists recorded service, action, reactor, tool and model calls newest first (filter by `conversation` or ISO `since`), or with `trace` set the whole call tree of that trace id, indented; ' +
+          '`trace` lists recorded service, action, reactor, tool and model calls newest first with argument headlines (filter by `conversation` or ISO `since`); `before` continues to older rows, using the last displayed row’s `id`, even when output is cut. With `trace` set, returns the whole call tree of that trace id, indented; ' +
           "`apis` lists extension contracts (api.ts, refs.ts) with summaries and `api` returns one extension's by `name`, each file under a header. " +
           'Start from an event or a call, take its trace id and read the tree. Read-only; one line per row, ages relative; `limit` defaults to 20 events or 50 rows.',
         parameters: Type.Object({
@@ -199,6 +201,12 @@ export default function debug(host: ExtensionHost) {
             }),
           ),
           trace: Type.Optional(Type.String({ minLength: 1, description: 'trace: a trace id.' })),
+          before: Type.Optional(
+            Type.String({
+              minLength: 1,
+              description: 'trace list: exclusive call id; continues to older rows.',
+            }),
+          ),
           conversation: Type.Optional(
             Type.Integer({ minimum: 1, description: 'trace: calls of this conversation.' }),
           ),

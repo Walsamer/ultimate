@@ -310,9 +310,9 @@ function globals(
     {
       name: 'trace',
       description:
-        'Recorded calls (service, action, reactor, tool, model): the newest `limit` (default 100, at most 1000), oldest first; filter by trace id, conversation or ISO `since`.',
+        'Recorded calls (service, action, reactor, tool, model): the newest `limit` (default 100, at most 1000), oldest first; filter by trace id, conversation or ISO `since`. `before` continues to older rows using the oldest row’s id (the first row). `headline` is at most 120 characters of stored args, whitespace collapsed.',
       signature:
-        '(query?: { trace?: string; conversation?: number; since?: string; limit?: number; project?: string; machine?: string }): Promise<{ id: string; parent?: string; trace: string; at: string; ms: number; caller: string; callee: string; kind: string; name: string; ok: boolean; error?: string; args?: string; result?: string; conversation?: number; task?: number; entry?: number }[]>',
+        '(query?: { trace?: string; conversation?: number; since?: string; before?: string; limit?: number; project?: string; machine?: string }): Promise<{ id: string; parent?: string; trace: string; at: string; ms: number; caller: string; callee: string; kind: string; name: string; ok: boolean; error?: string; args?: string; headline?: string; result?: string; conversation?: number; task?: number; entry?: number }[]>',
       execute: read('trace', 0),
     },
     {

@@ -47,6 +47,8 @@ export interface CallRow {
   ok: boolean
   error?: string
   args?: string
+  /** At most 120 characters of the stored arguments, with whitespace collapsed. */
+  headline?: string
   result?: string
   conversation?: number
   task?: number
@@ -58,6 +60,8 @@ export interface TraceQuery {
   conversation?: number
   /** ISO time; only calls that started after it. */
   since?: string
+  /** Exclusive call id: continue to calls older than this one in start order. */
+  before?: string
   /** The newest calls, at most 1000; default 100. */
   limit?: number
 }
@@ -198,6 +202,8 @@ export function callTrace(file: string | (() => string), retention = { rows: 200
       if (item !== null)
         result[key] =
           key === 'ok' ? item === 1 : key === 'at' ? new Date(item as number).toISOString() : item
+    if (typeof result.args === 'string')
+      result.headline = result.args.replace(/\s+/g, ' ').trim().slice(0, 120)
     return result as unknown as CallRow
   }
   const select = (where: string, order: string, ...values: (string | number)[]) => {
@@ -432,6 +438,11 @@ CREATE INDEX IF NOT EXISTS calls_at ON calls (at);`)
           value === undefined ? [] : [{ sql: `${column} = ?`, value }],
         )
         if (since !== undefined) where.push({ sql: 'at > ?', value: since })
+        if (query.before !== undefined)
+          where.push({
+            sql: '(at, rowid) < (SELECT at, rowid FROM calls WHERE id = ?)',
+            value: query.before,
+          })
         const limit = Math.min(Math.max(1, Math.trunc(Number(query.limit) || 100)), 1000)
         return select(
           where.length ? 'WHERE ' + where.map((filter) => filter.sql).join(' AND ') : '',
