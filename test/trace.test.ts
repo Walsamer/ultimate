@@ -1,5 +1,6 @@
 import { mkdir, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { fauxAssistantMessage, fauxToolCall } from '@earendil-works/pi-ai/providers/faux'
 import { afterAll, expect, it, vi } from 'vitest'
 import { context, prepareHarness } from '../server/harness.ts'
@@ -168,6 +169,60 @@ it('traces an action through a service, its event and a reactor into another ser
   // Not hex, so it can't match the rows' random ids by chance.
   expect(JSON.stringify(rows)).not.toContain('sentinel-token')
   expect(note.args).toBe('[{"from":"beta.worked"}]')
+})
+
+it('pages older calls by id without overlap or gaps, in start order rather than finish order', async () => {
+  const trace = callTrace(join(await temp(), 'trace.sqlite'))
+  trace.open()
+  try {
+    const pending = Array.from({ length: 6 }, (_, i) => trace.begin(call(`call-${i}`), null))
+    // A slow older call finishes last; write-order cursors would skip it or repeat newer calls.
+    for (const item of pending.toReversed()) item.finish(true, undefined)
+    const all = trace.reader.query()
+    const first = trace.reader.query({ limit: 2 })
+    const second = trace.reader.query({ limit: 2, before: first[0].id })
+    const third = trace.reader.query({ limit: 2, before: second[0].id })
+    expect(first.map((row) => row.name)).toEqual(['call-4', 'call-5'])
+    expect(second.map((row) => row.name)).toEqual(['call-2', 'call-3'])
+    expect([...third, ...second, ...first]).toEqual(all)
+    expect(trace.reader.query({ before: third[0].id })).toEqual([])
+    expect(trace.reader.query({ before: first[0].id, since: '1970-01-01T00:00:00Z' })).toEqual(
+      all.slice(0, 4),
+    )
+  } finally {
+    trace.close()
+  }
+})
+
+it('derives a bounded, whitespace-collapsed headline only from stored arguments', async () => {
+  const file = join(await temp(), 'trace.sqlite')
+  const trace = callTrace(file)
+  trace.open()
+  try {
+    trace.run(
+      { ...call('with-args'), args: { token: 'sentinel-token', value: 'x'.repeat(200) } },
+      () => {},
+    )
+    trace.run(call('without-args'), () => {})
+    const [withArgs, withoutArgs] = trace.reader.query()
+    expect(withArgs.headline).toBe(withArgs.args!.slice(0, 120))
+    expect(withArgs.headline).toHaveLength(120)
+    expect(withArgs.headline).toContain('[redacted]')
+    expect(withArgs.headline).not.toContain('sentinel-token')
+    expect(withoutArgs).not.toHaveProperty('headline')
+    // Read an existing, formatted summary: the headline must not serialize it a second time.
+    const database = new DatabaseSync(file)
+    try {
+      database
+        .prepare('UPDATE calls SET args = ? WHERE id = ?')
+        .run('  {\n\t"value":  "hello"\n}  ', withArgs.id)
+    } finally {
+      database.close()
+    }
+    expect(trace.reader.query()[0].headline).toBe('{ "value": "hello" }')
+  } finally {
+    trace.close()
+  }
 })
 
 it('records failing service calls and passes the error through unchanged', async () => {

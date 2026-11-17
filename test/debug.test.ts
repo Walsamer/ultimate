@@ -114,7 +114,13 @@ it('shows events, reactor failures, the catalogue and a trace tree, within limit
   const rows = (await debug({ call: 'trace', conversation: 1, limit: 2 })).split('\n')
   expect(rows).toHaveLength(2)
   for (const row of rows)
-    expect(row).toMatch(/^\d+s\s+\w+ {2}\S+ → \S+ {2}\d+ms .* trace=\S+ conversation=1$/)
+    expect(row).toMatch(/^\d+s\s+\w+ {2}\S+ → \S+ {2}\d+ms .* id=\S+ trace=\S+ conversation=1$/)
+  const before = rows.at(-1)!.match(/ id=(\S+)/)![1]
+  const older = (await debug({ call: 'trace', conversation: 1, limit: 2, before })).split('\n')
+  const expected = server.extensions.trace.query({ conversation: 1, limit: 2, before }).toReversed()
+  expect(older.map((row) => row.match(/ id=(\S+)/)![1])).toEqual(expected.map((row) => row.id))
+  expect(older).toHaveLength(2)
+  expect(older.some((row) => rows.includes(row))).toBe(false)
   const first = server.extensions.trace.query().find((row) => row.name === 'alpha/go')!
   // Each later event's commit retries the first event, whose reactor runs join the first trace.
   await until(() => server.extensions.trace.query({ trace: first.trace }).length >= 5)
