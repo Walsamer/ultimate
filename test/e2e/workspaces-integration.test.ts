@@ -1459,8 +1459,8 @@ it.concurrent('reruns only the failing command of a group, reports its output tw
   expect(runs(submissions[0])).toEqual(['if [ failed', 'if [ flaky', 'true passed'])
   for (const event of checks) expect(event.data.ms).toEqual(expect.any(Number))
 })
-it.concurrent('fast-forwards the worktree that has the target checked out, past unrelated dirty files but not over overlapping ones', async () => {
-  const f = await lander({})
+it.concurrent('refuses a dirty target before merging or checking, then lands an unchanged resubmission once clean', async () => {
+  const f = await lander({ checks: ['echo CHECK_RAN'] })
   const id = await f.create()
   await f.service.ready(id, context)
   const workspace = (await f.service.get(id, context))!
@@ -1468,21 +1468,73 @@ it.concurrent('fast-forwards the worktree that has the target checked out, past 
   await git(f.projectRoot, 'switch', '-q', '-c', 'other')
   const elsewhere = join(f.directory, 'elsewhere')
   await git(f.projectRoot, 'worktree', 'add', '-q', elsewhere, 'main')
-  await writeFile(join(elsewhere, 'unrelated.txt'), 'dirty')
+  const dirtyPaths = Array.from({ length: 10 }, (_, i) => `unrelated-${i}.txt`)
+  for (const path of dirtyPaths) await writeFile(join(elsewhere, path), 'dirty')
+  const base = await git(elsewhere, 'rev-parse', 'HEAD')
   const tip = await commit(workspace.path)
   await f.service.submit(id, 'None', context)
-  expect((await submitted(f, id))[0]).toContain('landed as')
+  const [report] = await submitted(f, id)
+  expect(report).toContain('refused the fast-forward')
+  expect(report).toContain(`${elsewhere} has uncommitted changes`)
+  for (const path of dirtyPaths.slice(0, 8)) expect(report).toContain(path)
+  for (const path of dirtyPaths.slice(8)) expect(report).not.toContain(path)
+  expect(report).toContain('2 more')
+  const log = (await landerLog(f)).log
+  expect(log.some((line) => line.step === 'merging' || line.step === 'fast-forwarding')).toBe(false)
+  expect(log.some((line) => line.check)).toBe(false)
+  expect(await git(elsewhere, 'rev-parse', 'HEAD')).toBe(base)
+  for (const path of dirtyPaths) {
+    expect(await readFile(join(elsewhere, path), 'utf8')).toBe('dirty')
+    await unlink(join(elsewhere, path))
+  }
+  expect(await git(f.projectRoot, 'status', '--porcelain')).toBe('')
+  await f.service.submit(id, 'None', context)
+  expect((await submitted(f, id)).at(-1)).toContain('landed as')
   expect(await git(elsewhere, 'rev-parse', 'HEAD')).toBe(tip)
   expect(await readFile(join(elsewhere, 'change.txt'), 'utf8')).toBe('change.txt')
-  expect(await readFile(join(elsewhere, 'unrelated.txt'), 'utf8')).toBe('dirty')
-  expect(await git(f.projectRoot, 'status', '--porcelain')).toBe('')
-  await writeFile(join(elsewhere, 'overlap.txt'), 'dirty')
-  await commit(workspace.path, 'overlap.txt')
+})
+it.concurrent('keeps git stderr when a clean target refuses the fast-forward', async () => {
+  const f = await lander({})
+  const id = await f.create()
+  await f.service.ready(id, context)
+  await commit((await f.service.get(id, context))!.path)
+  const base = await git(f.projectRoot, 'rev-parse', 'HEAD')
+  // The checkout is clean, but an index lock makes the final merge fail after checks.
+  const lock = join(f.projectRoot, '.git', 'index.lock')
+  f.host.projectSettings = async () => ({ lander: { checks: [`touch '${lock}'`] } })
   await f.service.submit(id, 'None', context)
-  const reports = await submitted(f, id)
-  expect(reports.at(-1)).toContain('refused the fast-forward')
-  expect(reports.at(-1)).toContain('overlap.txt')
-  expect(await git(elsewhere, 'rev-parse', 'HEAD')).toBe(tip)
+  const [report] = await submitted(f, id)
+  expect(report).toContain('refused the fast-forward')
+  expect(report).toContain('index.lock')
+  expect(report).toContain('File exists')
+  expect(report).not.toContain('usually not clean')
+  expect(await git(f.projectRoot, 'rev-parse', 'HEAD')).toBe(base)
+  expect(await git(f.projectRoot, 'status', '--porcelain')).toBe('')
+  expect((await landerLog(f)).log.at(-1)).toMatchObject({
+    outcome: 'failed',
+    output: expect.stringContaining('File exists'),
+  })
+  await unlink(lock)
+})
+it.concurrent('reports git output for a conflicting merge from a clean target', async () => {
+  const f = await lander({})
+  const id = await f.create()
+  await f.service.ready(id, context)
+  const workspace = (await f.service.get(id, context))!
+  await commit(workspace.path, 'base.txt')
+  await writeFile(join(f.projectRoot, 'base.txt'), 'target edit')
+  await git(f.projectRoot, 'commit', '-am', 'target edit')
+  expect(await git(f.projectRoot, 'status', '--porcelain')).toBe('')
+  await f.service.submit(id, 'None', context)
+  const [report] = await submitted(f, id)
+  expect(report).toContain('CONFLICT (content): Merge conflict in base.txt')
+  expect(report).toContain('Automatic merge failed')
+  expect((await landerLog(f)).log.at(-1)).toMatchObject({
+    outcome: 'failed',
+    output: expect.stringContaining('CONFLICT'),
+  })
+  expect(await readFile(join(f.projectRoot, 'base.txt'), 'utf8')).toBe('target edit')
+  expect(await git(f.projectRoot, 'status', '--porcelain')).toBe('')
 })
 it.concurrent('counts checkouts by state, commits and uncommitted changes, and measures their disk once a minute', async () => {
   const f = await fixture()

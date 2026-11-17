@@ -276,6 +276,22 @@ const failure = (error: unknown) => {
     .trim()
     .slice(-3000)
 }
+/** The checkout whose files must follow the target branch's fast-forward, if it is checked out. */
+const targetWorktree = async (source: string, target: string) =>
+  (await git(source, 'worktree', 'list', '--porcelain'))
+    .split('\n\n')
+    .map((record) => record.split('\n'))
+    .find((record) => record.includes(`branch refs/heads/${target}`))?.[0]
+    .slice('worktree '.length)
+
+const requireCleanTarget = async (worktree: string) => {
+  const dirty = lines(await git(worktree, 'status', '--porcelain'))
+  if (dirty.length)
+    throw new Error(
+      `${worktree} has uncommitted changes (${dirty.slice(0, 8).join(', ')}${dirty.length > 8 ? `; ${dirty.length - 8} more` : ''}); commit them or move them out of the checkout, then submit again.`,
+    )
+}
+
 /** Run a network git command in `cwd`; longer than git()'s local timeout. */
 const remote = (cwd: string, signal: AbortSignal, ...args: string[]) =>
   git({ cwd, signal, timeout: 300000 }, ...args)
@@ -546,6 +562,19 @@ export function createLander(
           // A crash after the checks keeps the integrated commit: go straight to fast-forwarding it.
           let prepared = await runtime.memo<Prepared>(`prepared:${id}:${attempt}`, context)
           if (!prepared) {
+            // Refuse before integration and checks, not after paying for every check suite. This is not memoized:
+            // resubmission (or replay before a recorded refusal) reads the checkout as it is now.
+            try {
+              await serial(source, async () => {
+                const worktree = await targetWorktree(source, target)
+                if (worktree) await requireCleanTarget(worktree)
+              })
+            } catch (error) {
+              return await fail(
+                `the checkout of ${target} refused the fast-forward`,
+                failure(error),
+              )
+            }
             // A crash after the merges resumes on the same merged commit instead of merging again.
             let merged = await runtime.memo<{ base: string; sha: string }>(
               `merged:${id}:${attempt}`,
@@ -568,11 +597,11 @@ export function createLander(
                 try {
                   await git(path, 'merge', '--no-edit', '-m', message, commit)
                   return false
-                } catch {
+                } catch (error) {
                   const conflicts = await git(path, 'diff', '--name-only', '--diff-filter=U')
                   // The next attempt starts from a reset, cleaned checkout, so a failed abort cannot leak into it.
                   await git(path, 'merge', '--abort').catch(() => undefined)
-                  await fail(reason, conflicts, hint)
+                  await fail(reason, [failure(error), conflicts].filter(Boolean).join('\n'), hint)
                   return true
                 }
               }
@@ -731,34 +760,24 @@ export function createLander(
             let worktree: string | undefined
             try {
               // Fast-forward the checkout that has the target checked out, so its files follow the branch.
-              worktree = (await git(source, 'worktree', 'list', '--porcelain'))
-                .split('\n\n')
-                .map((record) => record.split('\n'))
-                .find((record) => record.includes(`branch refs/heads/${target}`))?.[0]
-                .slice('worktree '.length)
-              if (worktree) await git(worktree, 'merge', '-q', '--ff-only', integrated)
-              else await git(source, 'update-ref', `refs/heads/${target}`, integrated, base)
+              worktree = await targetWorktree(source, target)
+              if (worktree) {
+                // The target may have become dirty during checks. Never touch those files.
+                await requireCleanTarget(worktree)
+                await git(worktree, 'merge', '--ff-only', integrated)
+              } else await git(source, 'update-ref', `refs/heads/${target}`, integrated, base)
             } catch (error) {
               refused = failure(error)
               refusedAt = worktree ?? source
             }
             return false
           })
-          if (refused) {
-            // The refusal is usually a checkout that is not clean, and it is read only after every check suite ran:
-            // name the files, so resubmitting is one step instead of a guess.
-            const dirty = (await git(refusedAt, 'status', '--porcelain').catch(() => ''))
-              .split('\n')
-              .filter(Boolean)
-              .slice(0, 5)
+          if (refused)
             return fail(
               `the checkout of ${target} refused the fast-forward to ${integrated.slice(0, 7)}`,
               refused,
-              dirty.length
-                ? `${refusedAt} has uncommitted changes (${dirty.join(', ')}); commit or stash them there, then submit again`
-                : `Check \`git status\` in ${refusedAt}: a checkout that cannot take the fast-forward is usually not clean.`,
+              `Inspect the git error above and \`git status\` in ${refusedAt}, then submit again.`,
             )
-          }
           if (moved) {
             if (attempt < attempts) return retry()
             return fail(`${target} kept moving during ${attempts} attempts.`)

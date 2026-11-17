@@ -153,6 +153,10 @@ first lines and outcome, and the root note carry that snapshot. `landing.tsx` re
 the root's landing note; its one-line `Subject` heads each submission in the lander log and the submit card, and the
 lander's sidebar row shows the feature it lands or landed last.
 
+Before integration or checks, the lander refuses a dirty checkout of the target branch, naming at most eight
+status paths and the remaining count. It checks again before fast-forwarding in case files changed during checks.
+It never stashes or cleans the target checkout; git failures keep their output in the refusal report.
+
 1. Resets its own detached checkout, `<home>/lander/<hash of source>`, to the target branch tip. `isolates.worktree.setup`
    runs once when the checkout is created. With `lander.push`, it fetches the remote branch and merges it when it is ahead.
 2. Merges the submitted tip. A conflict aborts the merge and reports the conflicting paths to the submitter.
