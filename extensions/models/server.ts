@@ -21,10 +21,13 @@ import {
   LoginAction,
   LoginDoc,
   LogoutAction,
+  PreviewFamiliesAction,
+  ReportFamilyMovesAction,
   SaveFamiliesAction,
 } from './refs.ts'
-import type { SaveFamilies } from './refs.ts'
+import type { FamilyMove, SaveFamilies } from './refs.ts'
 import { familiesView, saveFamilies } from './families.ts'
+import { previewFamilies, reportFamilyMoves } from './family-impact.ts'
 import { fallback } from './fallback.ts'
 import { markRefusals } from './quota.ts'
 import { switchBack, SwitchbackDoc } from './switchback.ts'
@@ -111,11 +114,26 @@ const loginChanged = async (host: ActionContext['host'], provider: string) =>
 export const actions = {
   /** The families, and who runs on which, for the Agents panel. */
   families: implementAction(FamiliesAction, (_args, { host }) => familiesView(host)),
-  /** Save the families: their models, the features' assignments; optionally move open conversations along. */
+  /** Save the families: their models and the features' assignments. Open conversations keep their model. */
   saveFamilies: implementAction(SaveFamiliesAction, (args, { host }) => {
     if (!args || typeof args !== 'object' || Array.isArray(args))
       throw new Error('Expected families')
     return saveFamilies(host, args as SaveFamilies)
+  }),
+  /** The open conversations this same save would move, so the user can be asked before anything changes. */
+  previewFamilies: implementAction(PreviewFamiliesAction, (args, { host }) => {
+    if (!args || typeof args !== 'object' || Array.isArray(args))
+      throw new Error('Expected families')
+    return previewFamilies(host, args as SaveFamilies)
+  }),
+  /** One passive root entry naming every conversation a batch moved; a repeated requestId writes nothing again. */
+  reportFamilyMoves: implementAction(ReportFamilyMovesAction, (args, { host }) => {
+    if (!args || typeof args !== 'object' || Array.isArray(args))
+      throw new Error('Expected requestId and moves')
+    const { requestId, moves } = args as { requestId?: unknown; moves?: unknown }
+    if (typeof requestId !== 'string' || !requestId) throw new Error('Expected requestId')
+    if (!Array.isArray(moves) || !moves.length) throw new Error('Expected moves')
+    return reportFamilyMoves(host, { requestId, moves: moves as FamilyMove[] })
   }),
   /** Start a login flow for the calling conversation and resolve with its id; the document shows its progress. */
   login: implementAction(LoginAction, async (args, { host, conversationId }) => {
