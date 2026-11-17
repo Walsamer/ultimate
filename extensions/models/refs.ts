@@ -163,6 +163,8 @@ export const ReportFamilyMovesAction = actionRef<{ requestId: string; moves: Fam
  * (`auto-moves.ts`, which moves a conversation off a spent provider). `from` is the model that refused, `until` when it
  * may work again, and `moves` the conversations the group carried.
  */
+export const AutoMovesDoc = docRef<AutoMoves>('models.auto-moves')
+
 export type AutoMoves = {
   groups: Record<string, { from: string; until: number; moves: FamilyMove[] }>
 }

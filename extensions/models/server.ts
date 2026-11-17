@@ -29,6 +29,7 @@ import type { FamilyMove, SaveFamilies } from './refs.ts'
 import { familiesView, saveFamilies } from './families.ts'
 import { previewFamilies, reportFamilyMoves } from './family-impact.ts'
 import { fallback } from './fallback.ts'
+import { AutoMovesState } from './auto-moves.ts'
 import { markRefusals } from './quota.ts'
 import { switchBack, SwitchbackDoc } from './switchback.ts'
 
@@ -59,7 +60,7 @@ export const Logins = defineDoc<{ flows: Record<string, LoginFlow> }>({
   fork: 'initial',
   initial: () => ({ flows: {} }),
 })
-export const docs = [Logins, SwitchbackDoc]
+export const docs = [Logins, SwitchbackDoc, AutoMovesState]
 
 /** A running flow: process-local, so a flow the document shows running without one here died with its process. */
 interface Flow {

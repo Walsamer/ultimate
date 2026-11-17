@@ -96,7 +96,7 @@ function parseFallback(
       throw new Error(
         typeof value === 'string' && isFamilyName(value)
           ? `${at} must be "provider/id", not a family name`
-          : // An entry written as an object names its target in `to`; one without has nothing to step to.
+          : // An object is not a fallback model either; make a missing target explicit.
             isObject(value) && value.to === undefined
             ? `${at} needs a target: a "provider/id"`
             : `${at} must be "provider/id"`,
