@@ -15,7 +15,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { api, cn, errorMessage, useModels } from '@/sdk'
+import { cn, errorMessage, useModels } from '@/sdk'
 import {
   BUILTIN_FAMILIES,
   DEFAULT_FAMILY,
@@ -25,9 +25,8 @@ import {
   familyTitle,
   isFamilyName,
 } from '../../lib/families.ts'
-import { refreshFamilies } from './families.tsx'
+import { saveWithMoves } from './family-moves.tsx'
 import { ModelRow } from './picker.tsx'
-import { SaveFamiliesAction } from './refs.ts'
 import type { FamiliesView, FamilyView, SaveFamilies } from './refs.ts'
 
 type Spec = SaveFamilies['families'][string]
@@ -47,7 +46,7 @@ async function save(
   view: FamiliesView,
   change: Partial<Pick<SaveFamilies, 'families' | 'assign' | 'unpin'>>,
 ) {
-  await api.action(SaveFamiliesAction, {
+  await saveWithMoves({
     families: Object.fromEntries(view.families.map((family) => [family.name, specOf(family)])),
     assign: Object.fromEntries(
       Object.entries(view.assign).filter(([id]) => Object.hasOwn(FEATURES, id)),
@@ -55,7 +54,6 @@ async function save(
     unpin: [],
     ...change,
   })
-  await refreshFamilies()
 }
 
 /** Run feature `id` (Summaries, Previews) on `family`; a pin in the user's settings gives way to it. */
@@ -74,7 +72,7 @@ export function moveFeature(view: FamiliesView, id: string, family: string) {
 
 /**
  * A family's settings in a popover over `children`: model, thinking and color as a draft, saved together. New
- * conversations take the change; open ones keep their model.
+ * conversations take the change; a model change asks whether to move open conversations too.
  */
 export function FamilyPopover({
   family,
@@ -275,7 +273,7 @@ function FamilyForm({
           className="h-7 px-3 text-[12px]"
           disabled={!changed || pending}
           onClick={() => void apply({ families: families(draft) })}
-          title="New conversations take it; open ones keep their model"
+          title="Save the family and choose whether to move open conversations"
           size="sm"
         >
           {pending ? 'Saving…' : 'Save'}

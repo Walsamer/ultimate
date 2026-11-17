@@ -18,6 +18,7 @@ import { modelBlocked, outOfQuota, resetAt, transient } from '../lib/rate-limit.
 import models from '../extensions/models/server.ts'
 import { BLIP_MS, Quota, RETRY_MINUTES, refusal } from '../extensions/models/quota.ts'
 import { SwitchbackDoc } from '../extensions/models/switchback.ts'
+import { AutoMovesState } from '../extensions/models/auto-moves.ts'
 import { Standing } from '../extensions/subagents/api.ts'
 import { Workspaces } from '../extensions/workspaces/workspaces.ts'
 import watchdog from '../extensions/watchdog/server.ts'
@@ -368,6 +369,29 @@ it('marks a provider that runs out of quota, and the next run finishes on the fa
   expect(await f.tasks('watchdog.failure')).toHaveLength(1)
   // Nothing was reported as failed: the fallback finished the work.
   expect(await f.entries(f.ultimate, 'watchdog.failure')).toEqual([])
+})
+
+it('groups automatic recovery of multiple branches in one root notice', async () => {
+  const f = await fixture({ primary: () => error(quota) })
+  const first = await f.conversation('Build the feature')
+  const second = await f.conversation('Review the feature')
+  await (await f.submit(first, 'build it')).wait(context)
+  await until(async () => (await f.marks())['faux/faux-1'] !== undefined)
+  // A later input sees the same refused-model episode, even if its own run never had to fail.
+  await (await f.submit(second, 'review it')).wait(context)
+  await f.deadline()
+  await until(async () => (await f.agent(first)).model?.provider === 'faux2')
+  const notices = await f.entries(ROOT_CONVERSATION_ID, 'models.auto-moved')
+  expect(notices).toHaveLength(1)
+  const { key } = notices[0].data as { key: string }
+  const state = await f.harness.snapshot(AutoMovesState, ROOT_CONVERSATION_ID, context)
+  expect(state?.groups[key].moves).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ id: first, title: 'Build the feature', to: 'faux2/faux-2' }),
+      expect.objectContaining({ id: second, title: 'Review the feature', to: 'faux2/faux-2' }),
+    ]),
+  )
+  expect(state?.groups[key].moves).toHaveLength(2)
 })
 
 it("finishes a subagent's review on the fallback and tells its parent nothing failed", async () => {

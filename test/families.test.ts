@@ -95,6 +95,10 @@ it('walks a fallback list in order, and refuses one it cannot read whole', () =>
   expect(over.families.fast.fallback).toEqual(['hub/other'])
   // Each entry is refused on its own, naming the field: a list that silently shrank would hide a typo.
   expect(() => parseFamilies({ families: { fast: { fallback: [] } } })).toThrow('at least one')
+  // An entry written as an object with no `to` names no target at all, and says so with the family and the entry.
+  expect(() => parseFamilies({ families: { fast: { fallback: [{}] } } })).toThrow(
+    'modelFamilies.families.fast.fallback[0] needs a target: a "provider/id"',
+  )
   expect(() => parseFamilies({ families: { fast: { fallback: ['acme/cheap', 7] } } })).toThrow(
     '.fallback[1] must be "provider/id"',
   )

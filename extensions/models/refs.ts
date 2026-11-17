@@ -124,6 +124,47 @@ export type SaveFamilies = {
 }
 /**
  * Save this project's families, also as the most recent ones new projects start from. Conversations started after it
- * use them; open ones keep their model.
+ * use them; open ones keep their model until `previewFamilies` names them and the user agrees to move them.
  */
 export const SaveFamiliesAction = actionRef<SaveFamilies, null>('models', 'saveFamilies')
+
+/**
+ * One open conversation a family change would move: its id and title, the family whose model changed, and the model it
+ * runs now → the one its family names after the save. A conversation whose definition pins a model is never one.
+ */
+export type FamilyMove = {
+  id: number
+  title: string
+  family: string
+  from: string
+  to: string
+}
+
+/**
+ * The same save's `SaveFamilies` arguments → the open conversations it would move, and nothing else: it writes nothing
+ * and changes no agent, so the user can be asked before anything happens. A save with no moves can apply at once.
+ */
+export const PreviewFamiliesAction = actionRef<SaveFamilies, FamilyMove[]>(
+  'models',
+  'previewFamilies',
+)
+
+/**
+ * `{ requestId, moves }` → null: one passive `models.family-moved` entry on the project root naming every conversation
+ * that was moved, written once per `requestId`.
+ */
+export const ReportFamilyMovesAction = actionRef<{ requestId: string; moves: FamilyMove[] }, null>(
+  'models',
+  'reportFamilyMoves',
+)
+
+/**
+ * The automatic moves of refused models, grouped on the root: one entry per outage rather than one per conversation
+ * (`auto-moves.ts`, which moves a conversation off a spent provider). `from` is the model that refused, `until` when it
+ * may work again, and `moves` the conversations the group carried.
+ */
+export const AutoMovesDoc = docRef<AutoMoves>('models.auto-moves')
+
+export type AutoMoves = {
+  groups: Record<string, { from: string; until: number; moves: FamilyMove[] }>
+}

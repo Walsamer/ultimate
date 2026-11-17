@@ -96,7 +96,10 @@ function parseFallback(
       throw new Error(
         typeof value === 'string' && isFamilyName(value)
           ? `${at} must be "provider/id", not a family name`
-          : `${at} must be "provider/id"`,
+          : // An object is not a fallback model either; make a missing target explicit.
+            isObject(value) && value.to === undefined
+            ? `${at} needs a target: a "provider/id"`
+            : `${at} must be "provider/id"`,
       )
     // A fallback that is the family's own model could never fire: the provider it names is the one that just refused.
     if (value === model) throw new Error(`${at} must differ from the family's model`)

@@ -17,6 +17,7 @@ import {
   mergeFamilies,
   parseFamilies,
   refName,
+  refOf,
 } from '../../lib/families.ts'
 import type { Feature, FamilySpec } from '../../lib/families.ts'
 import { readFamilyLayers, writeFamilies } from '../../lib/families-settings.ts'
@@ -46,7 +47,7 @@ const pinned = (value: unknown) =>
         : JSON.stringify(value)
 
 /** Pi's default model and thinking, which a default family without its own follows. */
-const piDefault = (host: Pick<ExtensionHost, 'settings'>) => {
+export const piDefault = (host: Pick<ExtensionHost, 'settings'>) => {
   const provider = host.settings.getDefaultProvider()
   const modelId = host.settings.getDefaultModel()
   return {
@@ -162,11 +163,35 @@ function compact(value: { families: object; assign: object }): JsonObject {
   ) as JsonObject
 }
 
+/** The `modelFamilies` value a save writes: only what differs from the built-in families, and the feature assignments. */
+export function savedFamilies(args: SaveFamilies) {
+  return { families: userFamilies(args.families), assign: args.assign }
+}
+
+/**
+ * Every entry a family's fallback names must be a model this runtime knows, so a chain never looks safe and steps
+ * nowhere. A model whose provider has no login here is still known and stays: a login may come back, a typo never does.
+ * The shape is checked before this (`parseFallback`), so an entry here is one `provider/id`.
+ */
+function knownFallbacks(host: ExtensionHost, families: Record<string, FamilySpec>) {
+  for (const [family, spec] of Object.entries(families)) {
+    const { fallback } = spec
+    if (fallback === undefined) continue
+    const entries = Array.isArray(fallback) ? fallback : [fallback]
+    entries.forEach((value, index) => {
+      const at = `modelFamilies.families.${family}.fallback${Array.isArray(fallback) ? `[${index}]` : ''}`
+      const ref = refOf(value)
+      if (!ref || !host.modelRuntime.getModel(ref.provider, ref.modelId))
+        throw new Error(`${at}: ${value} is not a model this runtime knows`)
+    })
+  }
+}
+
 export async function saveFamilies(host: ExtensionHost, args: SaveFamilies) {
-  const families = userFamilies(args.families)
-  const value = { families, assign: args.assign }
+  const value = savedFamilies(args)
   // Throws on an invalid name or model before anything is written.
   parseFamilies(value)
+  knownFallbacks(host, value.families)
   for (const user of Object.keys(args.assign))
     if (!Object.hasOwn(FEATURES, user))
       throw new Error(

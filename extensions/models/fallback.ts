@@ -25,6 +25,7 @@ import { Quota, refusal } from './quota.ts'
 import type { Refusal } from './quota.ts'
 import type { Fallback } from './refs.ts'
 import { movedOut, REVIEW_FAMILY } from './switchback.ts'
+import { recordAutoMove } from './auto-moves.ts'
 
 type Ref = { provider: string; modelId: string }
 /** The step of the chain that picked a model: which one it is decides whether it may leave a subscription. */
@@ -131,6 +132,20 @@ export async function fallback(
         from: refName(backTo),
         to: name(to),
       })
+    if (mark && conversationId !== ROOT_CONVERSATION_ID) {
+      const metadata = await tx.doc(host.metadata, conversationId)
+      await recordAutoMove(
+        tx,
+        {
+          id: conversationId,
+          title: metadata.title || `Conversation ${conversationId}`,
+          family: runs?.family ?? DEFAULT_FAMILY,
+          from: name(from),
+          to: name(to),
+        },
+        mark.until,
+      )
+    }
   }
   const spending = billed ? ', billed per token' : ''
   // A spent account says so plainly; any other refusal names the model, since the login is fine there.
