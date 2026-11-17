@@ -117,8 +117,13 @@ export function checkQuestions(questions: Question[]): Question[] {
   })
 }
 
-/** A reply-enabled message to the user that the user has neither answered nor dismissed yet. */
-export const openQuestion = (m: Message) => m.to === 'user' && m.reply && m.state === 'delivered'
+/** A reply-enabled message to the user that the user has neither answered nor dismissed yet: its card waits on them. */
+export const waitsOnUser = (m: Message) => m.to === 'user' && m.reply && m.state === 'delivered'
+/**
+ * A waiting message whose card asks the user decisions, and so an open question: a report that asks nothing still waits
+ * on the user's answer or dismissal, but it is not one to list or settle.
+ */
+export const openQuestion = (m: Message) => waitsOnUser(m) && !!m.questions?.length
 /** A message in one line: its questions by number, else its first line that asks something, else its first line, clipped. */
 export const gist = (message: Pick<Message, 'text' | 'questions'>) => {
   const lines = message.questions?.length

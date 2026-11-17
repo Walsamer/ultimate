@@ -104,10 +104,13 @@ commit. When the user decides a question in @ultimate's chat instead, @ultimate 
 action (see Actions): the same answer or dismissal, recorded with `via`, so the card reads "@ultimate answered for you"
 with a link to the user's message, and the pointer "answered for you".
 
-While the sender has questions open, the input that starts its next run goes in after a `board.open` entry, placed
+While the sender has open questions, the input that starts its next run goes in after a `board.open` entry, placed
 by the patched `beforeInput` hook in the input's commit: one user-role line listing each open message's id, first
-line and age. @ultimate's lists every open question to the user, each with its asker, and names `settle`. It renders nothing in the transcript. It is per input rather than a system-prompt section, so the
-prompt stays cached; nothing is added while nothing is open.
+line and age. Only a message whose card asks `questions` is an open question: a report that asks nothing still waits
+on the user's answer or dismissal (its card's reply field and Dismiss), but it is never listed, so it is never settled
+settled for the user. @ultimate's lists every open question to the user, each with its asker, and names `settle`. It
+renders nothing in the transcript. It is per input rather than a system-prompt section, so the prompt stays cached;
+nothing is added while nothing is open.
 
 A reply-expected agent message to `user` may carry `questions` (the `message` tool's argument, checked in
 `questions.ts`; refused ones come back as the tool's error naming the question). The sender's outgoing `message` card

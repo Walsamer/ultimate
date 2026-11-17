@@ -16,7 +16,13 @@ import { Branches, WorkspacesApi } from '../workspaces/api.ts'
 import { Standing, SubagentsApi } from '../subagents/api.ts'
 import { LineageApi } from '../lineage/api.ts'
 import { Messages, MessagesApi } from './api.ts'
-import { gist, openQuestion, openQuestionsNote, questionsParameter } from './questions.ts'
+import {
+  gist,
+  openQuestion,
+  openQuestionsNote,
+  questionsParameter,
+  waitsOnUser,
+} from './questions.ts'
 import { callerOf } from './caller.ts'
 import { CallerAction, SettleAction } from './refs.ts'
 import type { Via } from './refs.ts'
@@ -38,7 +44,7 @@ export const docs = [Messages]
 async function openMessage(host: ExtensionHost, messageId: number, ctx: Context) {
   const log = await host.harness().snapshot(Messages, ROOT_CONVERSATION_ID, ctx)
   const message = log?.messages.find((m) => m.id === messageId)
-  if (!message || !openQuestion(message)) throw new Error('These questions are no longer open')
+  if (!message || !waitsOnUser(message)) throw new Error('These questions are no longer open')
   return message
 }
 /** The user's answer `text` to open message `messageId`, or @ultimate's on their behalf (`via`). */

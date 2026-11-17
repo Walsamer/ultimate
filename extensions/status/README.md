@@ -45,7 +45,7 @@ Each field comes from the API of the extension that owns it, never from its docu
 - `head`: Update's state from its last check (`UpdateApi.state()`): HEAD of the clone Ultimate runs from, and `behind`/`ahead` against origin as of `fetchedAt`. Origin is fetched in the background at most hourly, never per call. `error` is the last fetch's failure. Absent while Update is off and on a preview.
 - `failures`: the failed runs Watchdog reported since `since` (`WatchdogApi.failures()`), newest first. Watchdog keeps the last 20, including @ultimate's own. Absent while Watchdog is off.
 - `providers`: Health's providers with a login on this machine (`HealthApi.providers()`), with `state` `ok`, `failing` or `unknown`, and the error of a failing one. Absent while Health is off.
-- `questions`: the messages waiting on the user's answer (`MessagesApi.openQuestions()`), `first` the oldest, its text the one line its card shows.
+- `questions`: the messages asking the user questions, waiting on their answer (`MessagesApi.openQuestions()`), `first` the oldest, its text the one line its card shows.
 - `busy`: conversations running a turn now.
 - `extensions`: every discovered extension from the host's registry (`host.extensions()`), with its `source` (`builtin`, `user` or `project`), whether it is `enabled`, and `error` when its server facet failed to load. A dashboard compares the enabled set with what it expects, and spots a broken extension after a rollout.
 

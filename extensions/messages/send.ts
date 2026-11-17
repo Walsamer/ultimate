@@ -7,7 +7,7 @@ import { Standing } from '../subagents/api.ts'
 import { Messages, MessageSent } from './api.ts'
 import type { Question } from './api.ts'
 import type { Via } from './refs.ts'
-import { checkQuestions, gist, openQuestion } from './questions.ts'
+import { checkQuestions, gist, waitsOnUser } from './questions.ts'
 import { UserInputEvent } from '../../shared/events.ts'
 import type { Device } from '../../shared/events.ts'
 import { resolveImages } from './images.ts'
@@ -129,8 +129,7 @@ export async function send(
       const original = (await tx.doc(Messages, ROOT_CONVERSATION_ID)).messages.find(
         (m) => m.id === answerId,
       )
-      if (!original || !openQuestion(original))
-        throw new Error('These questions are no longer open')
+      if (!original || !waitsOnUser(original)) throw new Error('These questions are no longer open')
     }
     if (input.images !== undefined && from === 'user')
       throw new Error('your images go along with what you submit, not with a message')
@@ -138,10 +137,10 @@ export async function send(
       input.images === undefined
         ? undefined
         : await resolveImages(tx, input.imagesFrom ?? (from as ConversationId), input.images)
-    // Only a Reply answers a question to the user, and only the one it replies to; a dismissal closes it unanswered.
+    // Only a Reply settles a waiting message to the user, and only the one it replies to; a dismissal closes it unanswered.
     if (from === 'user' && input.re !== undefined)
       for (const m of (await tx.doc(Messages, ROOT_CONVERSATION_ID)).messages)
-        if (openQuestion(m) && m.id === input.re) m.state = input.dismiss ? 'dismissed' : 'answered'
+        if (waitsOnUser(m) && m.id === input.re) m.state = input.dismiss ? 'dismissed' : 'answered'
     let re = input.re
     if (from !== 'user' && input.reply !== false) {
       const log = await tx.doc(Messages, ROOT_CONVERSATION_ID)

@@ -15,7 +15,7 @@ import messagesExtension, {
 } from '../extensions/messages/server.ts'
 import { Started } from '../extensions/messages/addresses.ts'
 import { Messages } from '../extensions/messages/api.ts'
-import type { Question } from '../extensions/messages/api.ts'
+import type { MessagesService, Question } from '../extensions/messages/api.ts'
 import { checkQuestions } from '../extensions/messages/questions.ts'
 import questionsExtension, {
   actions,
@@ -112,6 +112,8 @@ async function fixture() {
   for (const fn of openers) await fn()
   const log = async () => (await opened.harness.snapshot(Messages, ROOT_CONVERSATION_ID, context))!
   // Settled: every event reacted to and every task done, deliveries included.
+  /** What the messages service lists as open questions, as status and @ultimate read them. */
+  const questions = () => (services.get('messages') as MessagesService).openQuestions(context)
   const settled = () =>
     until(
       async () =>
@@ -188,6 +190,7 @@ async function fixture() {
     log,
     entries,
     observed,
+    questions,
     settled,
   }
 }
@@ -346,8 +349,40 @@ describe('questions on a message', () => {
       re: plain.id,
       text: 'Questions',
     })
+    // The reply settles the message it answers, though it asked nothing.
+    expect((await f.log()).messages.find((m) => m.id === plain.id)?.state).toBe('answered')
     await expect(f.answer({ messageId: plain.id, text: 'Again' })).rejects.toThrow(
       'These questions are no longer open',
+    )
+  })
+
+  it('lists only a card that asks questions, so a report that asks nothing is never an open question', async () => {
+    const f = await fixture()
+    const id = await f.ultimate()
+    const asker = await f.branch(id)
+    const report = (await f.ask(asker, { text: 'Landed in main as abc1234.' })).message!
+    expect(report).toMatchObject({ reply: true, state: 'delivered' })
+    expect(report.questions).toBeUndefined()
+    expect(await f.questions()).toEqual([])
+    // Neither @ultimate nor the asker gets an open-questions note for it, though it still waits on the user.
+    await f.type(id, 'Carry on')
+    expect((await f.entries(id)).some((entry) => entry.kind === 'board.open')).toBe(false)
+    await f.type(asker, 'Still there?')
+    expect((await f.entries(asker)).some((entry) => entry.kind === 'board.open')).toBe(false)
+    // Its card's Dismiss still closes it, as the reply field still answers it.
+    await f.dismiss(report.id)
+    expect((await f.log()).messages.find((m) => m.id === report.id)?.state).toBe('dismissed')
+    // A card is one, listed to both, and @ultimate lists the asker with it.
+    const card = (await f.ask(asker, { text: 'Ship it?', questions: [decisions[2]] })).message!
+    expect((await f.questions()).map((question) => question.message)).toEqual([card.id])
+    await f.type(asker, 'And now?')
+    const note = (await f.entries(asker)).findLast((entry) => entry.kind === 'board.open')!
+    expect(note.data).toEqual({ ids: [card.id] })
+    await f.type(id, 'Carry on')
+    const listed = (await f.entries(id)).findLast((entry) => entry.kind === 'board.open')!
+    expect(listed.data).toEqual({ ids: [card.id] })
+    expect(listed.model?.[0]?.content).toContain(
+      `- message ${card.id} from #${asker}: questions 3. Land it?`,
     )
   })
 
